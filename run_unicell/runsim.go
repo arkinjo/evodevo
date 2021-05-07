@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,15 +12,23 @@ import (
 )
 
 //var epoch int
-var maxepochs int = 5
-var epochlength int = 200
 //var train_jsonfile string = "train.txt"
 //var test_jsonfile string = "test.txt"
 var jsonfile string = "test.json"
 
 func main() {
 	t0 := time.Now()
-	unicell.SetSeed(20210417)
+        seedPtr := flag.Int("seed", 11, "random seed")
+        epochPtr := flag.Int("nepoch", 1, "number of epochs")
+        genPtr := flag.Int("ngen", 100, "number of generation/epoch")
+	//        denvPtr := flag.Int("denv", 1, "magnitude of environmental changes")
+        flag.Parse()
+
+	unicell.SetSeed(int64(*seedPtr))
+	maxepochs := *epochPtr
+	epochlength := *genPtr
+	//	denv := *denvPtr
+	
 	fout, err := os.OpenFile(unicell.Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file
 	if err != nil {
 		log.Fatal(err)
