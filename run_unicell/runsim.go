@@ -21,6 +21,7 @@ func main() {
         seedPtr := flag.Int("seed", 11, "random seed")
         epochPtr := flag.Int("nepoch", 1, "number of epochs")
         genPtr := flag.Int("ngen", 100, "number of generation/epoch")
+	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
 	//        denvPtr := flag.Int("denv", 1, "magnitude of environmental changes")
         flag.Parse()
 
@@ -28,7 +29,9 @@ func main() {
 	maxepochs := *epochPtr
 	epochlength := *genPtr
 	//	denv := *denvPtr
-	
+
+	unicell.WithCue = *cuePtr
+
 	fout, err := os.OpenFile(unicell.Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file
 	if err != nil {
 		log.Fatal(err)

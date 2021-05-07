@@ -209,10 +209,10 @@ func (indiv *Indiv) Develop(env, env0 Cue) Indiv { //Developmental process
 		multMatVec(g1, indiv.Genome.G, g0)
 		multMatVec(ve, indiv.Genome.E, env0.C) 
 		if WithCue {
-      addVecs(g1, vg, ve)
-    } else {
-      g1 = vg
-    }
+			addVecs(g1, vg, ve)
+		} else {
+			g1 = vg
+		}
 		applyFnVec(sigma, g1)
 
 		multMatVec_T(p0, indiv.Genome.P, g1)
