@@ -241,11 +241,11 @@ func (indiv *Indiv) Develop(env, env0 Cue) Indiv { //Developmental process
 	for nstep := 0; nstep < MaxDevStep; nstep++ { //development with environment cue
 		multMatVec(vg, indiv.Genome.G, g)
 		multMatVec(ve, indiv.Genome.E, devenv.C)
-    if WithCue {
-      addVecs(g1, vg, ve)
-    } else {
-      g1 = vg
-    }
+		if WithCue {
+			addVecs(g1, vg, ve)
+		} else {
+			g1 = vg
+		}
 
 		applyFnVec(sigma, g1)
 
