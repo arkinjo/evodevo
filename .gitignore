@@ -19,3 +19,8 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# output of the program
+evodevo
+test.json
+test0.dat
