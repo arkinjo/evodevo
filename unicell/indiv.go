@@ -4,7 +4,6 @@ import (
 	//"fmt"
 	"math"
 	"math/rand"
-	
 )
 
 type Genome struct { //Genome of an individual
