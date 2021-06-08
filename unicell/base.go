@@ -8,7 +8,7 @@ import (
 var MaxPop int = 100 // population size
 var Ngenes int = 50 // number of genes
 var Nenv int = 10    // number of environmental cues/phenotypic values per face
-var Ncells int = 2 //Two cells, one without cue, one with cues
+var Ncells int = 3 //Three cells, one without cue, one for ancestral environment, one for novel environment
 
 var MaxDevStep int = 200    // Maximum steps for development.
 var epsDev float64 = 1.0e-8 // convergence criterion of development.
@@ -22,7 +22,7 @@ var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 var MutationRate float64 = 0.01
 
 var s float64 = 0.25 // selection strength
-var omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
+var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var WithCue bool = true // with or without environmental cues. See Develop in indiv.go.
 
@@ -65,12 +65,12 @@ func sigmoid(x, omega float64) float64 {
 }
 
 func sigma(x float64) float64 { //Activation function for development
-	return sigmoid(x, omega)
+	return sigmoid(x, Omega)
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
 	//Talk to a biologist about this??? What actually is a phenotype? SOLVED
-	return sigmoid(x, omega)
+	return sigmoid(x, Omega)
 }
 
 func NewSpmat(nrow, ncol int, density float64) Spmat { //Generate a new sparse matrix
