@@ -14,7 +14,6 @@ type Population struct { //Population of individuals
 	Fitness  	float64 //Mean fitness of population
 	CuePlas		float64 //Mean cue plasticity of population
 	ObsPlas		float64 //Mean observed plasticity of population
-	Diff		float64 //Mean difference of population
 	Utility		float64 //Mean utility of population
 }
 
@@ -26,7 +25,7 @@ func NewPopulation(npop int) Population { //Initialize new population
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{env, env, indivs, 0.0, 0.0, 0.0, 0.0, 0.0}
+	p := Population{env, env, indivs, 0.0, 0.0, 0.0, 0.0}
 	return p
 }
 
@@ -60,22 +59,6 @@ func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity
 	return mp / fn
 }
 
-func (pop *Population) GetMeanDiff() float64 { //average  of population
-	var diff float64
-	md := 0.0
-	fn := float64(len(pop.Indivs))
-	e0 := pop.RefEnv.C //Ancestral environment
-	p := NewCue(Nenv)
-	for _, indiv := range pop.Indivs {
-		p = indiv.Cells[2].P
-		diff = dist2Vecs(p.C,e0)
-		md += diff
-	}
-
-	return md / fn
-}
-
-
 func (pop *Population) GetMeanUtility() float64 { //average utility of population
 	mu := 0.0
 	fn := float64(len(pop.Indivs))
@@ -101,8 +84,6 @@ func (pop *Population) Reproduce(nNewPop int) Population {
 		r1 := rand.Float64()
 		if r0 < dad.F && r1 < mom.F {
 			kid0, kid1 := Mate(&dad, &mom)
-			//			fmt.Println("kids.G0", len(kid0.G0), len(kid1.G0))
-
 			nindivs = append(nindivs, kid0)
 			nindivs = append(nindivs, kid1)
 			ipop += 2
@@ -112,12 +93,7 @@ func (pop *Population) Reproduce(nNewPop int) Population {
 		nindivs[i].Id = i
 	}
 	
-	new_population := Population{pop.Env, pop.RefEnv, nindivs, 0.0, 0.0, 0.0, 0.0, 0.0} //resets embryonic values to zero!
-	/*
-		fmt.Println("Reproduce new population: ", ipop)
-			for _,indiv := range new_population.Pop {
-				fmt.Println("in reproduction", len(indiv.G0))
-			}*/
+	new_population := Population{pop.Env, pop.RefEnv, nindivs, 0.0, 0.0, 0.0, 0.0} //resets embryonic values to zero!
 
 	return new_population
 }
@@ -148,7 +124,7 @@ func RecEvolve(nstep int, init_pop *Population, epoch int) Population { //Record
 		pop.ObsPlas = pop.GetMeanObsPlasticity()
 		pop.Utility = pop.GetMeanUtility()
 		fmt.Fprintln(fout, epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
-		fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Pl>:", pop.ObsPlas, "<u>:", pop.Utility) //Prints averages for generation
+		fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Epg>:", pop.CuePlas , "<Pl>:", pop.ObsPlas, "<u>:", pop.Utility) //Prints averages for generation
 		pop = pop.Reproduce(MaxPop)
 	}
 	fout.Close()

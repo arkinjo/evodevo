@@ -185,7 +185,7 @@ func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individua
 func(indiv *Indiv) get_obs_plasticity() float64 { //observed plasticity of individual
 	Clist := indiv.Cells
 	p0 := Clist[1].P.C
-	p := Clist[1].P.C
+	p := Clist[2].P.C
 	d2 := dist2Vecs(p,p0)/float64(Nenv) //Divide by number of phenotypes to normalize
 	return d2
 }

@@ -38,28 +38,6 @@ func SetSeed(seed int64) {
 	rand.Seed(seed)
 }
 
-/*
-func stepfunc(x float64) float64 {
-	if x > 0 {
-		return 1
-	} else {
-		return 0
-	}
-}
-
-func relu(x float64) float64 {
-	if x > 0 {
-		return x
-	} else {
-		return 0
-	}
-}
-
-func srelu(x, omega float64) float64 { //Smooth approximation of ramp function
-	return omega*math.Log(1+math.Exp(x/omega))
-}
-*/
-
 func sigmoid(x, omega float64) float64 {
 	return 1 / (1 + math.Exp(-x/omega))
 }
@@ -69,12 +47,10 @@ func sigma(x float64) float64 { //Activation function for development
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
-	//Talk to a biologist about this??? What actually is a phenotype? SOLVED
 	return sigmoid(x, Omega)
 }
 
 func NewSpmat(nrow, ncol int, density float64) Spmat { //Generate a new sparse matrix
-	//d2 := density * 0.5 //Half of matrix density
 	mat := make([](map[int]float64), nrow)
 	for i := range mat {
 		mat[i] = make(map[int]float64)

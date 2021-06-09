@@ -39,7 +39,6 @@ func RandomEnv(n int, density float64) Cue { //Fake up a boolean environment vec
 	return env
 }
 
-
 func (cue *Cue) CopyCue() Cue { //Returns a copy of an environment cue
 	c0 := cue.C
 	l := len(c0)
