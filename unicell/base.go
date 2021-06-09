@@ -5,9 +5,9 @@ import (
 	"math/rand"
 )
 
-var MaxPop int = 100 // population size
-var Ngenes int = 50 // number of genes
-var Nenv int = 10    // number of environmental cues/phenotypic values per face
+var MaxPop int = 1000 // population size
+var Ngenes int = 200 // number of genes
+var Nenv int = 40    // number of environmental cues/phenotypic values per face
 var Ncells int = 3 //Three cells, one without cue, one for ancestral environment, one for novel environment
 
 var MaxDevStep int = 200    // Maximum steps for development.
