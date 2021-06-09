@@ -11,7 +11,7 @@ import (
 	"github.com/arkinjo/evodevo/unicell"
 )
 
-var jsonfile string = "test.json"
+var jsonfile string = "pop_1.json"
 
 func main() {
 	t0 := time.Now()
@@ -75,7 +75,7 @@ func main() {
 		OldEnv := popstart.Env.CopyCue()
 		popstart.RefEnv = OldEnv
 
-		popstart.Env = OldEnv.ChangeEnv(1) 
+		popstart.Env = unicell.RandomEnv(unicell.Nenv,0.5)
 	}
 
 	fmt.Println("Trajectory of population written to",unicell.Filename)
