@@ -15,7 +15,7 @@ var jsonfile string = "pop_1.json"
 
 func main() {
 	t0 := time.Now()
-	seedPtr := flag.Int("seed", 20210601, "random seed")
+	seedPtr := flag.Int("seed", 1, "random seed")
     epochPtr := flag.Int("nepoch", 1, "number of epochs")
     genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
@@ -74,7 +74,6 @@ func main() {
 		popstart = pop1  //Update population after evolution.
 		OldEnv := popstart.Env.CopyCue()
 		popstart.RefEnv = OldEnv
-
 		popstart.Env = unicell.RandomEnv(unicell.Nenv,0.5)
 	}
 
