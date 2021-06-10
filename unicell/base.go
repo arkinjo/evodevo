@@ -26,7 +26,7 @@ var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zer
 
 var WithCue bool = true // with or without environmental cues. See Develop in indiv.go.
 
-var Filename string = "traj_1.dat"
+var Filename string = "traj_2.dat"
 
 type Spmat = [](map[int]float64) // Sparse matrix is an array of maps.
 

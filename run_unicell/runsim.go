@@ -11,7 +11,7 @@ import (
 	"github.com/arkinjo/evodevo/unicell"
 )
 
-var jsonfile string = "pop_1.json"
+var jsonfile string = "pop_2.json"
 
 func main() {
 	t0 := time.Now()
@@ -56,26 +56,26 @@ func main() {
 		
 		pop1 := unicell.RecEvolve(epochlength, &popstart, epoch)
 		fmt.Println("End of epoch", epoch)
-		jsonpop, err := json.Marshal(pop1) //JSON encoding of population
-		if err != nil {
-			log.Fatal(err)
-		}
-		jsonout, err := os.OpenFile(jsonfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file
-		if err != nil {
-			log.Fatal(err)
-		}
-		
-		jsonout.Write(jsonpop)
-		if err != nil {
-			log.Fatal(err)
-		}
-		//fmt.Println("JSON encoding of evolved population written to ",jsonfile)
-		
 		popstart = pop1  //Update population after evolution.
 		OldEnv := popstart.Env.CopyCue()
 		popstart.RefEnv = OldEnv
 		popstart.Env = unicell.RandomEnv(unicell.Nenv,0.5)
 	}
+
+	jsonpop, err := json.Marshal(popstart) //JSON encoding of population
+	if err != nil {
+		log.Fatal(err)
+	}
+	jsonout, err := os.OpenFile(jsonfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file
+	if err != nil {
+		log.Fatal(err)
+	}
+		
+	jsonout.Write(jsonpop)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//fmt.Println("JSON encoding of evolved population written to ",jsonfile)
 
 	fmt.Println("Trajectory of population written to",unicell.Filename)
 	fmt.Println("JSON encoding of evolved population written to ",jsonfile)
