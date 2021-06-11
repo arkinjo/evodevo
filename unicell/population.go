@@ -98,27 +98,39 @@ func (pop *Population) Reproduce(nNewPop int) Population {
 	return new_population
 }
 
-func RecEvolve(nstep int, init_pop *Population, epoch int) Population { //Records population fitness and writes file
+func (pop *Population) DevPop() Population {
 	var indivenv, refenv Cue
+
+	ch := make(chan Indiv) //channels for parallelization
+	for _, indiv := range pop.Indivs {
+		go func(indiv Indiv) {
+			indivenv = pop.Env //Novel environment
+			refenv = pop.RefEnv //Ancestral environment
+			ch <- indiv.Develop(indivenv, refenv)
+		}(indiv)
+	}
+	for i := range pop.Indivs {
+		pop.Indivs[i] = <-ch //Update output results
+	}
+
+	return *pop
+}
+
+
+
+func RecEvolve(nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
 	
-	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	fout, err := os.OpenFile(Traj_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Fprintln(fout, "Generation", "Population Fitness")
+
 	pop := *init_pop
-	ch := make(chan Indiv) //channels for parallelization
+
 	for istep := 1; istep <= nstep; istep++ {
-		for _, indiv := range pop.Indivs {
-			go func(indiv Indiv) {
-				indivenv = pop.Env //Without noise
-				refenv = pop.RefEnv
-				ch <- indiv.Develop(indivenv, refenv)
-			}(indiv)
-		}
-		for i := range pop.Indivs {
-			pop.Indivs[i] = <-ch //Update output results
-		}
+		
+		pop.DevPop()
+
 		pop.Fitness = pop.GetMeanFitness()
 		pop.CuePlas = pop.GetMeanCuePlasticity()
 		pop.ObsPlas = pop.GetMeanObsPlasticity()
@@ -130,3 +142,73 @@ func RecEvolve(nstep int, init_pop *Population, epoch int) Population { //Record
 	fout.Close()
 	return pop
 }
+
+func (pop *Population) Get_Phenotypes(Filename string) { //Extracts phenotypes from population
+	var str_trait string
+	
+	pop.DevPop()
+
+	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, indiv := range pop.Indivs {
+		//fmt.Fprintln(fout, indiv.Cells[2].P.C)
+		for _,trait := range indiv.Cells[2].P.C {
+			str_trait = fmt.Sprint(trait)
+			fmt.Fprintf(fout, str_trait + "\t" )
+		}
+		fmt.Fprint(fout,"\n")
+
+	}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+
+func (pop *Population) Get_Genotypes(Filename string) { //Extracts genomes from population
+	var str_val string
+	var Gtilde Genome
+
+	pop.DevPop()
+
+	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, indiv := range pop.Indivs {
+		Gtilde = indiv.Genome 
+		for i, row := range Gtilde.G {
+			for j := range row {
+				str_val = fmt.Sprint(Gtilde.G[i][j])
+				fmt.Fprintf(fout, str_val + "\t" )
+			}
+		}
+		for i, row := range Gtilde.E {
+			for j := range row {
+				str_val = fmt.Sprint(Gtilde.E[i][j])
+				fmt.Fprintf(fout, str_val + "\t" )
+			}
+		}
+		for i, row := range Gtilde.P {
+			for j := range row {
+				str_val = fmt.Sprint(Gtilde.P[i][j])
+				fmt.Fprintf(fout, str_val + "\t" )
+			}
+		}
+		for i, row := range Gtilde.Z {
+			for j := range row {
+				str_val = fmt.Sprint(Gtilde.Z[i][j])
+				fmt.Fprintf(fout, str_val + "\t" )
+			}
+		}
+		fmt.Fprint(fout,"\n")
+	}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
