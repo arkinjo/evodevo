@@ -56,12 +56,16 @@ func main() {
 		if epoch != 0 {
 			fmt.Println("Epoch ",epoch,"has environment",popstart.Env)
 		}
-		if epoch == maxepochs {		
-			popstart.Get_Phenotypes(unicell.P_Filename)
-			popstart.Get_Genotypes(unicell.G_Filename)
-		}
 		pop1 := unicell.RecEvolve(epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
+		if epoch == maxepochs {	//JSON encoding is much faster than this.
+			fmt.Println("Getting phenotypes and genotypes")
+			t_ext := time.Now()
+			popstart.Get_Phenotypes(unicell.P_Filename)
+			popstart.Get_Genotypes(unicell.G_Filename)
+			dt_ext := time.Since(t_ext)
+			fmt.Println("Extraction time : ",dt_ext)
+		}
 		popstart = pop1  //Update population after evolution.
 		OldEnv := popstart.Env.CopyCue()
 		popstart.RefEnv = OldEnv

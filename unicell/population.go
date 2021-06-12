@@ -172,36 +172,50 @@ func (pop *Population) Get_Genotypes(Filename string) { //Extracts genomes from 
 	var str_val string
 	var Gtilde Genome
 
-	pop.DevPop()
-
 	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, indiv := range pop.Indivs {
-		Gtilde = indiv.Genome 
-		for i, row := range Gtilde.G {
+		Gtilde = indiv.Genome
+		for _, row := range Gtilde.G {
+			rg := make([]float64,Ngenes)
 			for j := range row {
-				str_val = fmt.Sprint(Gtilde.G[i][j])
-				fmt.Fprintf(fout, str_val + "\t" )
+				rg[j] = row[j]
+			}
+			for _,val := range rg {
+				str_val = fmt.Sprint(val)
+				fmt.Fprintf(fout, str_val + "\t")
 			}
 		}
-		for i, row := range Gtilde.E {
+		for _, row := range Gtilde.E {
+			rg := make([]float64,Nenv)
 			for j := range row {
-				str_val = fmt.Sprint(Gtilde.E[i][j])
-				fmt.Fprintf(fout, str_val + "\t" )
+				rg[j] = row[j]
+			}
+			for _,val := range rg {
+				str_val = fmt.Sprint(val)
+				fmt.Fprintf(fout, str_val + "\t")
 			}
 		}
-		for i, row := range Gtilde.P {
+		for _, row := range Gtilde.P {
+			rg := make([]float64,Nenv)
 			for j := range row {
-				str_val = fmt.Sprint(Gtilde.P[i][j])
-				fmt.Fprintf(fout, str_val + "\t" )
+				rg[j] = row[j]
+			}
+			for _,val := range rg {
+				str_val = fmt.Sprint(val)
+				fmt.Fprintf(fout, str_val + "\t")
 			}
 		}
-		for i, row := range Gtilde.Z {
+		for _, row := range Gtilde.Z {
+			rg := make([]float64,Ngenes)
 			for j := range row {
-				str_val = fmt.Sprint(Gtilde.Z[i][j])
-				fmt.Fprintf(fout, str_val + "\t" )
+				rg[j] = row[j]
+			}
+			for _,val := range rg {
+				str_val = fmt.Sprint(val)
+				fmt.Fprintf(fout, str_val + "\t")
 			}
 		}
 		fmt.Fprint(fout,"\n")
