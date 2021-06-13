@@ -119,7 +119,7 @@ func (pop *Population) DevPop() Population {
 
 
 func RecEvolve(nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
-	
+	//var str_istep, str_epoch, str_Fitness, str_CuePlas, str_ObsPlas, str_Util string
 	fout, err := os.OpenFile(Traj_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -135,7 +135,18 @@ func RecEvolve(nstep, epoch int, init_pop *Population) Population { //Records po
 		pop.CuePlas = pop.GetMeanCuePlasticity()
 		pop.ObsPlas = pop.GetMeanObsPlasticity()
 		pop.Utility = pop.GetMeanUtility()
-		fmt.Fprintln(fout, epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
+
+		str_istep 	:= fmt.Sprint(istep)
+		str_epoch	:= fmt.Sprint(epoch)
+		str_Fitness := fmt.Sprint(pop.Fitness)
+		str_CuePlas := fmt.Sprint(pop.CuePlas)
+		str_ObsPlas := fmt.Sprint(pop.ObsPlas)
+		str_Util	:= fmt.Sprint(pop.Utility)
+
+		fmt.Fprintf(fout, str_epoch + "\t" + str_istep + "\t" + str_Fitness +"\t" + str_CuePlas + "\t" + str_ObsPlas + "\t" + str_Util)
+		fmt.Fprintf(fout, "\n")
+
+		//fmt.Fprintln(fout, epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
 		fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Epg>:", pop.CuePlas , "<Pl>:", pop.ObsPlas, "<u>:", pop.Utility) //Prints averages for generation
 		pop = pop.Reproduce(MaxPop)
 	}

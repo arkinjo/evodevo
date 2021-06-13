@@ -36,7 +36,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintln(fout, "Epoch", "Generation", "Fitness", "Cue_Plas", "Obs_Plas", "Utility")
+
+	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Utility") //header
 	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)
