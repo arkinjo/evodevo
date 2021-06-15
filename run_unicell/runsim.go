@@ -62,8 +62,8 @@ func main() {
 		if epoch == maxepochs {	//JSON encoding is much faster than this.
 			fmt.Println("Getting phenotypes and genotypes")
 			t_ext := time.Now()
-			popstart.Get_Phenotypes(unicell.P_Filename)
-			popstart.Get_Genotypes(unicell.G_Filename)
+			popstart.Dump_Phenotypes(unicell.P_Filename)
+			popstart.Dump_Genotypes(unicell.G_Filename)
 			dt_ext := time.Since(t_ext)
 			fmt.Println("Extraction time : ",dt_ext)
 		}

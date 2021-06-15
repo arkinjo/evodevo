@@ -116,8 +116,6 @@ func (pop *Population) DevPop() Population {
 	return *pop
 }
 
-
-
 func RecEvolve(nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
 	//var str_istep, str_epoch, str_Fitness, str_CuePlas, str_ObsPlas, str_Util string
 	fout, err := os.OpenFile(Traj_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -136,15 +134,7 @@ func RecEvolve(nstep, epoch int, init_pop *Population) Population { //Records po
 		pop.ObsPlas = pop.GetMeanObsPlasticity()
 		pop.Utility = pop.GetMeanUtility()
 
-		str_istep 	:= fmt.Sprint(istep)
-		str_epoch	:= fmt.Sprint(epoch)
-		str_Fitness := fmt.Sprint(pop.Fitness)
-		str_CuePlas := fmt.Sprint(pop.CuePlas)
-		str_ObsPlas := fmt.Sprint(pop.ObsPlas)
-		str_Util	:= fmt.Sprint(pop.Utility)
-
-		fmt.Fprintf(fout, str_epoch + "\t" + str_istep + "\t" + str_Fitness +"\t" + str_CuePlas + "\t" + str_ObsPlas + "\t" + str_Util)
-		fmt.Fprintf(fout, "\n")
+		fmt.Fprintf(fout,"%d\t%d\t%e\t%e\t%e\t%e\n" ,epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
 
 		//fmt.Fprintln(fout, epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
 		fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Epg>:", pop.CuePlas , "<Pl>:", pop.ObsPlas, "<u>:", pop.Utility) //Prints averages for generation
@@ -154,8 +144,7 @@ func RecEvolve(nstep, epoch int, init_pop *Population) Population { //Records po
 	return pop
 }
 
-func (pop *Population) Get_Phenotypes(Filename string) { //Extracts phenotypes from population
-	var str_trait string
+func (pop *Population) Dump_Phenotypes(Filename string) { //Extracts phenotypes from population
 	
 	pop.DevPop()
 
@@ -166,8 +155,7 @@ func (pop *Population) Get_Phenotypes(Filename string) { //Extracts phenotypes f
 	for _, indiv := range pop.Indivs {
 		//fmt.Fprintln(fout, indiv.Cells[2].P.C)
 		for _,trait := range indiv.Cells[2].P.C {
-			str_trait = fmt.Sprint(trait)
-			fmt.Fprintf(fout, str_trait + "\t" )
+			fmt.Fprintf(fout, "%e\t", trait )
 		}
 		fmt.Fprint(fout,"\n")
 
@@ -179,54 +167,37 @@ func (pop *Population) Get_Phenotypes(Filename string) { //Extracts phenotypes f
 }
 
 
-func (pop *Population) Get_Genotypes(Filename string) { //Extracts genomes from population
-	var str_val string
+func (pop *Population) Dump_Genotypes(Filename string) { //Extracts genomes from population
 	var Gtilde Genome
 
 	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	for _, indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
-		for _, row := range Gtilde.G {
-			rg := make([]float64,Ngenes)
-			for j := range row {
-				rg[j] = row[j]
-			}
-			for _,val := range rg {
-				str_val = fmt.Sprint(val)
-				fmt.Fprintf(fout, str_val + "\t")
+		for i := range Gtilde.G {
+			for j:=0 ; j < Ngenes ; j++ {
+				fmt.Fprintf(fout, "%e\t",Gtilde.G[i][j])
 			}
 		}
-		for _, row := range Gtilde.E {
-			rg := make([]float64,Nenv)
-			for j := range row {
-				rg[j] = row[j]
-			}
-			for _,val := range rg {
-				str_val = fmt.Sprint(val)
-				fmt.Fprintf(fout, str_val + "\t")
+		Gtilde = indiv.Genome
+		for i := range Gtilde.E {
+			for j:=0 ; j < Nenv ; j++ {
+				fmt.Fprintf(fout, "%e\t",Gtilde.E[i][j])
 			}
 		}
-		for _, row := range Gtilde.P {
-			rg := make([]float64,Nenv)
-			for j := range row {
-				rg[j] = row[j]
-			}
-			for _,val := range rg {
-				str_val = fmt.Sprint(val)
-				fmt.Fprintf(fout, str_val + "\t")
+		Gtilde = indiv.Genome
+		for i := range Gtilde.P {
+			for j:=0 ; j < Nenv ; j++ {
+				fmt.Fprintf(fout, "%e\t",Gtilde.P[i][j])
 			}
 		}
-		for _, row := range Gtilde.Z {
-			rg := make([]float64,Ngenes)
-			for j := range row {
-				rg[j] = row[j]
-			}
-			for _,val := range rg {
-				str_val = fmt.Sprint(val)
-				fmt.Fprintf(fout, str_val + "\t")
+		Gtilde = indiv.Genome
+		for i := range Gtilde.Z {
+			for j:=0 ; j < Ngenes ; j++ {
+				fmt.Fprintf(fout, "%e\t",Gtilde.Z[i][j])
 			}
 		}
 		fmt.Fprint(fout,"\n")
