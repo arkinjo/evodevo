@@ -116,9 +116,9 @@ func (pop *Population) DevPop() Population {
 	return *pop
 }
 
-func RecEvolve(nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
+func RecEvolve(Filename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
 	//var str_istep, str_epoch, str_Fitness, str_CuePlas, str_ObsPlas, str_Util string
-	fout, err := os.OpenFile(Traj_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}

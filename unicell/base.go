@@ -26,10 +26,6 @@ var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zer
 
 var WithCue bool = true // with or without environmental cues. See Develop in indiv.go.
 
-var Traj_Filename string = "test.dat"
-var P_Filename string = "phentest.dat" //Expressed phenotypes of population
-var G_Filename string = "genetest.dat" //Genome of population
-
 type Spmat = [](map[int]float64) // Sparse matrix is an array of maps.
 
 type Vec = []float64 //Vector is a slice
