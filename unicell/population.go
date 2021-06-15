@@ -137,7 +137,8 @@ func RecEvolve(nstep, epoch int, init_pop *Population) Population { //Records po
 		fmt.Fprintf(fout,"%d\t%d\t%e\t%e\t%e\t%e\n" ,epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
 
 		//fmt.Fprintln(fout, epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
-		fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Epg>:", pop.CuePlas , "<Pl>:", pop.ObsPlas, "<u>:", pop.Utility) //Prints averages for generation
+		//fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Epg>:", pop.CuePlas , "<Pl>:", pop.ObsPlas, "<u>:", pop.Utility) //Prints averages for generation
+		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Epg>:%e\t <Pl>:%e\t <u>:%e\n ", istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility )
 		pop = pop.Reproduce(MaxPop)
 	}
 	fout.Close()

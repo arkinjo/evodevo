@@ -20,14 +20,13 @@ func main() {
     genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-
-	//        denvPtr := flag.Int("denv", 1, "magnitude of environmental changes")
+	denvPtr := flag.Int("denv", 1, "magnitude of environmental changes")
     flag.Parse()
 
 	unicell.SetSeed(int64(*seedPtr))
 	maxepochs := *epochPtr
 	epochlength := *genPtr
-	//	denv := *denvPtr
+	denv := *denvPtr
 
 	unicell.WithCue = *cuePtr
 	unicell.Omega = *omegaPtr
@@ -70,8 +69,8 @@ func main() {
 		popstart = pop1  //Update population after evolution.
 		OldEnv := popstart.Env.CopyCue()
 		popstart.RefEnv = OldEnv
-		popstart.Env = unicell.RandomEnv(unicell.Nenv,0.5)
-		
+		//popstart.Env = unicell.RandomEnv(unicell.Nenv,0.5)
+		popstart.Env = popstart.Env.ChangeEnv(denv)
 	}
 
 	/*
