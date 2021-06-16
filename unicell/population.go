@@ -134,7 +134,7 @@ func RecEvolve(Filename string, nstep, epoch int, init_pop *Population) Populati
 		pop.ObsPlas = pop.GetMeanObsPlasticity()
 		pop.Utility = pop.GetMeanUtility()
 
-		fmt.Fprintf(fout,"%d\t%d\t%e\t%e\t%e\t%e\n" ,epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
+		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\n" ,epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
 
 		//fmt.Fprintln(fout, epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
 		//fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Epg>:", pop.CuePlas , "<Pl>:", pop.ObsPlas, "<u>:", pop.Utility) //Prints averages for generation
