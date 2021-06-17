@@ -72,7 +72,7 @@ func main() {
 			fmt.Println("Dumping phenotypes and genotypes")
 			t_ext := time.Now()
 			popstart.Dump_Phenotypes(P_Filename)
-			popstart.Dump_Genotypes(G_Filename)
+			//popstart.Dump_Genotypes(G_Filename)
 			dt_ext := time.Since(t_ext)
 			fmt.Println("Extraction time : ",dt_ext)
 		}
