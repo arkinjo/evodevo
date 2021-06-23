@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	//"encoding/json"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -20,14 +20,15 @@ var jsonfile string = "jsonpop.json"
 func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
-    epochPtr := flag.Int("nepoch", 1, "number of epochs")
+    epochPtr := flag.Int("nepoch", 20, "number of epochs")
     genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	denvPtr := flag.Int("denv", 1, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj.dat","name of file of trajectories")
 	pfilenamePtr := flag.String("pfilename","phenotypes.dat","name of file of phenotypes")
 	gfilenamePtr := flag.String("gfilename","genotypes.dat","name of file of genomes")
+	jsonfilePtr := flag.String("jsonfile","jsonpop.json","json file of population")
     flag.Parse()
 
 	unicell.SetSeed(int64(*seedPtr))
@@ -37,6 +38,7 @@ func main() {
 	T_Filename = *tfilenamePtr
 	P_Filename = *pfilenamePtr
 	G_Filename = *gfilenamePtr
+	jsonfile = *jsonfilePtr
 	unicell.WithCue = *cuePtr
 	unicell.Omega = *omegaPtr
 
@@ -68,11 +70,23 @@ func main() {
 		}
 		pop1 := unicell.RecEvolve(T_Filename,epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
-		if epoch == maxepochs {	//JSON encoding is actually much faster than this.
+		if epoch == maxepochs {
 			fmt.Println("Dumping phenotypes and genotypes")
 			t_ext := time.Now()
 			popstart.Dump_Phenotypes(P_Filename)
 			//popstart.Dump_Genotypes(G_Filename)
+			jsonpop, err := json.Marshal(pop1) //JSON encoding of population
+			if err != nil {
+				log.Fatal(err)
+			}
+			jsonout, err := os.OpenFile(jsonfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file
+			if err != nil {
+				log.Fatal(err)
+			}
+			jsonout.Write(jsonpop)
+			if err != nil {
+				log.Fatal(err)
+			}
 			dt_ext := time.Since(t_ext)
 			fmt.Println("Extraction time : ",dt_ext)
 		}
@@ -81,22 +95,6 @@ func main() {
 		popstart.RefEnv = OldEnv
 		popstart.Env = popstart.Env.ChangeEnv(denv)
 	}
-
-	/*
-	jsonpop, err := json.Marshal(pop1) //JSON encoding of population
-	if err != nil {
-		log.Fatal(err)
-	}
-	jsonout, err := os.OpenFile(jsonfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file
-	if err != nil {
-		log.Fatal(err)
-	}
-		
-	jsonout.Write(jsonpop)
-	if err != nil {
-		log.Fatal(err)
-		}
-	*/
 
 	fmt.Println("Trajectory of population written to",T_Filename)
 	fmt.Println("JSON encoding of evolved population written to ",jsonfile)
