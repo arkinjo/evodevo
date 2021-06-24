@@ -25,4 +25,6 @@ evodevo
 traj.dat
 genotypes.dat
 phenotypes.dat
-jsonpop.json
+jsonout.json
+phenotypes*
+phen*

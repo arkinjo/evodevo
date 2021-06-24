@@ -116,34 +116,56 @@ func (pop *Population) DevPop() Population {
 	return *pop
 }
 
-func RecEvolve(Filename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
-	//var str_istep, str_epoch, str_Fitness, str_CuePlas, str_ObsPlas, str_Util string
-	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func Evolve(test bool, tfilename, pfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
+	var pfile string
+	
 	pop := *init_pop
 
-	for istep := 1; istep <= nstep; istep++ {
-		
+	for istep := 1; istep <= nstep; istep++ {		
 		pop.DevPop()
+		if test && len(pfilename)!=0 { //Dump phenotypes in test mode
+			pfile = fmt.Sprintf("%s%d_%d.dat",pfilename,epoch,istep)
+			
+			fout, err := os.OpenFile(pfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				log.Fatal(err)
+			}
+			for _, indiv := range pop.Indivs {
+				for _,trait := range indiv.Cells[2].P.C {
+					fmt.Fprintf(fout, "%e\t", trait )
+				}
+				fmt.Fprint(fout,"\n")
+		
+			}
+			err = fout.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		}
 
 		pop.Fitness = pop.GetMeanFitness()
 		pop.CuePlas = pop.GetMeanCuePlasticity()
 		pop.ObsPlas = pop.GetMeanObsPlasticity()
 		pop.Utility = pop.GetMeanUtility()
 
-		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\n" ,epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
+		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		//fmt.Fprintln(fout, epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
-		//fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Epg>:", pop.CuePlas , "<Pl>:", pop.ObsPlas, "<u>:", pop.Utility) //Prints averages for generation
+		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\n" ,epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Epg>:%e\t <Pl>:%e\t <u>:%e\n ", istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility )
 		pop = pop.Reproduce(MaxPop)
 	}
-	fout.Close()
 	return pop
 }
+
 
 func (pop *Population) Dump_Phenotypes(Filename string) { //Extracts phenotypes from population
 	
@@ -167,6 +189,8 @@ func (pop *Population) Dump_Phenotypes(Filename string) { //Extracts phenotypes 
 	}
 }
 
+
+/*
 
 func (pop *Population) Dump_Genotypes(Filename string) { //Extracts genomes from population
 	var Gtilde Genome
@@ -208,4 +232,4 @@ func (pop *Population) Dump_Genotypes(Filename string) { //Extracts genomes from
 		log.Fatal(err)
 	}
 }
-
+*/
