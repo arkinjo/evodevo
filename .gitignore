@@ -22,11 +22,6 @@
 
 # output of the program
 evodevo
-traj.dat
-genotypes.dat
-phenotypes.dat
-jsonout.json
-phenotypes*
-phen*
-run_unicell/test.dat
-run_unicell/test.json
+*.dat
+*.json
+
