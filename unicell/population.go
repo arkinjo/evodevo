@@ -166,7 +166,6 @@ func Evolve(test bool, tfilename, pfilename string, nstep, epoch int, init_pop *
 	return pop
 }
 
-
 func (pop *Population) Dump_Phenotypes(Filename string) { //Extracts phenotypes from population
 	
 	pop.DevPop()
@@ -189,6 +188,15 @@ func (pop *Population) Dump_Phenotypes(Filename string) { //Extracts phenotypes 
 	}
 }
 
+func MergePop(pop1, pop2 Population) Population { //Warning! Environments ill-defined
+	N1 := len(pop1.Indivs)
+	N2 := len(pop2.Indivs)
+	popout := NewPopulation(N1+N2)
+	IndArray := append(pop1.Indivs, pop2.Indivs...)
+	popout.Indivs = IndArray
+
+	return popout
+}
 
 /*
 
