@@ -188,18 +188,6 @@ func (pop *Population) Dump_Phenotypes(Filename string) { //Extracts phenotypes 
 	}
 }
 
-func MergePop(pop1, pop2 Population) Population { //Warning! Environments ill-defined
-	N1 := len(pop1.Indivs)
-	N2 := len(pop2.Indivs)
-	popout := NewPopulation(N1+N2)
-	IndArray := append(pop1.Indivs, pop2.Indivs...)
-	popout.Indivs = IndArray
-
-	return popout
-}
-
-/*
-
 func (pop *Population) Dump_Genotypes(Filename string) { //Extracts genomes from population
 	var Gtilde Genome
 
@@ -240,4 +228,4 @@ func (pop *Population) Dump_Genotypes(Filename string) { //Extracts genomes from
 		log.Fatal(err)
 	}
 }
-*/
+
