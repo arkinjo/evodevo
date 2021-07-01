@@ -14,23 +14,23 @@ import (
 
 
 var T_Filename string = "traj"
-var P_Filename string = "phenotypes" //Expressed phenotypes of population
-var G_Filename string = "genotypes" //Genome of population
-var json_in string = "" //JSON encoding of initial population; default to empty string
+var P_Filename string  //Expressed phenotypes of population
+var G_Filename string  //Genome of population
+var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "json_out"
 var test bool = false //false : training mode, true : testing mode
 
 func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
-    epochPtr := flag.Int("nepoch", 20, "number of epochs")
+    epochPtr := flag.Int("nepoch", 1, "number of epochs")
     genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
-	pfilenamePtr := flag.String("pfilename","phenotypes","name of file of phenotypes")
-	gfilenamePtr := flag.String("gfilename","genotypes.dat","name of file of genomes")
+	pfilenamePtr := flag.String("pfilename","","name of file of phenotypes") //default to empty string
+	gfilenamePtr := flag.String("gfilename","","name of file of genomes") //default to empty string
 	jsoninPtr := flag.String("jsonin","","json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout","jsonout","json file of output population")
 	testPtr := flag.Bool("test",false,"test mode if true, defaults to train mode")
