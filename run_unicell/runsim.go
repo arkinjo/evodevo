@@ -15,7 +15,7 @@ import (
 
 var T_Filename string = "traj"
 var P_Filename string = "phenotypes" //Expressed phenotypes of population
-//var G_Filename string = "genotypes.dat" //Genome of population
+var G_Filename string = "genotypes" //Genome of population
 var json_in string = "" //JSON encoding of initial population; default to empty string
 var json_out string = "json_out"
 var test bool = false //false : training mode, true : testing mode
@@ -30,7 +30,7 @@ func main() {
 	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
 	pfilenamePtr := flag.String("pfilename","phenotypes","name of file of phenotypes")
-	//gfilenamePtr := flag.String("gfilename","genotypes.dat","name of file of genomes")
+	gfilenamePtr := flag.String("gfilename","genotypes.dat","name of file of genomes")
 	jsoninPtr := flag.String("jsonin","","json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout","jsonout","json file of output population")
 	testPtr := flag.Bool("test",false,"test mode if true, defaults to train mode")
@@ -42,7 +42,7 @@ func main() {
 	denv := *denvPtr
 	T_Filename = fmt.Sprintf("%s.dat",*tfilenamePtr)
 	P_Filename = *pfilenamePtr
-	//G_Filename = *gfilenamePtr
+	G_Filename = *gfilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	unicell.WithCue = *cuePtr
@@ -99,7 +99,7 @@ func main() {
 			fmt.Println("Epoch ",epoch,"has environment",popstart.Env)
 		}
 
-		pop1 := unicell.Evolve(test,T_Filename,P_Filename,epochlength, epoch, &popstart)
+		pop1 := unicell.Evolve(test,T_Filename,P_Filename,G_Filename,epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population

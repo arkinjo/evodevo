@@ -116,30 +116,70 @@ func (pop *Population) DevPop() Population {
 	return *pop
 }
 
-func Evolve(test bool, tfilename, pfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
-	var pfile string
+func Evolve(test bool, tfilename, pfilename, gfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
+	var filename string
+	var Gtilde Genome
 	
 	pop := *init_pop
 
 	for istep := 1; istep <= nstep; istep++ {		
 		pop.DevPop()
-		if test && len(pfilename)!=0 { //Dump phenotypes in test mode
-			pfile = fmt.Sprintf("%s%d_%d.dat",pfilename,epoch,istep)
-			
-			fout, err := os.OpenFile(pfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-			if err != nil {
-				log.Fatal(err)
-			}
-			for _, indiv := range pop.Indivs {
-				for _,trait := range indiv.Cells[2].P.C {
-					fmt.Fprintf(fout, "%e\t", trait )
+		if test { //Dump phenotypes and genotypes in test mode
+			if pfilename != "" {
+				filename = fmt.Sprintf("%s%d_%d.dat",pfilename,epoch,istep)
+				fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+				if err != nil {
+					log.Fatal(err)
 				}
-				fmt.Fprint(fout,"\n")
+				for _, indiv := range pop.Indivs {
+					for _,trait := range indiv.Cells[2].P.C {
+						fmt.Fprintf(fout, "%e\t", trait )
+					}
+					fmt.Fprint(fout,"\n")
 		
+				}
+				err = fout.Close()
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
-			err = fout.Close()
-			if err != nil {
-				log.Fatal(err)
+			if gfilename != "" {
+				filename = fmt.Sprintf("%s%d_%d.dat",gfilename,epoch,istep)
+				fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, indiv := range pop.Indivs {
+					Gtilde = indiv.Genome
+					for i := range Gtilde.G {
+						for j:=0 ; j < Ngenes ; j++ {
+							fmt.Fprintf(fout, "%e\t",Gtilde.G[i][j])
+						}
+					}
+					Gtilde = indiv.Genome
+					for i := range Gtilde.E {
+						for j:=0 ; j < Nenv ; j++ {
+							fmt.Fprintf(fout, "%e\t",Gtilde.E[i][j])
+						}
+					}
+					Gtilde = indiv.Genome
+					for i := range Gtilde.P {
+						for j:=0 ; j < Nenv ; j++ {
+							fmt.Fprintf(fout, "%e\t",Gtilde.P[i][j])
+						}
+					}
+					Gtilde = indiv.Genome
+					for i := range Gtilde.Z {
+						for j:=0 ; j < Ngenes ; j++ {
+							fmt.Fprintf(fout, "%e\t",Gtilde.Z[i][j])
+						}
+					}
+					fmt.Fprint(fout,"\n")
+				}
+				err = fout.Close()
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 
 		}
