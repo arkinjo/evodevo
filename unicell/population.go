@@ -69,7 +69,7 @@ func (pop *Population) GetMeanUtility() float64 { //average utility of populatio
 	return mu / fn
 }
 
-func (pop *Population) Reproduce(nNewPop int) Population {
+func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
 	npop := len(pop.Indivs)
 	var nindivs []Indiv
 	ipop := 0
@@ -90,7 +90,7 @@ func (pop *Population) Reproduce(nNewPop int) Population {
 		}
 	}
 	for i := range nindivs {
-		nindivs[i].Id = i
+		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 	
 	new_population := Population{pop.Env, pop.RefEnv, nindivs, 0.0, 0.0, 0.0, 0.0} //resets embryonic values to zero!
@@ -204,6 +204,21 @@ func Evolve(test bool, tfilename, pfilename, gfilename string, nstep, epoch int,
 		pop = pop.Reproduce(MaxPop)
 	}
 	return pop
+}
+
+func (pop *Population) Dump_Ids(Filename string, gen int) {
+	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintln(fout,"Gen \t Id \t DadId \t MomId")
+	for _, indiv := range pop.Indivs {
+		fmt.Fprintf(fout,"%d\t%d\t%d\t%d\n",gen,indiv.Id,indiv.DadId,indiv.MomId)
+		}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (pop *Population) Dump_Phenotypes(Filename string) { //Extracts phenotypes from population
