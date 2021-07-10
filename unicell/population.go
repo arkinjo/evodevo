@@ -206,14 +206,18 @@ func Evolve(test bool, tfilename, pfilename, gfilename string, nstep, epoch int,
 	return pop
 }
 
-func (pop *Population) Dump_Ids(Filename string, gen int) {
+func (pop *Population) Make_DOT_Ids(Filename string, gen int) { //Dump in DOT language friendly format
+	var id, dadid, momid string
 	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintln(fout,"Gen \t Id \t DadId \t MomId")
 	for _, indiv := range pop.Indivs {
-		fmt.Fprintf(fout,"%d\t%d\t%d\t%d\n",gen,indiv.Id,indiv.DadId,indiv.MomId)
+		id = fmt.Sprintf("g%d;id%d",gen,indiv.Id)
+		dadid = fmt.Sprintf("g%d;id%d",gen-1,indiv.DadId) //Dad and mom from previous generation
+		momid = fmt.Sprintf("g%d;id%d",gen-1,indiv.MomId)
+		fmt.Fprintf(fout,"%s -> %s\n",dadid,id) //Use parent -> child convention
+		fmt.Fprintf(fout,"%s -> %s\n",momid,id)
 		}
 	err = fout.Close()
 	if err != nil {
