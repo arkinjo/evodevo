@@ -21,6 +21,8 @@ type Cell struct { //A 'cell' is characterized by its gene expression and phenot
 
 type Indiv struct { //An individual as an unicellular organism
 	Id       int
+	DadId	 int
+	MomId	 int
 	F   	 float64 //Fitness in novel (current) environment
 	F0 		 float64 //Fitness in previous environment
 	Genome   Genome
@@ -101,7 +103,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	cells := NewCells(Ncells)
 	z := NewVec(Ngenes)
 
-	indiv := Indiv{id, 0.0, 0.0, genome, cells, z, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, 0.0, 0.0, genome, cells, z, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -160,8 +162,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	cells0 := NewCells(Ncells)
 	cells1 := NewCells(Ncells)
 
-	kid0 := Indiv{dad.Id, 0.0, 0.0, genome0,  cells0, g0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, 0.0, 0.0, genome1,  cells1, g1, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.DadId, mom.MomId, 0.0, 0.0, genome0,  cells0, g0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.DadId, mom.MomId, 0.0, 0.0, genome1,  cells1, g1, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
