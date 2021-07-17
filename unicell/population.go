@@ -202,7 +202,7 @@ func Evolve(test bool, tfilename, pfilename, gfilename, gidfilename string, nste
 					id = fmt.Sprintf("g%d:id%d",pop.Gen,indiv.Id)
 					dadid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.DadId) //Dad and mom from previous generation
 					momid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.MomId)
-					fmt.Fprintf(fout,"%s -> {%s, %s}\n",id,dadid,momid) //Use child -> parent convention
+					fmt.Fprintf(fout,"\t%s -> {%s, %s}\n",id,dadid,momid) //Use child -> parent convention
 				}
 			}
 		}
