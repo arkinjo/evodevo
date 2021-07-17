@@ -16,6 +16,7 @@ import (
 var T_Filename string = "traj"
 var P_Filename string  //Expressed phenotypes of population
 var G_Filename string  //Genome of population
+var Gid_Filename string //Genealogy of ID's
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "json_out"
 var test bool = false //false : training mode, true : testing mode
@@ -31,6 +32,7 @@ func main() {
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
 	pfilenamePtr := flag.String("pfilename","","name of file of phenotypes") //default to empty string
 	gfilenamePtr := flag.String("gfilename","","name of file of genomes") //default to empty string
+	gidfilenamePtr := flag.String("gidfilename","","name of file of geneology of ids") //default to empty string
 	jsoninPtr := flag.String("jsonin","","json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout","jsonout","json file of output population")
 	testPtr := flag.Bool("test",false,"test mode if true, defaults to train mode")
@@ -43,6 +45,7 @@ func main() {
 	T_Filename = fmt.Sprintf("%s.dat",*tfilenamePtr)
 	P_Filename = *pfilenamePtr
 	G_Filename = *gfilenamePtr
+	Gid_Filename = *gidfilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	unicell.WithCue = *cuePtr
@@ -99,7 +102,7 @@ func main() {
 			fmt.Println("Epoch ",epoch,"has environment",popstart.Env)
 		}
 
-		pop1 := unicell.Evolve(test,T_Filename,P_Filename,G_Filename,epochlength, epoch, &popstart)
+		pop1 := unicell.Evolve(test,T_Filename,P_Filename,G_Filename,Gid_Filename,epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population
@@ -119,11 +122,10 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			n, err := popout.Write(jsonpop)
+			_, err = popout.Write(jsonpop)
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("Number of bytes written =", n)
 		}
 		if test { //Randomly generate new environment each epoch in test mode
 			popstart.Env = unicell.RandomEnv(unicell.Nenv,0.5)

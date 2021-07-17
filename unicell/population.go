@@ -115,15 +115,28 @@ func (pop *Population) DevPop(gen int) Population {
 	return *pop
 }
 
-func Evolve(test bool, tfilename, pfilename, gfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
-	var filename string
+func Evolve(test bool, tfilename, pfilename, gfilename, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
+	var filename, id_filename, id, dadid, momid string
 	var Gtilde Genome 
 	var Fitness, CuePlas, ObsPlas, Util float64
 	pop := *init_pop
 
+	if test && gidfilename != ""{
+		id_filename = fmt.Sprintf("%s.dot",gidfilename)
+		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprintln(fout,"digraph G {")
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	for istep := 1; istep <= nstep; istep++ {		
 		pop.DevPop(istep)
-		if test { //Dump phenotypes and genotypes in test mode
+		if test { //Dump phenotypes, genotypes and genealogy of ids in test mode
 			if pfilename != "" {
 				filename = fmt.Sprintf("%s%d_%d.dat",pfilename,epoch,istep)
 				fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -180,12 +193,26 @@ func Evolve(test bool, tfilename, pfilename, gfilename string, nstep, epoch int,
 					log.Fatal(err)
 				}
 			}
+			if gidfilename!= ""{
+				fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, indiv := range pop.Indivs {
+					id = fmt.Sprintf("g%d:id%d",pop.Gen,indiv.Id)
+					dadid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.DadId) //Dad and mom from previous generation
+					momid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.MomId)
+					fmt.Fprintf(fout,"%s -> {%s, %s}\n",id,dadid,momid) //Use child -> parent convention
+				}
+			}
 		}
 
 		Fitness = pop.GetMeanFitness()
 		CuePlas = pop.GetMeanCuePlasticity()
 		ObsPlas = pop.GetMeanObsPlasticity()
 		Util = pop.GetMeanUtility()
+
+
 
 		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
@@ -201,28 +228,18 @@ func Evolve(test bool, tfilename, pfilename, gfilename string, nstep, epoch int,
 		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Epg>:%e\t <Pl>:%e\t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Util)
 		pop = pop.Reproduce(MaxPop)
 	}
-	return pop
-}
-
-func (pop *Population) DOT_Ids(DotFilename string, gen int) { //Dump in DOT language friendly format
-	var id, dadid, momid string
-	Filename := fmt.Sprintf("%s.dot",DotFilename)
-	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Fprintln(fout,"") //Insert first line here, Digraph etc.
-	for _, indiv := range pop.Indivs {
-		id = fmt.Sprintf("g%d:id%d",gen,indiv.Id)
-		dadid = fmt.Sprintf("g%d:id%d",gen-1,indiv.DadId) //Dad and mom from previous generation
-		momid = fmt.Sprintf("g%d:id%d",gen-1,indiv.MomId)
-		fmt.Fprintf(fout,"%s -> {%s %s}\n",id,dadid,momid) //Use child -> parent convention
+	if test && gidfilename!= ""{
+		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatal(err)
 		}
-	fmt.Fprintln(fout,"") //Insert final line here, end of graph generating function
-	err = fout.Close()
-	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(fout,"}")
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+	return pop
 }
 
 func (pop *Population) Dump_Phenotypes(Filename string, gen int) { //Extracts phenotypes from population
