@@ -22,6 +22,7 @@
 
 # output of the program
 evodevo
+*.pdf
 *.dat
 *.json
 
