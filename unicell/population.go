@@ -8,13 +8,10 @@ import (
 )
 
 type Population struct { //Population of individuals
+	Gen			int
 	Env      	Cue //Environment of population in this epoch
 	RefEnv		Cue //Environment of population in previous epoch
 	Indivs   	[]Indiv
-	Fitness  	float64 //Mean fitness of population
-	CuePlas		float64 //Mean cue plasticity of population
-	ObsPlas		float64 //Mean observed plasticity of population
-	Utility		float64 //Mean utility of population
 }
 
 func NewPopulation(npop int) Population { //Initialize new population
@@ -25,7 +22,7 @@ func NewPopulation(npop int) Population { //Initialize new population
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{env, env, indivs, 0.0, 0.0, 0.0, 0.0}
+	p := Population{0, env, env, indivs}
 	return p
 }
 
@@ -93,13 +90,15 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 	
-	new_population := Population{pop.Env, pop.RefEnv, nindivs, 0.0, 0.0, 0.0, 0.0} //resets embryonic values to zero!
+	new_population := Population{0, pop.Env, pop.RefEnv, nindivs} //resets embryonic values to zero!
 
 	return new_population
 }
 
-func (pop *Population) DevPop() Population {
+func (pop *Population) DevPop(gen int) Population {
 	var indivenv, refenv Cue
+
+	pop.Gen = gen
 
 	ch := make(chan Indiv) //channels for parallelization
 	for _, indiv := range pop.Indivs {
@@ -118,12 +117,12 @@ func (pop *Population) DevPop() Population {
 
 func Evolve(test bool, tfilename, pfilename, gfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
 	var filename string
-	var Gtilde Genome
-	
+	var Gtilde Genome 
+	var Fitness, CuePlas, ObsPlas, Util float64
 	pop := *init_pop
 
 	for istep := 1; istep <= nstep; istep++ {		
-		pop.DevPop()
+		pop.DevPop(istep)
 		if test { //Dump phenotypes and genotypes in test mode
 			if pfilename != "" {
 				filename = fmt.Sprintf("%s%d_%d.dat",pfilename,epoch,istep)
@@ -181,65 +180,64 @@ func Evolve(test bool, tfilename, pfilename, gfilename string, nstep, epoch int,
 					log.Fatal(err)
 				}
 			}
-
 		}
 
-		pop.Fitness = pop.GetMeanFitness()
-		pop.CuePlas = pop.GetMeanCuePlasticity()
-		pop.ObsPlas = pop.GetMeanObsPlasticity()
-		pop.Utility = pop.GetMeanUtility()
+		Fitness = pop.GetMeanFitness()
+		CuePlas = pop.GetMeanCuePlasticity()
+		ObsPlas = pop.GetMeanObsPlasticity()
+		Util = pop.GetMeanUtility()
 
 		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\n" ,epoch, istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility)
+		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\n" ,epoch, istep, Fitness, CuePlas, ObsPlas, Util)
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Epg>:%e\t <Pl>:%e\t <u>:%e\n ", istep, pop.Fitness, pop.CuePlas, pop.ObsPlas, pop.Utility )
+		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Epg>:%e\t <Pl>:%e\t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Util)
 		pop = pop.Reproduce(MaxPop)
 	}
 	return pop
 }
 
-func (pop *Population) Make_DOT_Ids(Filename string, gen int) { //Dump in DOT language friendly format
+func (pop *Population) DOT_Ids(DotFilename string, gen int) { //Dump in DOT language friendly format
 	var id, dadid, momid string
+	Filename := fmt.Sprintf("%s.dot",DotFilename)
 	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Fprintln(fout,"") //Insert first line here, Digraph etc.
 	for _, indiv := range pop.Indivs {
-		id = fmt.Sprintf("g%d;id%d",gen,indiv.Id)
-		dadid = fmt.Sprintf("g%d;id%d",gen-1,indiv.DadId) //Dad and mom from previous generation
-		momid = fmt.Sprintf("g%d;id%d",gen-1,indiv.MomId)
-		fmt.Fprintf(fout,"%s -> %s\n",dadid,id) //Use parent -> child convention
-		fmt.Fprintf(fout,"%s -> %s\n",momid,id)
+		id = fmt.Sprintf("g%d:id%d",gen,indiv.Id)
+		dadid = fmt.Sprintf("g%d:id%d",gen-1,indiv.DadId) //Dad and mom from previous generation
+		momid = fmt.Sprintf("g%d:id%d",gen-1,indiv.MomId)
+		fmt.Fprintf(fout,"%s -> {%s %s}\n",id,dadid,momid) //Use child -> parent convention
 		}
+	fmt.Fprintln(fout,"") //Insert final line here, end of graph generating function
 	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (pop *Population) Dump_Phenotypes(Filename string) { //Extracts phenotypes from population
+func (pop *Population) Dump_Phenotypes(Filename string, gen int) { //Extracts phenotypes from population
 	
-	pop.DevPop()
+	pop.DevPop(gen)
 
 	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, indiv := range pop.Indivs {
-		//fmt.Fprintln(fout, indiv.Cells[2].P.C)
 		for _,trait := range indiv.Cells[2].P.C {
 			fmt.Fprintf(fout, "%e\t", trait )
 		}
 		fmt.Fprint(fout,"\n")
-
 	}
 	err = fout.Close()
 	if err != nil {

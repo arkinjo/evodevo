@@ -104,8 +104,10 @@ func main() {
 
 		if epoch == maxepochs { //Export output population
 			if !test { //in training mode, dump phenotypes after evolution
-				pfilename := fmt.Sprintf("%s.dat",P_Filename)
-				pop1.Dump_Phenotypes(pfilename)
+				if P_Filename != "" {
+					pfilename := fmt.Sprintf("%s.dat",P_Filename)
+					pop1.Dump_Phenotypes(pfilename,epochlength)
+				}
 			}
 
 			jfilename := fmt.Sprintf("%s.json",json_out)
