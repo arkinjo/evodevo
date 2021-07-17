@@ -193,7 +193,7 @@ func Evolve(test bool, tfilename, pfilename, gfilename, gidfilename string, nste
 					log.Fatal(err)
 				}
 			}
-			if gidfilename!= ""{
+			if gidfilename!= "" && istep>1 { //Genealogy not defined for first generation
 				fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 				if err != nil {
 					log.Fatal(err)
