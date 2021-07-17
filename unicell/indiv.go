@@ -162,8 +162,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	cells0 := NewCells(Ncells)
 	cells1 := NewCells(Ncells)
 
-	kid0 := Indiv{dad.Id, dad.DadId, mom.MomId, 0.0, 0.0, genome0,  cells0, g0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.DadId, mom.MomId, 0.0, 0.0, genome1,  cells1, g1, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, 0.0, 0.0, genome0,  cells0, g0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, 0.0, 0.0, genome1,  cells1, g1, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
