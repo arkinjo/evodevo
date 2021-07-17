@@ -212,8 +212,6 @@ func Evolve(test bool, tfilename, pfilename, gfilename, gidfilename string, nste
 		ObsPlas = pop.GetMeanObsPlasticity()
 		Util = pop.GetMeanUtility()
 
-
-
 		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatal(err)
