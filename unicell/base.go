@@ -101,6 +101,18 @@ func addVecs(vout, v0, v1 Vec) { //Sum of vectors
 	}
 }
 
+func innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v1, use for axis projection
+	dot := 0.0
+	for i,v := range v0 {
+		dot += v * v1[i]
+	}
+	return dot 
+}
+
+func Veclength(v Vec) float64 { //Euclidean Length of vector
+	return math.Sqrt(innerproduct(v,v))
+}
+
 func dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
 	dist := 0.0
 	for i, v := range v0 {

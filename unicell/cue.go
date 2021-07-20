@@ -43,13 +43,8 @@ func (cue *Cue) CopyCue() Cue { //Returns a copy of an environment cue
 	c0 := cue.C
 	l := len(c0)
 	v := make([]float64,l)
-	
-	for i,c := range c0 { //Alternate is to use copy() for float64 slices!
-		v[i] = c
-	}
-	
+	copy(v,c0)
 	c1 := Cue{v}
-
 	return c1
 }
 

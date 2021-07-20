@@ -3,6 +3,7 @@ package unicell
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 )
@@ -64,6 +65,50 @@ func (pop *Population) GetMeanUtility() float64 { //average utility of populatio
 	}
 
 	return mu / fn
+}
+
+func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of population
+	var Gtilde Genome
+	
+	MeanGenome := NewGenome()
+	for _,indiv := range pop.Indivs {
+		Gtilde = indiv.Genome
+		for i := range Gtilde.G {
+			for j:=0 ; j<Ngenes ; j++ {
+				MeanGenome.G[i][j] += Gtilde.G[i][j]/float64(len(pop.Indivs))
+			} 
+		}
+		for i := range Gtilde.E {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.E[i][j] += Gtilde.E[i][j]/float64(len(pop.Indivs))
+			} 
+		}
+		for i := range Gtilde.P {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.P[i][j] += Gtilde.P[i][j]/float64(len(pop.Indivs))
+			}
+		}
+		for i := range Gtilde.Z {
+			for j:=0 ; j<Ngenes ; j++ {
+				MeanGenome.Z[i][j] += Gtilde.Z[i][j]/float64(len(pop.Indivs))
+			} 
+		}
+	}
+	return MeanGenome
+}
+
+func (pop *Population) Get_Environment_Axis() Vec { //Choice of axis defined using difference of environment cues
+	e := pop.Env.C
+	e0 := pop.RefEnv.C
+	de := NewVec(len(e))
+	for i,v := range e {
+		de[i] = v-e0[i]
+	}
+	difflength := Veclength(de)
+	for i := range de { //normalize
+		de[i] = de[i]/difflength 
+	}
+	return de
 }
 
 func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
@@ -275,19 +320,16 @@ func (pop *Population) Dump_Genotypes(Filename string) { //Extracts genomes from
 				fmt.Fprintf(fout, "%e\t",Gtilde.G[i][j])
 			}
 		}
-		Gtilde = indiv.Genome
 		for i := range Gtilde.E {
 			for j:=0 ; j < Nenv ; j++ {
 				fmt.Fprintf(fout, "%e\t",Gtilde.E[i][j])
 			}
 		}
-		Gtilde = indiv.Genome
 		for i := range Gtilde.P {
 			for j:=0 ; j < Nenv ; j++ {
 				fmt.Fprintf(fout, "%e\t",Gtilde.P[i][j])
 			}
 		}
-		Gtilde = indiv.Genome
 		for i := range Gtilde.Z {
 			for j:=0 ; j < Ngenes ; j++ {
 				fmt.Fprintf(fout, "%e\t",Gtilde.Z[i][j])
