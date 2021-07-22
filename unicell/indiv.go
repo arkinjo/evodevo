@@ -26,7 +26,7 @@ type Indiv struct { //An individual as an unicellular organism
 	F   	 float64 //Fitness in novel (current) environment
 	F0 		 float64 //Fitness in previous environment
 	Genome   Genome
-	Cells    []Cell 
+	Cells    []Cell
 	Z        Vec // Initial gene expression of offspring.
 	Pl		 float64 // Degree of observed plasticity
 	Plc		 float64 // Degree of cue plasticity

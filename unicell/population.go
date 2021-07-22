@@ -3,8 +3,8 @@ package unicell
 import (
 	"fmt"
 	"log"
-	"math"
 	"math/rand"
+	"encoding/json"
 	"os"
 )
 
@@ -67,6 +67,21 @@ func (pop *Population) GetMeanUtility() float64 { //average utility of populatio
 	return mu / fn
 }
 
+func (pop *Population) GetMeanPhenotype(gen int) Vec { //elementwise average phenotype of population
+	npop := len(pop.Indivs)
+	MeanPhenotype := make(Vec, npop)
+	pop.DevPop(gen)
+
+	for _,indiv := range(pop.Indivs) {
+		for i,p := range(indiv.Cells[2].P.C){
+			MeanPhenotype[i] += p/float64(npop)
+		}
+	}
+	return MeanPhenotype
+}
+
+//func (pop *Population) CentralizePhenotypes(gen int, Centre Vec)
+
 func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of population
 	var Gtilde Genome
 	
@@ -101,14 +116,25 @@ func (pop *Population) Get_Environment_Axis() Vec { //Choice of axis defined usi
 	e := pop.Env.C
 	e0 := pop.RefEnv.C
 	de := NewVec(len(e))
-	for i,v := range e {
-		de[i] = v-e0[i]
-	}
+	diffVecs(de, e, e0)
 	difflength := Veclength(de)
 	for i := range de { //normalize
 		de[i] = de[i]/difflength 
 	}
 	return de
+}
+
+func(pop *Population) Get_Mid_Env() Vec { //Midpoint between environments
+	e := pop.Env.C
+	e0 := pop.RefEnv.C
+	me := NewVec(len(e))
+	addVecs(me, e, e0)
+	for i := range me {
+		me[i] = me[i]/2
+	}
+	return me
+
+
 }
 
 func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
@@ -160,9 +186,8 @@ func (pop *Population) DevPop(gen int) Population {
 	return *pop
 }
 
-func Evolve(test bool, tfilename, pfilename, gfilename, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
-	var filename, id_filename, id, dadid, momid string
-	var Gtilde Genome 
+func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
+	var id_filename, id, dadid, momid string 
 	var Fitness, CuePlas, ObsPlas, Util float64
 	pop := *init_pop
 
@@ -181,63 +206,7 @@ func Evolve(test bool, tfilename, pfilename, gfilename, gidfilename string, nste
 
 	for istep := 1; istep <= nstep; istep++ {		
 		pop.DevPop(istep)
-		if test { //Dump phenotypes, genotypes and genealogy of ids in test mode
-			if pfilename != "" {
-				filename = fmt.Sprintf("%s%d_%d.dat",pfilename,epoch,istep)
-				fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-				if err != nil {
-					log.Fatal(err)
-				}
-				for _, indiv := range pop.Indivs {
-					for _,trait := range indiv.Cells[2].P.C {
-						fmt.Fprintf(fout, "%e\t", trait )
-					}
-					fmt.Fprint(fout,"\n")
-		
-				}
-				err = fout.Close()
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			if gfilename != "" {
-				filename = fmt.Sprintf("%s%d_%d.dat",gfilename,epoch,istep)
-				fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-				if err != nil {
-					log.Fatal(err)
-				}
-				for _, indiv := range pop.Indivs {
-					Gtilde = indiv.Genome
-					for i := range Gtilde.G {
-						for j:=0 ; j < Ngenes ; j++ {
-							fmt.Fprintf(fout, "%e\t",Gtilde.G[i][j])
-						}
-					}
-					Gtilde = indiv.Genome
-					for i := range Gtilde.E {
-						for j:=0 ; j < Nenv ; j++ {
-							fmt.Fprintf(fout, "%e\t",Gtilde.E[i][j])
-						}
-					}
-					Gtilde = indiv.Genome
-					for i := range Gtilde.P {
-						for j:=0 ; j < Nenv ; j++ {
-							fmt.Fprintf(fout, "%e\t",Gtilde.P[i][j])
-						}
-					}
-					Gtilde = indiv.Genome
-					for i := range Gtilde.Z {
-						for j:=0 ; j < Ngenes ; j++ {
-							fmt.Fprintf(fout, "%e\t",Gtilde.Z[i][j])
-						}
-					}
-					fmt.Fprint(fout,"\n")
-				}
-				err = fout.Close()
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
+		if test{
 			if gidfilename!= "" && istep>1 { //Genealogy not defined for first generation
 				fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 				if err != nil {
@@ -248,6 +217,21 @@ func Evolve(test bool, tfilename, pfilename, gfilename, gidfilename string, nste
 					dadid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.DadId) //Dad and mom from previous generation
 					momid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.MomId)
 					fmt.Fprintf(fout,"\t%s -> {%s, %s}\n",id,dadid,momid) //Use child -> parent convention
+				}
+			}
+			if jsonout!="" { //Export JSON population of each generation in test mode
+				jfilename := fmt.Sprintf("%s_%d.json",jsonout,pop.Gen)
+				jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
+				if err != nil {
+					log.Fatal(err)
+				}
+				popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
+				if err != nil {
+					log.Fatal(err)
+				}
+				_, err = popout.Write(jsonpop)
+				if err != nil {
+					log.Fatal(err)
 				}
 			}
 		}
@@ -283,6 +267,96 @@ func Evolve(test bool, tfilename, pfilename, gfilename, gidfilename string, nste
 		}
 	}
 	return pop
+}
+
+func (pop *Population) Dump_Projections(Filename string, gen int, Paxis Vec, Gaxis Genome) {
+	var pproj, gproj float64
+	pop.DevPop(gen)
+
+	Projfilename := fmt.Sprintf("%s_%d.dat",Filename,gen)
+
+	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintln(fout,"Phenotype\t Genotype")
+
+	for _,indiv := range(pop.Indivs){
+		pproj = innerproduct(indiv.Cells[2].P.C,Paxis)
+		gproj = 0.0 //initialize
+		for i, m := range indiv.Genome.G {
+			for j, d := range m {
+				gproj += d * Gaxis.G[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.E {
+			for j, d := range m {
+				gproj += d * Gaxis.E[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.P {
+			for j, d := range m {
+				gproj += d * Gaxis.P[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.Z {
+			for j, d := range m {
+				gproj += d * Gaxis.Z[i][j]
+			}
+		}
+		fmt.Fprintf(fout,"%e\t %e\n",pproj,gproj)
+	}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+/* Code beyond this point may be considered as obsolete.
+func (pop *Population) Project_Phenotypes(Filename string, gen int, axis Vec) []float64 {
+	var proj float64
+	pop.DevPop(gen)
+	
+	projs := make([]float64,len(pop.Indivs))
+
+	for _,indiv := range(pop.Indivs){
+		proj = innerproduct(indiv.Cells[2].P.C,axis)
+		projs = append(projs, proj)
+		
+	}
+
+	return projs
+}
+
+func (pop *Population) Project_Genomes(Filename string, axis Genome) []float64 {
+	var proj float64
+	projs := make([]float64,len(pop.Indivs))
+
+	for _,indiv := range(pop.Indivs){
+		proj = 0.0 //initialize
+		for i, m := range indiv.Genome.G {
+			for j, d := range m {
+				proj += d * axis.G[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.E {
+			for j, d := range m {
+				proj += d * axis.E[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.P {
+			for j, d := range m {
+				proj += d * axis.P[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.Z {
+			for j, d := range m {
+				proj += d * axis.Z[i][j]
+			}
+		}
+		projs = append(projs, proj)
+	}
+	return projs
 }
 
 func (pop *Population) Dump_Phenotypes(Filename string, gen int) { //Extracts phenotypes from population
@@ -342,4 +416,4 @@ func (pop *Population) Dump_Genotypes(Filename string) { //Extracts genomes from
 		log.Fatal(err)
 	}
 }
-
+*/

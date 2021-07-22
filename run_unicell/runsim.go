@@ -14,11 +14,10 @@ import (
 
 
 var T_Filename string = "traj"
-var P_Filename string  //Expressed phenotypes of population
-var G_Filename string  //Genome of population
+var PG_Filename string //Dump for phenotypes and genotypes
 var Gid_Filename string //Genealogy of ID's
 var json_in string //JSON encoding of initial population; default to empty string
-var json_out string = "json_out"
+var json_out string = "popout"
 var test bool = false //false : training mode, true : testing mode
 
 func main() {
@@ -30,11 +29,10 @@ func main() {
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
-	pfilenamePtr := flag.String("pfilename","","name of file of phenotypes") //default to empty string
-	gfilenamePtr := flag.String("gfilename","","name of file of genomes") //default to empty string
+	pgfilenamePtr := flag.String("pgfilename","","name of file of projected phenotypes and genotypes") //default to empty string
 	gidfilenamePtr := flag.String("gidfilename","","name of file of geneology of ids") //default to empty string
 	jsoninPtr := flag.String("jsonin","","json file of input population") //default to empty string
-	jsonoutPtr := flag.String("jsonout","jsonout","json file of output population")
+	jsonoutPtr := flag.String("jsonout","popout","json file of output population")
 	testPtr := flag.Bool("test",false,"test mode if true, defaults to train mode")
     flag.Parse()
 
@@ -43,8 +41,7 @@ func main() {
 	epochlength := *genPtr
 	denv := *denvPtr
 	T_Filename = fmt.Sprintf("%s.dat",*tfilenamePtr)
-	P_Filename = *pfilenamePtr
-	G_Filename = *gfilenamePtr
+	PG_Filename = *pgfilenamePtr
 	Gid_Filename = *gidfilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
@@ -102,17 +99,10 @@ func main() {
 			fmt.Println("Epoch ",epoch,"has environment",popstart.Env)
 		}
 
-		pop1 := unicell.Evolve(test,T_Filename,P_Filename,G_Filename,Gid_Filename,epochlength, epoch, &popstart)
+		pop1 := unicell.Evolve(test,T_Filename,json_out,Gid_Filename,epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population
-			if !test { //in training mode, dump phenotypes after evolution
-				if P_Filename != "" {
-					pfilename := fmt.Sprintf("%s.dat",P_Filename)
-					pop1.Dump_Phenotypes(pfilename,epochlength)
-				}
-			}
-
 			jfilename := fmt.Sprintf("%s.json",json_out)
 			jsonpop, err := json.Marshal(pop1) //JSON encoding of population as byte array
 			if err != nil {
@@ -135,10 +125,10 @@ func main() {
 			popstart.RefEnv = OldEnv
 			popstart.Env = OldEnv.ChangeEnv(denv)
 		}
-
 	}
 
-	fmt.Println("Trajectory of population written to",T_Filename)
+	fmt.Println("Trajectory of population written to",T_Filename,".dat")
+	fmt.Println("Projections written to",PG_Filename,".dat")
 	fmt.Println("JSON encoding of evolved population written to ",json_out)
 	fmt.Println("Trajectory of environment :", envtraj)
 	

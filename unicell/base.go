@@ -101,6 +101,12 @@ func addVecs(vout, v0, v1 Vec) { //Sum of vectors
 	}
 }
 
+func diffVecs(vout, v0, v1 Vec) { //Difference of vectors
+	for i := range vout {
+		vout[i] = v0[i] - v1[i]
+	}
+}
+
 func innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v1, use for axis projection
 	dot := 0.0
 	for i,v := range v0 {
