@@ -133,8 +133,6 @@ func(pop *Population) Get_Mid_Env() Vec { //Midpoint between environments
 		me[i] = me[i]/2
 	}
 	return me
-
-
 }
 
 func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
@@ -269,9 +267,16 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 	return pop
 }
 
-func (pop *Population) Dump_Projections(Filename string, gen int, Paxis Vec, Gaxis Genome) {
+func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) {
 	var pproj, gproj float64
 	pop.DevPop(gen)
+
+	cphens := make([]Vec,len(pop.Indivs))
+	mu := pop.Get_Mid_Env()
+	for i,indiv := range(pop.Indivs){
+		diffVecs(cphens[i], indiv.Cells[2].P.C, mu)//centralize
+	}
+	Paxis := pop.Get_Environment_Axis()
 
 	Projfilename := fmt.Sprintf("%s_%d.dat",Filename,gen)
 
@@ -281,8 +286,8 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Paxis Vec, Gax
 	}
 	fmt.Fprintln(fout,"Phenotype\t Genotype")
 
-	for _,indiv := range(pop.Indivs){
-		pproj = innerproduct(indiv.Cells[2].P.C,Paxis)
+	for i,indiv := range(pop.Indivs){
+		pproj = innerproduct(cphens[i],Paxis)
 		gproj = 0.0 //initialize
 		for i, m := range indiv.Genome.G {
 			for j, d := range m {

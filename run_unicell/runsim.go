@@ -117,8 +117,32 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-		if test { //Randomly generate new environment each epoch in test mode
-			popstart.Env = unicell.RandomEnv(unicell.Nenv,0.5)
+		if test { //Dump trajectories in test mode
+			pop := unicell.NewPopulation(unicell.MaxPop)
+			g0 := pop0.GetMeanGenome()
+			g1 := pop1.GetMeanGenome()
+			Gaxis := unicell.NewGenome()
+			unicell.DiffGenomes(Gaxis,g1,g0)
+			Gaxis = Gaxis.NormalizeGenome()
+			for gen := 1; gen<=epochlength; gen++ {
+				jfilename := fmt.Sprintf("%s_%d.json",json_out,gen)
+				popin, err := os.Open(jfilename)
+				if err != nil {
+					log.Fatal(err)
+				}
+				
+				byteValue, _ := ioutil.ReadAll(popin)
+				err = json.Unmarshal(byteValue, &pop)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				err = popin.Close()
+				if err != nil{
+					log.Fatal(err)
+				}
+				pop.Dump_Projections(PG_Filename,gen,Gaxis)
+			}
 		} else { //Update population in training mode
 			popstart = pop1  //Update population after evolution.
 			OldEnv := popstart.Env.CopyCue()

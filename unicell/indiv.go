@@ -80,6 +80,71 @@ func (parent *Genome) Copy() Genome { //creates copy of parent's genome
 	return genome
 }
 
+func DiffGenomes(Gout, G0, G1 Genome){ //Elementwise difference between two genomes
+	for i := 0 ; i < Ngenes ; i++ {
+		for j := 0; j < Ngenes; j++ {
+			Gout.G[i][j] = G1.G[i][j] - G0.G[i][j]
+		}
+		for j := 0; j < Nenv; j++ {
+			Gout.E[i][j] = G1.E[i][j] - G0.E[i][j]
+		}
+		for j := 0; j < Nenv; j++ {
+			Gout.P[i][j] = G1.P[i][j] - G0.P[i][j]
+		}
+		for j := 0; j < Ngenes; j++ {
+			Gout.Z[i][j] = G1.Z[i][j] - G0.Z[i][j]
+		}
+	}
+}
+
+func(G *Genome) NormalizeGenome() Genome{
+	lambda2 := 0.0
+	eG := G.Copy()
+	
+	for _,m := range G.G{
+		for _,v := range m{
+			lambda2 += v*v
+		}
+	}
+	for _,m := range G.G{
+		for _,v := range m{
+			lambda2 += v*v
+		}
+	}
+	for _,m := range G.G{
+		for _,v := range m{
+			lambda2 += v*v
+		}
+	}
+	for _,m := range G.G{
+		for _,v := range m{
+			lambda2 += v*v
+		}
+	}
+	lambda := math.Sqrt(lambda2)
+	for i,m := range eG.G{
+		for j := range m{
+			eG.G[i][j] = eG.G[i][j]/lambda
+		}
+	}
+	for i,m := range eG.E{
+		for j := range m{
+			eG.E[i][j] = eG.E[i][j]/lambda
+		}
+	}
+	for i,m := range eG.P{
+		for j := range m{
+			eG.P[i][j] = eG.P[i][j]/lambda
+		}
+	}
+	for i,m := range eG.Z{
+		for j := range m{
+			eG.Z[i][j] = eG.Z[i][j]/lambda
+		}
+	}
+	return eG
+}
+
 func NewCell() Cell { //Creates a new cell
 	g := NewVec(Ngenes)
 	p := NewCue(Nenv)
