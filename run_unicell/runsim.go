@@ -143,6 +143,7 @@ func main() {
 				}
 				pop.Dump_Projections(PG_Filename,gen,Gaxis)
 			}
+			unicell.DOT_Genealogy(Gid_Filename,json_out,epochlength,unicell.MaxPop)
 		} else { //Update population in training mode
 			popstart = pop1  //Update population after evolution.
 			OldEnv := popstart.Env.CopyCue()
