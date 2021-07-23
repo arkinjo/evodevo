@@ -269,15 +269,12 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) {
 	var pproj, gproj float64
+	
 	pop.DevPop(gen)
-
-	cphens := make([]Vec,len(pop.Indivs))
+	
+	cphen := make(Vec, Nenv)
 	mu := pop.Get_Mid_Env()
-	for i,indiv := range(pop.Indivs){
-		diffVecs(cphens[i], indiv.Cells[2].P.C, mu)//centralize
-	}
 	Paxis := pop.Get_Environment_Axis()
-
 	Projfilename := fmt.Sprintf("%s_%d.dat",Filename,gen)
 
 	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -286,8 +283,9 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 	}
 	fmt.Fprintln(fout,"Phenotype\t Genotype")
 
-	for i,indiv := range(pop.Indivs){
-		pproj = innerproduct(cphens[i],Paxis)
+	for _,indiv := range(pop.Indivs){
+		diffVecs(cphen,indiv.Cells[2].P.C,mu) //centralize
+		pproj = innerproduct(cphen,Paxis)
 		gproj = 0.0 //initialize
 		for i, m := range indiv.Genome.G {
 			for j, d := range m {

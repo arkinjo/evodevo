@@ -93,13 +93,15 @@ func main() {
 	envtraj[0] = popstart.RefEnv
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
+		tevol := time.Now()
 		envtraj = append(envtraj, popstart.Env)
 
 		if epoch != 0 {
 			fmt.Println("Epoch ",epoch,"has environment",popstart.Env)
 		}
+		gidfilename := fmt.Sprintf("%s_full",Gid_Filename)
 
-		pop1 := unicell.Evolve(test,T_Filename,json_out,Gid_Filename,epochlength, epoch, &popstart)
+		pop1 := unicell.Evolve(test,T_Filename,json_out,gidfilename,epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population
@@ -117,13 +119,19 @@ func main() {
 				log.Fatal(err)
 			}
 		}
+		dtevol := time.Since(tevol)
+		fmt.Println("Time taken to simulate evolution :",dtevol)
 		if test { //Dump trajectories in test mode
+			fmt.Println("Dumping projections")
+			tdump := time.Now()
 			pop := unicell.NewPopulation(unicell.MaxPop)
 			g0 := pop0.GetMeanGenome()
 			g1 := pop1.GetMeanGenome()
 			Gaxis := unicell.NewGenome()
 			unicell.DiffGenomes(Gaxis,g1,g0)
 			Gaxis = Gaxis.NormalizeGenome()
+			pop.Env = pop1.Env
+			pop.RefEnv = pop1.RefEnv
 			for gen := 1; gen<=epochlength; gen++ {
 				jfilename := fmt.Sprintf("%s_%d.json",json_out,gen)
 				popin, err := os.Open(jfilename)
@@ -143,7 +151,13 @@ func main() {
 				}
 				pop.Dump_Projections(PG_Filename,gen,Gaxis)
 			}
+			dtdump := time.Since(tdump)
+			fmt.Println("Time taken to dump projections :",dtdump)
+			fmt.Println("Making DOT genealogy file")
+			tdot := time.Now()
 			unicell.DOT_Genealogy(Gid_Filename,json_out,epochlength,unicell.MaxPop)
+			dtdot := time.Since(tdot)
+			fmt.Println("Time taken to make dot file :",dtdot)
 		} else { //Update population in training mode
 			popstart = pop1  //Update population after evolution.
 			OldEnv := popstart.Env.CopyCue()
@@ -152,9 +166,9 @@ func main() {
 		}
 	}
 
-	fmt.Println("Trajectory of population written to",T_Filename,".dat")
+	fmt.Println("Trajectory of population written to",T_Filename)
 	fmt.Println("Projections written to",PG_Filename,".dat")
-	fmt.Println("JSON encoding of evolved population written to ",json_out)
+	fmt.Println("JSON encoding of evolved population written to ",json_out,".json")
 	fmt.Println("Trajectory of environment :", envtraj)
 	
 	dt := time.Since(t0)

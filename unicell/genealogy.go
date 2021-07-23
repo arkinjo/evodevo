@@ -13,7 +13,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 	var id, dadid, momid string
 	indiv := NewIndiv(0)
 
-	proptraj := make([]float64,ngen)
+	proptraj := make([]float64,npop)
 	pop := NewPopulation(npop)
 	genfile := fmt.Sprintf("%s.dot",dotfilename)
 	fout, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -26,7 +26,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 		log.Fatal(err)
 	}
 	kids := make(map[int]bool)
-	for i:=1; i<=npop; i++ {
+	for i:=0; i<npop; i++ {
 		kids[i]=true
 	}
 	pars := make(map[int]bool)
@@ -58,7 +58,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 			id = fmt.Sprintf("g%d:id%d",pop.Gen,indiv.Id)
 			dadid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.DadId)
 			momid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.MomId)
-			fmt.Fprintf(fout,"\t %s-> {%s, %s}",id,dadid,momid)
+			fmt.Fprintf(fout,"\t %s-> {%s, %s}\n",id,dadid,momid)
 		}
 		err = fout.Close()
 			if err != nil {
