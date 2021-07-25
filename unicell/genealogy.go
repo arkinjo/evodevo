@@ -69,5 +69,16 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 		kids = pars //update; go back in time
 		pars = make(map[int]bool) //re-initialize
 	}
+	fout, err = os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintln(fout,"}")
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
 	return proptraj
 }
