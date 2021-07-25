@@ -167,8 +167,8 @@ func main() {
 	}
 
 	fmt.Println("Trajectory of population written to",T_Filename)
-	fmt.Println("Projections written to",PG_Filename,".dat")
-	fmt.Println("JSON encoding of evolved population written to ",json_out,".json")
+	fmt.Printf("Projections written to %s.dat \n",PG_Filename)
+	fmt.Printf("JSON encoding of evolved population written to %s.json \n", json_out)
 	fmt.Println("Trajectory of environment :", envtraj)
 	
 	dt := time.Since(t0)
