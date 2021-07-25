@@ -16,6 +16,7 @@ import (
 var T_Filename string = "traj"
 var PG_Filename string //Dump for phenotypes and genotypes
 var Gid_Filename string //Genealogy of ID's
+var nancfilename string
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
 var test bool = false //false : training mode, true : testing mode
@@ -155,9 +156,23 @@ func main() {
 			fmt.Println("Time taken to dump projections :",dtdump)
 			fmt.Println("Making DOT genealogy file")
 			tdot := time.Now()
-			unicell.DOT_Genealogy(Gid_Filename,json_out,epochlength,unicell.MaxPop)
+			nanctraj := unicell.DOT_Genealogy(Gid_Filename,json_out,epochlength,unicell.MaxPop)
 			dtdot := time.Since(tdot)
 			fmt.Println("Time taken to make dot file :",dtdot)
+			fmt.Println("Dumping number of ancestors")
+			nancfilename = fmt.Sprintf("%s_prop.dat",Gid_Filename)
+			fout, err := os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Fprintln(fout, "Generation \t Proportion")
+			for i, prop := range(nanctraj){
+				fmt.Fprintf(fout,"%d\t%f\n",i,prop)
+			}
+			err = fout.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
 		} else { //Update population in training mode
 			popstart = pop1  //Update population after evolution.
 			OldEnv := popstart.Env.CopyCue()
@@ -168,6 +183,8 @@ func main() {
 
 	fmt.Println("Trajectory of population written to",T_Filename)
 	fmt.Printf("Projections written to %s.dat \n",PG_Filename)
+	fmt.Printf("Genealogy of final generation written to %s.dot\n",Gid_Filename)
+	fmt.Printf("Number of ancestors of final generation written to %s.dat",nancfilename)
 	fmt.Printf("JSON encoding of evolved population written to %s.json \n", json_out)
 	fmt.Println("Trajectory of environment :", envtraj)
 	

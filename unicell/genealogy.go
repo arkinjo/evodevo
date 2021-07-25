@@ -13,7 +13,8 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 	var id, dadid, momid string
 	indiv := NewIndiv(0)
 
-	proptraj := make([]float64,npop)
+	nanctraj := make([]float64,ngen)
+	rnanctraj := make([]float64,ngen)
 	pop := NewPopulation(npop)
 	genfile := fmt.Sprintf("%s.dot",dotfilename)
 	fout, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -65,7 +66,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 				log.Fatal(err)
 			}
 		npars = len(pars)
-		proptraj = append(proptraj, float64(npars)/float64(npop))
+		rnanctraj = append(rnanctraj, float64(npars)/float64(npop))
 		kids = pars //update; go back in time
 		pars = make(map[int]bool) //re-initialize
 	}
@@ -79,6 +80,11 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 		log.Fatal(err)
 	}
 
+	//Order of proptraj is recorded backwards, need to reverse it
+	copy(nanctraj, rnanctraj)
+	for i:=0; i<ngen; i++{
+		nanctraj[i] = rnanctraj[-i]
+	}
 
-	return proptraj
+	return nanctraj
 }
