@@ -8,13 +8,13 @@ import (
 	"os"
 )
 
-func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { //Dumps genealogy of population for an epoch into a dot file, going backwards in time. Returns proportion of reproducing population
+func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Dumps genealogy of population for an epoch into a dot file, going backwards in time. Returns number of reproducing population
 	var npars int
 	var id, dadid, momid string
 	indiv := NewIndiv(0)
 
-	nanctraj := make([]float64,ngen)
-	rnanctraj := make([]float64,ngen)
+	nanctraj := []int{}
+	rnanctraj := []int{}
 	pop := NewPopulation(npop)
 	genfile := fmt.Sprintf("%s.dot",dotfilename)
 	fout, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -66,8 +66,11 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 				log.Fatal(err)
 			}
 		npars = len(pars)
-		rnanctraj = append(rnanctraj, float64(npars)/float64(npop))
-		kids = pars //update; go back in time
+		rnanctraj = append(rnanctraj, npars)
+		kids = make(map[int]bool)
+		for i := range(pars){
+			kids[i] = pars[i]
+		}
 		pars = make(map[int]bool) //re-initialize
 	}
 	fout, err = os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -83,7 +86,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []float64 { 
 	//Order of proptraj is recorded backwards, need to reverse it
 	copy(nanctraj, rnanctraj)
 	for i:=0; i<ngen; i++{
-		nanctraj[i] = rnanctraj[-i]
+		nanctraj = append(nanctraj, rnanctraj[ngen-1-i])
 	}
 
 	return nanctraj

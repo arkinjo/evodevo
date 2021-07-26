@@ -157,17 +157,18 @@ func main() {
 			fmt.Println("Making DOT genealogy file")
 			tdot := time.Now()
 			nanctraj := unicell.DOT_Genealogy(Gid_Filename,json_out,epochlength,unicell.MaxPop)
+			fmt.Println(nanctraj)
 			dtdot := time.Since(tdot)
 			fmt.Println("Time taken to make dot file :",dtdot)
 			fmt.Println("Dumping number of ancestors")
-			nancfilename = fmt.Sprintf("%s_prop.dat",Gid_Filename)
+			nancfilename = fmt.Sprintf("%s_nanc.dat",Gid_Filename)
 			fout, err := os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Fprintln(fout, "Generation \t Proportion")
-			for i, prop := range(nanctraj){
-				fmt.Fprintf(fout,"%d\t%f\n",i,prop)
+			fmt.Fprintln(fout, "Generation \t Ancestors")
+			for i, n := range(nanctraj){
+				fmt.Fprintf(fout,"%d\t%d\n",i+1,n)
 			}
 			err = fout.Close()
 			if err != nil {
@@ -184,7 +185,7 @@ func main() {
 	fmt.Println("Trajectory of population written to",T_Filename)
 	fmt.Printf("Projections written to %s.dat \n",PG_Filename)
 	fmt.Printf("Genealogy of final generation written to %s.dot\n",Gid_Filename)
-	fmt.Printf("Number of ancestors of final generation written to %s.dat",nancfilename)
+	fmt.Printf("Number of ancestors of final generation written to %s.dat\n",nancfilename)
 	fmt.Printf("JSON encoding of evolved population written to %s.json \n", json_out)
 	fmt.Println("Trajectory of environment :", envtraj)
 	

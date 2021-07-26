@@ -5,6 +5,12 @@ dfit = diff(fit)
 plot(dfit,main="Change in fitness",xlab="Generation",type="l")
 abline(h=0,col="red")
 
+nancs <- read.table("gen4_nanc.dat",header=TRUE)
+nanc <- nancs$Ancestors
+
+plot(nanc,xlab="Generation",ylim=c(0,1000),main="Shape of graph",type="l")
+
+
 phat <- c()
 ghat <- c()
 
