@@ -4,28 +4,26 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"encoding/json"
 	"os"
 )
 
 type Population struct { //Population of individuals
+	Gen			int
 	Env      	Cue //Environment of population in this epoch
 	RefEnv		Cue //Environment of population in previous epoch
 	Indivs   	[]Indiv
-	Fitness  	float64 //Mean fitness of population
-	Plasticity	float64 //Mean plasticity of population
-	Utility		float64 //Mean utility of population
 }
 
 func NewPopulation(npop int) Population { //Initialize new population
 	indivs := make([]Indiv, npop)
-	//env := RandomEnv(Nenv, 0.5)
 	env := NewCue(Nenv) //Initialize environment = zero vector
 
 	for i := range indivs {
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{env, env, indivs, 0.0, 0.0, 0.0}
+	p := Population{0, env, env, indivs}
 	return p
 }
 
@@ -39,20 +37,21 @@ func (pop *Population) GetMeanFitness() float64 { //average fitness of populatio
 	return mf / fn
 }
 
-func (pop *Population) GetIndivFitness() []float64 { //fitness of each individual in population
-	var Flist []float64
-	//Flist := float64(len(pop.Indivs))
-	for _, indiv := range pop.Indivs {
-		Flist = append(Flist, indiv.F)
-	}
-	return Flist
-}
-
-func (pop *Population) GetMeanPlasticity() float64 { //average plasticity of population
+func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plasticity of population
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
 	for _, indiv := range pop.Indivs {
 		mp += indiv.Pl
+	}
+
+	return mp / fn
+}
+
+func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity of population
+	mp := 0.0
+	fn := float64(len(pop.Indivs))
+	for _, indiv := range pop.Indivs {
+		mp += indiv.Plc
 	}
 
 	return mp / fn
@@ -68,7 +67,75 @@ func (pop *Population) GetMeanUtility() float64 { //average utility of populatio
 	return mu / fn
 }
 
-func (pop *Population) Reproduce(nNewPop int) Population {
+func (pop *Population) GetMeanPhenotype(gen int) Vec { //elementwise average phenotype of population
+	npop := len(pop.Indivs)
+	MeanPhenotype := make(Vec, npop)
+	pop.DevPop(gen)
+
+	for _,indiv := range(pop.Indivs) {
+		for i,p := range(indiv.Cells[2].P.C){
+			MeanPhenotype[i] += p/float64(npop)
+		}
+	}
+	return MeanPhenotype
+}
+
+//func (pop *Population) CentralizePhenotypes(gen int, Centre Vec)
+
+func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of population
+	var Gtilde Genome
+	
+	MeanGenome := NewGenome()
+	for _,indiv := range pop.Indivs {
+		Gtilde = indiv.Genome
+		for i := range Gtilde.G {
+			for j:=0 ; j<Ngenes ; j++ {
+				MeanGenome.G[i][j] += Gtilde.G[i][j]/float64(len(pop.Indivs))
+			} 
+		}
+		for i := range Gtilde.E {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.E[i][j] += Gtilde.E[i][j]/float64(len(pop.Indivs))
+			} 
+		}
+		for i := range Gtilde.P {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.P[i][j] += Gtilde.P[i][j]/float64(len(pop.Indivs))
+			}
+		}
+		for i := range Gtilde.Z {
+			for j:=0 ; j<Ngenes ; j++ {
+				MeanGenome.Z[i][j] += Gtilde.Z[i][j]/float64(len(pop.Indivs))
+			} 
+		}
+	}
+	return MeanGenome
+}
+
+func (pop *Population) Get_Environment_Axis() Vec { //Choice of axis defined using difference of environment cues
+	e := pop.Env.C
+	e0 := pop.RefEnv.C
+	de := NewVec(len(e))
+	diffVecs(de, e, e0)
+	difflength := Veclength(de)
+	for i := range de { //normalize
+		de[i] = de[i]/difflength 
+	}
+	return de
+}
+
+func(pop *Population) Get_Mid_Env() Vec { //Midpoint between environments
+	e := pop.Env.C
+	e0 := pop.RefEnv.C
+	me := NewVec(len(e))
+	addVecs(me, e, e0)
+	for i := range me {
+		me[i] = me[i]/2
+	}
+	return me
+}
+
+func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
 	npop := len(pop.Indivs)
 	var nindivs []Indiv
 	ipop := 0
@@ -83,95 +150,273 @@ func (pop *Population) Reproduce(nNewPop int) Population {
 		r1 := rand.Float64()
 		if r0 < dad.F && r1 < mom.F {
 			kid0, kid1 := Mate(&dad, &mom)
-			//			fmt.Println("kids.G0", len(kid0.G0), len(kid1.G0))
-
 			nindivs = append(nindivs, kid0)
 			nindivs = append(nindivs, kid1)
 			ipop += 2
 		}
 	}
 	for i := range nindivs {
-		nindivs[i].Id = i
+		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 	
-	new_population := Population{pop.Env, pop.RefEnv, nindivs, 0.0, 0.0, 0.0} //resets embryonic values to zero!
-	/*
-		fmt.Println("Reproduce new population: ", ipop)
-			for _,indiv := range new_population.Pop {
-				fmt.Println("in reproduction", len(indiv.G0))
-			}*/
+	new_population := Population{0, pop.Env, pop.RefEnv, nindivs} //resets embryonic values to zero!
 
 	return new_population
 }
 
-func RecEvolve(nstep int, init_pop *Population, epoch int) Population { //Records population fitness and writes file
+func (pop *Population) DevPop(gen int) Population {
 	var indivenv, refenv Cue
-	
-	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	//fmt.Fprintln(fout, "Generation", "Population Fitness")
-	pop := *init_pop
+
+	pop.Gen = gen
+
 	ch := make(chan Indiv) //channels for parallelization
-	for istep := 1; istep <= nstep; istep++ {
-		for _, indiv := range pop.Indivs {
-			go func(indiv Indiv) {
-				indivenv = pop.Env //Without noise
-				refenv = pop.RefEnv
-				ch <- indiv.Develop(indivenv, refenv)
-			}(indiv)
+	for _, indiv := range pop.Indivs {
+		go func(indiv Indiv) {
+			indivenv = pop.Env //Novel environment
+			refenv = pop.RefEnv //Ancestral environment
+			ch <- indiv.Develop(indivenv, refenv)
+		}(indiv)
+	}
+	for i := range pop.Indivs {
+		pop.Indivs[i] = <-ch //Update output results
+	}
+
+	return *pop
+}
+
+func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
+	var id_filename, id, dadid, momid string 
+	var Fitness, CuePlas, ObsPlas, Util float64
+	pop := *init_pop
+
+	if test && gidfilename != ""{
+		id_filename = fmt.Sprintf("%s.dot",gidfilename)
+		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatal(err)
 		}
-		for i := range pop.Indivs {
-			pop.Indivs[i] = <-ch //Update output results
+		fmt.Fprintln(fout,"digraph G {")
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
 		}
-		pop.Fitness = pop.GetMeanFitness()
-		pop.Plasticity = pop.GetMeanPlasticity()
-		pop.Utility = pop.GetMeanUtility()
-		fmt.Fprintln(fout, epoch, istep, pop.Fitness, pop.Plasticity, pop.Utility)
-		fmt.Println("Evol_step: ", istep, " <Fit>: ", pop.Fitness, "<Pl>:", pop.Plasticity, "<u>:", pop.Utility) //Prints averages for generation
+	}
+
+	for istep := 1; istep <= nstep; istep++ {		
+		pop.DevPop(istep)
+		if test{
+			if gidfilename!= "" && istep>1 { //Genealogy not defined for first generation
+				fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, indiv := range pop.Indivs {
+					id = fmt.Sprintf("g%d:id%d",pop.Gen,indiv.Id)
+					dadid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.DadId) //Dad and mom from previous generation
+					momid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.MomId)
+					fmt.Fprintf(fout,"\t%s -> {%s, %s}\n",id,dadid,momid) //Use child -> parent convention
+				}
+			}
+			if jsonout!="" { //Export JSON population of each generation in test mode
+				jfilename := fmt.Sprintf("%s_%d.json",jsonout,pop.Gen)
+				jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
+				if err != nil {
+					log.Fatal(err)
+				}
+				popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
+				if err != nil {
+					log.Fatal(err)
+				}
+				_, err = popout.Write(jsonpop)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+
+		Fitness = pop.GetMeanFitness()
+		CuePlas = pop.GetMeanCuePlasticity()
+		ObsPlas = pop.GetMeanObsPlasticity()
+		Util = pop.GetMeanUtility()
+
+		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\n" ,epoch, istep, Fitness, CuePlas, ObsPlas, Util)
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Epg>:%e\t <Pl>:%e\t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Util)
 		pop = pop.Reproduce(MaxPop)
 	}
-	fout.Close()
+	if test && gidfilename!= ""{
+		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprintln(fout,"}")
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	return pop
 }
 
-/*
-func RecIndivEvolve(nstep int, init_pop *Population, epoch int) Population { //Records population fitness and individual fitness and writes file
-	// Warning! This function DOES NOT work!
+func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) {
+	var pproj, gproj float64
+	
+	pop.DevPop(gen)
+	
+	cphen := make(Vec, Nenv)
+	mu := pop.Get_Mid_Env()
+	Paxis := pop.Get_Environment_Axis()
+	Projfilename := fmt.Sprintf("%s_%d.dat",Filename,gen)
+
+	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintln(fout,"Phenotype\t Genotype")
+
+	for _,indiv := range(pop.Indivs){
+		diffVecs(cphen,indiv.Cells[2].P.C,mu) //centralize
+		pproj = innerproduct(cphen,Paxis)
+		gproj = 0.0 //initialize
+		for i, m := range indiv.Genome.G {
+			for j, d := range m {
+				gproj += d * Gaxis.G[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.E {
+			for j, d := range m {
+				gproj += d * Gaxis.E[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.P {
+			for j, d := range m {
+				gproj += d * Gaxis.P[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.Z {
+			for j, d := range m {
+				gproj += d * Gaxis.Z[i][j]
+			}
+		}
+		fmt.Fprintf(fout,"%e\t %e\n",pproj,gproj)
+	}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+/* Code beyond this point may be considered as obsolete.
+func (pop *Population) Project_Phenotypes(Filename string, gen int, axis Vec) []float64 {
+	var proj float64
+	pop.DevPop(gen)
+	
+	projs := make([]float64,len(pop.Indivs))
+
+	for _,indiv := range(pop.Indivs){
+		proj = innerproduct(indiv.Cells[2].P.C,axis)
+		projs = append(projs, proj)
+		
+	}
+
+	return projs
+}
+
+func (pop *Population) Project_Genomes(Filename string, axis Genome) []float64 {
+	var proj float64
+	projs := make([]float64,len(pop.Indivs))
+
+	for _,indiv := range(pop.Indivs){
+		proj = 0.0 //initialize
+		for i, m := range indiv.Genome.G {
+			for j, d := range m {
+				proj += d * axis.G[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.E {
+			for j, d := range m {
+				proj += d * axis.E[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.P {
+			for j, d := range m {
+				proj += d * axis.P[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.Z {
+			for j, d := range m {
+				proj += d * axis.Z[i][j]
+			}
+		}
+		projs = append(projs, proj)
+	}
+	return projs
+}
+
+func (pop *Population) Dump_Phenotypes(Filename string, gen int) { //Extracts phenotypes from population
+	
+	pop.DevPop(gen)
+
 	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Fprintln(fout, "Generation", "Population Fitness")
-	pop := *init_pop
-	ch := make(chan Indiv) //channels for parallelization
-	for istep := 1; istep <= nstep; istep++ {
-		for _, indiv := range pop.Indivs {
-			go func(indiv Indiv) {
-				//indivenv := pop.Env //Without noise
-				indivenv := AddNoise(pop.Env, NoisyEta) //Environment of individual may be different
-				ch <- indiv.Develop(indivenv)
-			}(indiv)
+	for _, indiv := range pop.Indivs {
+		for _,trait := range indiv.Cells[2].P.C {
+			fmt.Fprintf(fout, "%e\t", trait )
 		}
-		for i := range pop.Indivs {
-			pop.Indivs[i] = <-ch //Update output results
-		}
-		pop.Fitness = pop.GetMeanFitness()
-		//Fslice := pop.GetIndivFitness()
-		//fmt.Println(istep,":",len(Fslice),"=",MaxPop,"is",len(Fslice)==MaxPop) //Diagnostics; Parallel processing seems to create issues with this strategy.
-		fmt.Fprint(fout, epoch, istep, pop.Fitness)
-		for _,indiv := range pop.Indivs{
-			fmt.Fprint(fout,indiv.Fitness)
-		}
-		fmt.Fprint(fout,"\r\n")
-		fmt.Println("Evol_step: ", istep, " <fitness>: ", pop.Fitness) //Prints average fitness for generation
-		pop = pop.Reproduce(MaxPop)
+		fmt.Fprint(fout,"\n")
 	}
 	err = fout.Close()
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
-	return pop
+}
+
+func (pop *Population) Dump_Genotypes(Filename string) { //Extracts genomes from population
+	var Gtilde Genome
+
+	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, indiv := range pop.Indivs {
+		Gtilde = indiv.Genome
+		for i := range Gtilde.G {
+			for j:=0 ; j < Ngenes ; j++ {
+				fmt.Fprintf(fout, "%e\t",Gtilde.G[i][j])
+			}
+		}
+		for i := range Gtilde.E {
+			for j:=0 ; j < Nenv ; j++ {
+				fmt.Fprintf(fout, "%e\t",Gtilde.E[i][j])
+			}
+		}
+		for i := range Gtilde.P {
+			for j:=0 ; j < Nenv ; j++ {
+				fmt.Fprintf(fout, "%e\t",Gtilde.P[i][j])
+			}
+		}
+		for i := range Gtilde.Z {
+			for j:=0 ; j < Ngenes ; j++ {
+				fmt.Fprintf(fout, "%e\t",Gtilde.Z[i][j])
+			}
+		}
+		fmt.Fprint(fout,"\n")
+	}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 */

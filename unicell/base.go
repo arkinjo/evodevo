@@ -5,10 +5,10 @@ import (
 	"math/rand"
 )
 
-var MaxPop int = 100 // population size
-var Ngenes int = 50 // number of genes
-var Nenv int = 10    // number of environmental cues/phenotypic values per face
-var Ncells int = 2 //Two cells, one without cue, one with cues
+var MaxPop int = 1000 // population size
+var Ngenes int = 200 // number of genes
+var Nenv int = 40    // number of environmental cues/phenotypic values per face
+var Ncells int = 3 //Three cells, one without cue, one for ancestral environment, one for novel environment
 
 var MaxDevStep int = 200    // Maximum steps for development.
 var epsDev float64 = 1.0e-8 // convergence criterion of development.
@@ -22,11 +22,9 @@ var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 var MutationRate float64 = 0.01
 
 var s float64 = 0.25 // selection strength
-var omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
+var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var WithCue bool = true // with or without environmental cues. See Develop in indiv.go.
-
-var Filename string = "test0.dat"
 
 type Spmat = [](map[int]float64) // Sparse matrix is an array of maps.
 
@@ -38,43 +36,19 @@ func SetSeed(seed int64) {
 	rand.Seed(seed)
 }
 
-/*
-func stepfunc(x float64) float64 {
-	if x > 0 {
-		return 1
-	} else {
-		return 0
-	}
-}
-
-func relu(x float64) float64 {
-	if x > 0 {
-		return x
-	} else {
-		return 0
-	}
-}
-
-func srelu(x, omega float64) float64 { //Smooth approximation of ramp function
-	return omega*math.Log(1+math.Exp(x/omega))
-}
-*/
-
 func sigmoid(x, omega float64) float64 {
 	return 1 / (1 + math.Exp(-x/omega))
 }
 
 func sigma(x float64) float64 { //Activation function for development
-	return sigmoid(x, omega)
+	return sigmoid(x, Omega)
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
-	//Talk to a biologist about this??? What actually is a phenotype? SOLVED
-	return sigmoid(x, omega)
+	return sigmoid(x, Omega)
 }
 
 func NewSpmat(nrow, ncol int, density float64) Spmat { //Generate a new sparse matrix
-	//d2 := density * 0.5 //Half of matrix density
 	mat := make([](map[int]float64), nrow)
 	for i := range mat {
 		mat[i] = make(map[int]float64)
@@ -125,6 +99,24 @@ func addVecs(vout, v0, v1 Vec) { //Sum of vectors
 	for i := range vout {
 		vout[i] = v0[i] + v1[i]
 	}
+}
+
+func diffVecs(vout, v0, v1 Vec) { //Difference of vectors
+	for i := range vout {
+		vout[i] = v0[i] - v1[i]
+	}
+}
+
+func innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v1, use for axis projection
+	dot := 0.0
+	for i,v := range v0 {
+		dot += v * v1[i]
+	}
+	return dot 
+}
+
+func Veclength(v Vec) float64 { //Euclidean Length of vector
+	return math.Sqrt(innerproduct(v,v))
 }
 
 func dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared

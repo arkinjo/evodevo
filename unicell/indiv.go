@@ -21,12 +21,15 @@ type Cell struct { //A 'cell' is characterized by its gene expression and phenot
 
 type Indiv struct { //An individual as an unicellular organism
 	Id       int
+	DadId	 int
+	MomId	 int
 	F   	 float64 //Fitness in novel (current) environment
 	F0 		 float64 //Fitness in previous environment
 	Genome   Genome
-	Cells    []Cell 
+	Cells    []Cell
 	Z        Vec // Initial gene expression of offspring.
-	Pl		 float64 // Degree of plasticity
+	Pl		 float64 // Degree of observed plasticity
+	Plc		 float64 // Degree of cue plasticity
 	u		 float64 // Utility of plasticity
 }
 
@@ -77,6 +80,71 @@ func (parent *Genome) Copy() Genome { //creates copy of parent's genome
 	return genome
 }
 
+func DiffGenomes(Gout, G0, G1 Genome){ //Elementwise difference between two genomes
+	for i := 0 ; i < Ngenes ; i++ {
+		for j := 0; j < Ngenes; j++ {
+			Gout.G[i][j] = G0.G[i][j] - G1.G[i][j]
+		}
+		for j := 0; j < Nenv; j++ {
+			Gout.E[i][j] = G0.E[i][j] - G1.E[i][j]
+		}
+		for j := 0; j < Nenv; j++ {
+			Gout.P[i][j] = G0.P[i][j] - G1.P[i][j]
+		}
+		for j := 0; j < Ngenes; j++ {
+			Gout.Z[i][j] = G0.Z[i][j] - G1.Z[i][j]
+		}
+	}
+}
+
+func(G *Genome) NormalizeGenome() Genome{
+	lambda2 := 0.0
+	eG := G.Copy()
+	
+	for _,m := range G.G{
+		for _,v := range m{
+			lambda2 += v*v
+		}
+	}
+	for _,m := range G.G{
+		for _,v := range m{
+			lambda2 += v*v
+		}
+	}
+	for _,m := range G.G{
+		for _,v := range m{
+			lambda2 += v*v
+		}
+	}
+	for _,m := range G.G{
+		for _,v := range m{
+			lambda2 += v*v
+		}
+	}
+	lambda := math.Sqrt(lambda2)
+	for i,m := range eG.G{
+		for j := range m{
+			eG.G[i][j] = eG.G[i][j]/lambda
+		}
+	}
+	for i,m := range eG.E{
+		for j := range m{
+			eG.E[i][j] = eG.E[i][j]/lambda
+		}
+	}
+	for i,m := range eG.P{
+		for j := range m{
+			eG.P[i][j] = eG.P[i][j]/lambda
+		}
+	}
+	for i,m := range eG.Z{
+		for j := range m{
+			eG.Z[i][j] = eG.Z[i][j]/lambda
+		}
+	}
+	return eG
+}
+
 func NewCell() Cell { //Creates a new cell
 	g := NewVec(Ngenes)
 	p := NewCue(Nenv)
@@ -100,7 +168,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	cells := NewCells(Ncells)
 	z := NewVec(Ngenes)
 
-	indiv := Indiv{id, 0.0, 0.0, genome, cells, z, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, 0.0, 0.0, genome, cells, z, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -159,8 +227,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	cells0 := NewCells(Ncells)
 	cells1 := NewCells(Ncells)
 
-	kid0 := Indiv{dad.Id, 0.0, 0.0, genome0,  cells0, g0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, 0.0, 0.0, genome1,  cells1, g1, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, 0.0, 0.0, genome0,  cells0, g0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, 0.0, 0.0, genome1,  cells1, g1, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -173,11 +241,18 @@ func get_fitness(p, env Vec) float64 { //Difference between phenotype and select
 	return math.Exp(-s * d2)
 }
 
-func (indiv *Indiv) get_plasticity() float64 { //Plasticity of individual
+func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
 	Clist := indiv.Cells
 	p0 := Clist[0].P.C
-	p := Clist[1].P.C
-	//dhamming := Hammingdist(p, p0)/float64(Nenv) //Divided by number of phenotypes to normalize.
+	p := Clist[2].P.C
+	d2 := dist2Vecs(p,p0)/float64(Nenv) //Divide by number of phenotypes to normalize
+	return d2
+}
+
+func(indiv *Indiv) get_obs_plasticity() float64 { //observed plasticity of individual
+	Clist := indiv.Cells
+	p0 := Clist[1].P.C
+	p := Clist[2].P.C
 	d2 := dist2Vecs(p,p0)/float64(Nenv) //Divide by number of phenotypes to normalize
 	return d2
 }
@@ -193,8 +268,6 @@ func (indiv *Indiv) Develop(env, env0 Cue) Indiv { //Developmental process
 
 	devenv := env.AddNoise(DevNoise)
 	selenv := env.AddNoise(EnvNoise)
-	//fmt.Println("ID:",indiv.Id,"Development environment:",devenv.C)
-	//fmt.Println("ID:",indiv.Id,"Selection environment:",selenv.C)
 	Clist := indiv.Cells
 
 	Clist[0].G = indiv.Z
@@ -205,14 +278,9 @@ func (indiv *Indiv) Develop(env, env0 Cue) Indiv { //Developmental process
 	ve := make(Vec, Ngenes)
 	g1 := make(Vec, Ngenes)
 
-	for nstep := 0; nstep < MaxDevStep; nstep++ { // Measure relative to previous epoch; for comparison
+	for nstep := 0; nstep < MaxDevStep; nstep++ { // Measure without cue; for comparison
 		multMatVec(g1, indiv.Genome.G, g0)
-		multMatVec(ve, indiv.Genome.E, env0.C) 
-		if WithCue {
-			addVecs(g1, vg, ve)
-		} else {
-			g1 = vg
-		}
+		g1 = vg
 		applyFnVec(sigma, g1)
 
 		multMatVec_T(p0, indiv.Genome.P, g1)
@@ -227,16 +295,39 @@ func (indiv *Indiv) Develop(env, env0 Cue) Indiv { //Developmental process
 
 	indiv.F0 = fness0
 
-	Clist[0].G = g0
-	Clist[0].P.C = p0
-
 	Clist[1].G = indiv.Z
-	g := Clist[1].G
-	p := Clist[1].P.C
+	g0 = Clist[1].G
+	p0 = Clist[1].P.C
 
-	//vg = make(Vec, Ngenes) 
-	//ve := make(Vec, Ngenes)
-	//g1 = make(Vec, Ngenes)
+	Clist[1].G = g0
+	Clist[1].P.C = p0
+
+	for nstep := 0; nstep < MaxDevStep; nstep++ { // Measure relative to previous epoch; for comparison
+		multMatVec(g1, indiv.Genome.G, g0)
+		multMatVec(ve, indiv.Genome.E, env0.C) 
+		if WithCue {
+			addVecs(g1, vg, ve)
+		} else {
+			g1 = vg
+		}
+		applyFnVec(sigma, g1)
+
+		multMatVec_T(p0, indiv.Genome.P, g1)
+		applyFnVec(rho, p0)
+		//fness0 = get_fitness(p0, selenv.C)
+		diff = distVecs(g1, g0)
+		g0 = g1
+		if diff < epsDev { //Convergence criterion
+			break
+		}
+	}
+
+	Clist[1].G = g0
+	Clist[1].P.C = p0
+
+	Clist[2].G = indiv.Z
+	g := Clist[2].G
+	p := Clist[2].P.C
 
 	for nstep := 0; nstep < MaxDevStep; nstep++ { //development with environment cue
 		multMatVec(vg, indiv.Genome.G, g)
@@ -261,12 +352,13 @@ func (indiv *Indiv) Develop(env, env0 Cue) Indiv { //Developmental process
 
 	indiv.F = fness
 
-	indiv.Cells[1].G = g
-	indiv.Cells[1].P.C = p
+	indiv.Cells[2].G = g
+	indiv.Cells[2].P.C = p
 
 	multMatVec_T(indiv.Z, indiv.Genome.Z, g) //Genome of offspring
 
-	indiv.Pl = indiv.get_plasticity()
+	indiv.Pl = indiv.get_obs_plasticity()
+	indiv.Plc = indiv.get_cue_plasticity()
 	indiv.u = indiv.get_utility()
 
 	return *indiv
