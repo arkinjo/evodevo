@@ -80,19 +80,19 @@ func (parent *Genome) Copy() Genome { //creates copy of parent's genome
 	return genome
 }
 
-func DiffGenomes(Gout, G0, G1 Genome){ //Elementwise difference between two genomes
+func DiffGenomes(Gout, G1, G0 Genome){ //Elementwise difference between two genomes
 	for i := 0 ; i < Ngenes ; i++ {
 		for j := 0; j < Ngenes; j++ {
-			Gout.G[i][j] = G0.G[i][j] - G1.G[i][j]
+			Gout.G[i][j] = G1.G[i][j] - G0.G[i][j]
 		}
 		for j := 0; j < Nenv; j++ {
-			Gout.E[i][j] = G0.E[i][j] - G1.E[i][j]
+			Gout.E[i][j] = G1.E[i][j] - G0.E[i][j]
 		}
 		for j := 0; j < Nenv; j++ {
-			Gout.P[i][j] = G0.P[i][j] - G1.P[i][j]
+			Gout.P[i][j] = G1.P[i][j] - G0.P[i][j]
 		}
 		for j := 0; j < Ngenes; j++ {
-			Gout.Z[i][j] = G0.Z[i][j] - G1.Z[i][j]
+			Gout.Z[i][j] = G1.Z[i][j] - G0.Z[i][j]
 		}
 	}
 }
