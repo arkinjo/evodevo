@@ -25,8 +25,12 @@ func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
     epochPtr := flag.Int("nepoch", 1, "number of epochs")
+	ncelltypesPtr := flag.Int("celltypes",10,"number of cell types/phenotypes simultaneously trained")
     genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
+	cuePtr := flag.Bool("withCue", false, "develop with environmental cue")
+	epigPtr := flag.Bool("epig",false,"Add layer representing epigenetic markers")
+	HOCPtr := flag.Bool("HOC",false,"Add layer representing higher order complexes")
+	HOIPtr := flag.Bool("HOI",false,"Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
@@ -47,10 +51,14 @@ func main() {
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	unicell.WithCue = *cuePtr
+	unicell.Epig = *epigPtr
+	unicell.HOC = *HOCPtr
+	unicell.HOI = *HOIPtr
 	unicell.Omega = *omegaPtr
+	unicell.Ncells = *ncelltypesPtr
 	test = *testPtr
 
-	pop0 := unicell.NewPopulation(unicell.MaxPop)
+	pop0 := unicell.NewPopulation(unicell.Ncells,unicell.MaxPop)
 	
 	if  json_in != "" { //read input population as a json file, if given
 		fmt.Println("Importing initial population")
@@ -85,20 +93,20 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.Env = unicell.RandomEnv(unicell.Nenv,0.5)
+	popstart.Envs = unicell.RandomEnvs(unicell.Ncells,unicell.Nenv,0.5)
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
 	
-	envtraj := make([]unicell.Cue,1) //Trajectory of environment cue
-	envtraj[0] = popstart.RefEnv
+	envtraj := make([]unicell.Cues,1) //Trajectory of environment cue
+	envtraj[0] = popstart.RefEnvs
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
-		envtraj = append(envtraj, popstart.Env)
+		envtraj = append(envtraj, popstart.Envs)
 
 		if epoch != 0 {
-			fmt.Println("Epoch ",epoch,"has environment",popstart.Env)
+			fmt.Println("Epoch ",epoch,"has environments",popstart.Envs)
 		}
 		gidfilename := fmt.Sprintf("%s_full",Gid_Filename)
 
@@ -125,14 +133,14 @@ func main() {
 		if test { //Dump trajectories in test mode
 			fmt.Println("Dumping projections")
 			tdump := time.Now()
-			pop := unicell.NewPopulation(unicell.MaxPop)
+			pop := unicell.NewPopulation(unicell.Ncells,unicell.MaxPop)
 			g0 := pop0.GetMeanGenome()
 			g1 := pop1.GetMeanGenome()
 			Gaxis := unicell.NewGenome()
 			unicell.DiffGenomes(Gaxis,g1,g0)
 			Gaxis = Gaxis.NormalizeGenome()
-			pop.Env = pop1.Env
-			pop.RefEnv = pop1.RefEnv
+			pop.Envs = pop1.Envs
+			pop.RefEnvs = pop1.RefEnvs
 			for gen := 1; gen<=epochlength; gen++ {
 				jfilename := fmt.Sprintf("%s_%d.json",json_out,gen)
 				popin, err := os.Open(jfilename)
@@ -176,9 +184,9 @@ func main() {
 			}
 		} else { //Update population in training mode
 			popstart = pop1  //Update population after evolution.
-			OldEnv := popstart.Env.CopyCue()
-			popstart.RefEnv = OldEnv
-			popstart.Env = OldEnv.ChangeEnv(denv)
+			OldEnv := popstart.Envs.CopyCues()
+			popstart.RefEnvs = OldEnv
+			popstart.Envs = OldEnv.ChangeEnv(denv)
 		}
 	}
 

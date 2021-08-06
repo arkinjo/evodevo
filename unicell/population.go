@@ -1,29 +1,30 @@
 package unicell
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
-	"encoding/json"
 	"os"
 )
 
 type Population struct { //Population of individuals
 	Gen			int
-	Env      	Cue //Environment of population in this epoch
-	RefEnv		Cue //Environment of population in previous epoch
+	Envs      	Cues //Environment of population in this epoch
+	RefEnvs		Cues //Environment of population in previous epoch
 	Indivs   	[]Indiv
 }
 
-func NewPopulation(npop int) Population { //Initialize new population
+func NewPopulation(ncell, npop int) Population { //Initialize new population
 	indivs := make([]Indiv, npop)
-	env := NewCue(Nenv) //Initialize environment = zero vector
-
 	for i := range indivs {
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{0, env, env, indivs}
+	envs := NewCues(ncell,Nenv)
+
+	p := Population{0, envs, envs, indivs}
 	return p
 }
 
@@ -31,7 +32,7 @@ func (pop *Population) GetMeanFitness() float64 { //average fitness of populatio
 	mf := 0.0
 	fn := float64(len(pop.Indivs))
 	for _, indiv := range pop.Indivs {
-		mf += indiv.F
+		mf += indiv.Fit
 	}
 
 	return mf / fn
@@ -41,7 +42,7 @@ func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plast
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
 	for _, indiv := range pop.Indivs {
-		mp += indiv.Pl
+		mp += indiv.ObsPlas
 	}
 
 	return mp / fn
@@ -51,7 +52,7 @@ func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
 	for _, indiv := range pop.Indivs {
-		mp += indiv.Plc
+		mp += indiv.CuePlas
 	}
 
 	return mp / fn
@@ -61,20 +62,32 @@ func (pop *Population) GetMeanUtility() float64 { //average utility of populatio
 	mu := 0.0
 	fn := float64(len(pop.Indivs))
 	for _, indiv := range pop.Indivs {
-		mu += indiv.u
+		mu += indiv.Util
 	}
 
 	return mu / fn
 }
 
-func (pop *Population) GetMeanPhenotype(gen int) Vec { //elementwise average phenotype of population
+func (pop *Population) GetMeanPp() float64 { //average degree of polyphenism of population
+	mu := 0.0
+	fn := float64(len(pop.Indivs))
+	for _, indiv := range pop.Indivs {
+		mu += indiv.Pp
+	}
+
+	return mu / fn
+}
+
+func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
 	npop := len(pop.Indivs)
-	MeanPhenotype := make(Vec, npop)
+	MeanPhenotype := NewCues(Ncells,Nenv)
 	pop.DevPop(gen)
 
 	for _,indiv := range(pop.Indivs) {
-		for i,p := range(indiv.Cells[2].P.C){
-			MeanPhenotype[i] += p/float64(npop)
+		for i,c := range(indiv.Copies[2].Ctypes){
+			for j,p := range(c.P.C){
+				MeanPhenotype.Es[i].C[j] += p/float64(npop)
+			}
 		}
 	}
 	return MeanPhenotype
@@ -88,14 +101,29 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 	MeanGenome := NewGenome()
 	for _,indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
+		for i := range Gtilde.E {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.E[i][j] += Gtilde.E[i][j]/float64(len(pop.Indivs))
+			} 
+		}
+		for i := range Gtilde.F {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.F[i][j] += Gtilde.F[i][j]/float64(len(pop.Indivs))
+			} 
+		}
 		for i := range Gtilde.G {
 			for j:=0 ; j<Ngenes ; j++ {
 				MeanGenome.G[i][j] += Gtilde.G[i][j]/float64(len(pop.Indivs))
 			} 
 		}
-		for i := range Gtilde.E {
+		for i := range Gtilde.Hg {
 			for j:=0 ; j<Nenv ; j++ {
-				MeanGenome.E[i][j] += Gtilde.E[i][j]/float64(len(pop.Indivs))
+				MeanGenome.Hg[i][j] += Gtilde.Hg[i][j]/float64(len(pop.Indivs))
+			} 
+		}
+		for i := range Gtilde.Hh {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.Hh[i][j] += Gtilde.Hh[i][j]/float64(len(pop.Indivs))
 			} 
 		}
 		for i := range Gtilde.P {
@@ -112,25 +140,42 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 	return MeanGenome
 }
 
-func (pop *Population) Get_Environment_Axis() Vec { //Choice of axis defined using difference of environment cues
-	e := pop.Env.C
-	e0 := pop.RefEnv.C
-	de := NewVec(len(e))
-	diffVecs(de, e, e0)
-	difflength := Veclength(de)
-	for i := range de { //normalize
-		de[i] = de[i]/difflength 
+func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined using difference of environment cues
+	axlength2 := 0.0
+
+	e := pop.Envs.Es
+	e0 := pop.RefEnvs.Es
+	v := NewVec(len(e))
+	
+	de := NewCues(Ncells,Nenv)
+	for i,p := range e {
+		diffVecs(v,p.C,e0[i].C)
+		axlength2 += Veclength2(v)
+		de.Es[i] = Cue{v}
 	}
+	axlength := math.Sqrt(axlength2)
+	for i,c := range de.Es{
+		for j,p := range c.C {
+			de.Es[i].C[j] = p/axlength 
+		}
+	}
+
 	return de
 }
 
-func(pop *Population) Get_Mid_Env() Vec { //Midpoint between environments
-	e := pop.Env.C
-	e0 := pop.RefEnv.C
-	me := NewVec(len(e))
-	addVecs(me, e, e0)
-	for i := range me {
-		me[i] = me[i]/2
+func(pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
+	e := pop.Envs.Es
+	e0 := pop.RefEnvs.Es
+
+	me := NewCues(Ncells,Nenv)
+	v := NewVec(Nenv)
+
+	for i,p := range e {
+		addVecs(v,p.C,e0[i].C)
+		for j := range v {
+			v[j] = v[j]/2
+		}
+		me.Es[i].C = v
 	}
 	return me
 }
@@ -148,7 +193,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 		mom := pop.Indivs[l]
 		r0 := rand.Float64()
 		r1 := rand.Float64()
-		if r0 < dad.F && r1 < mom.F {
+		if r0 < dad.Fit && r1 < mom.Fit {
 			kid0, kid1 := Mate(&dad, &mom)
 			nindivs = append(nindivs, kid0)
 			nindivs = append(nindivs, kid1)
@@ -159,22 +204,23 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 	
-	new_population := Population{0, pop.Env, pop.RefEnv, nindivs} //resets embryonic values to zero!
+	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
 
 	return new_population
 }
 
 func (pop *Population) DevPop(gen int) Population {
-	var indivenv, refenv Cue
+	novenv := NewCues(Ncells,Nenv)
+	ancenv := NewCues(Ncells,Nenv)
 
 	pop.Gen = gen
 
 	ch := make(chan Indiv) //channels for parallelization
 	for _, indiv := range pop.Indivs {
 		go func(indiv Indiv) {
-			indivenv = pop.Env //Novel environment
-			refenv = pop.RefEnv //Ancestral environment
-			ch <- indiv.Develop(indivenv, refenv)
+			novenv = pop.Envs //Novel environment
+			ancenv = pop.RefEnvs //Ancestral environment
+			ch <- indiv.CompareDev(novenv, ancenv)
 		}(indiv)
 	}
 	for i := range pop.Indivs {
@@ -267,6 +313,8 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 	return pop
 }
 
+//BOOKMARK
+
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) {
 	var pproj, gproj float64
 	
@@ -284,17 +332,34 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 	fmt.Fprintln(fout,"Phenotype\t Genotype")
 
 	for _,indiv := range(pop.Indivs){
-		diffVecs(cphen,indiv.Cells[2].P.C,mu) //centralize
-		pproj = innerproduct(cphen,Paxis)
-		gproj = 0.0 //initialize
+		pproj, gproj = 0.0, 0.0
+		for i,env := range mu.Es {
+			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C)
+			pproj += innerproduct(cphen,Paxis.Es[i].C)
+		}
+		for i, m := range indiv.Genome.E {
+			for j, d := range m {
+				gproj += d * Gaxis.E[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.F {
+			for j, d := range m {
+				gproj += d * Gaxis.F[i][j]
+			}
+		}
 		for i, m := range indiv.Genome.G {
 			for j, d := range m {
 				gproj += d * Gaxis.G[i][j]
 			}
 		}
-		for i, m := range indiv.Genome.E {
+		for i, m := range indiv.Genome.Hg {
 			for j, d := range m {
-				gproj += d * Gaxis.E[i][j]
+				gproj += d * Gaxis.Hg[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.Hh {
+			for j, d := range m {
+				gproj += d * Gaxis.Hg[i][j]
 			}
 		}
 		for i, m := range indiv.Genome.P {

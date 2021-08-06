@@ -15,17 +15,21 @@ type Cue struct {
 	C Vec //Environment cue is a vector
 }
 
-func NewCue(Length int) Cue { //Initialize a new cue type object
-	cv := NewVec(Length)
+type Cues struct {
+	Es []Cue //Cue array object
+}
+
+func NewCue(nenv int) Cue { //Initialize a new cue type object
+	cv := NewVec(nenv)
 	cue := Cue{cv}
 	return cue
 }
 
 
-func RandomEnv(n int, density float64) Cue { //Fake up a boolean environment vector
+func RandomEnv(nenv int, density float64) Cue { //Fake up a boolean environment vector
 	var r float64
-	env := NewCue(Nenv)
-	v := make([]float64, n)
+	env := NewCue(nenv)
+	v := make([]float64, nenv)
 	for i := range v {
 		r = rand.Float64()
 		if r < density {
@@ -47,7 +51,6 @@ func (cue *Cue) CopyCue() Cue { //Returns a copy of an environment cue
 	c1 := Cue{v}
 	return c1
 }
-
 
 func (cue *Cue) AddNoise(eta float64) Cue {
 	var r float64
@@ -94,3 +97,90 @@ func (cue *Cue) ChangeEnv(n int) Cue {// Mutate precisely n bits of environment 
 	return env1
 }
 
+func NewCues(ncells, nenv int) Cues {
+	vs := make([]Cue,ncells)
+	for i := range vs { 
+		vs[i] = NewCue(nenv)
+	}
+	cs := Cues{vs}
+	return cs
+}
+
+func RandomEnvs(ncells, nenv int, density float64) Cues { //Randomly generate cue array
+	vs := make([]Cue,ncells)
+	for i := range vs { 
+		vs[i] = RandomEnv(nenv,density)
+	}
+	cs := Cues{vs}
+	return cs
+}
+
+func (cues *Cues) CopyCues() Cues{
+	ncells := len(cues.Es)
+	vs := make([]Cue,ncells)
+	copy(vs,cues.Es)
+	cs := Cues{vs}
+	return cs
+}
+
+func (cues *Cues) AddNoise(eta float64) Cues {
+	envs1 := cues.CopyCues()
+	for i := range envs1.Es{
+		envs1.Es[i] = envs1.Es[i].AddNoise(eta)
+	}
+	return envs1
+}
+
+func (cues *Cues) ChangeEnv(n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
+	var cell, j int
+	envs1 := cues.CopyCues()
+	cs := envs1.Es
+	ncells := len(cues.Es)
+	nenv := len(cues.Es[0].C)
+	N := nenv*ncells
+	indices := make([]int,N)
+	for i:= range indices{
+		indices[i] = i
+	}
+	rand.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] }) //
+	mutindices := make([]int,n)
+	for i := range mutindices {
+		mutindices[i] = indices[i]
+	}
+	for _,index := range mutindices {
+		cell = index/ncells //integer division
+		j = index%ncells //remainder is index of chosen cell
+		if cs[cell].C[j] == 0{
+			cs[cell].C[j] = 1
+		} else {
+			cs[cell].C[j] = 0
+		}
+	}
+	return envs1
+}
+
+
+func (cues *Cues) GetMeanCue() Vec { //Mean of environment cue
+	ncells := len(cues.Es)
+	ncues := len(cues.Es[0].C)
+	cv := NewVec(ncues)
+	for i := 0; i < ncues; i++{
+		for _,c := range cues.Es[i].C{
+			cv[i] += c/float64(ncells)
+		}
+	}
+	return cv
+}
+
+func (cues *Cues) GetCueVar() float64 { //Variance in environment cue
+	mu := cues.GetMeanCue()
+	ncells := len(cues.Es)
+	ncues := len(cues.Es[0].C)
+	v := NewVec(ncues)
+	sigma2 := 0.0
+	for _,cvec := range cues.Es {
+		diffVecs(v,cvec.C,mu)
+		sigma2 += Veclength2(v)/float64(ncells)
+	}
+	return sigma2
+}

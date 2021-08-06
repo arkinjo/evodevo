@@ -15,7 +15,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 
 	nanctraj := []int{}
 	rnanctraj := []int{}
-	pop := NewPopulation(npop)
+	pop := NewPopulation(Nenv,npop)
 	genfile := fmt.Sprintf("%s.dot",dotfilename)
 	fout, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {

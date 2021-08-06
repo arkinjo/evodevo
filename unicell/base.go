@@ -6,14 +6,14 @@ import (
 )
 
 var MaxPop int = 1000 // population size
-var Ngenes int = 200 // number of genes
-var Nenv int = 40    // number of environmental cues/phenotypic values per face
-var Ncells int = 3 //Three cells, one without cue, one for ancestral environment, one for novel environment
+var Ngenes int = 400 // number of genes
+var Nenv int = 20    // number of environmental cues/phenotypic values per face
+var Ncells int = 10 //number of cell types/phenotypes to be trained simultaneously
 
 var MaxDevStep int = 200    // Maximum steps for development.
 var epsDev float64 = 1.0e-8 // convergence criterion of development.
 
-var GeneLength = 2*Ngenes + 2*Nenv // Length of a gene for Unicellular organism.
+var GeneLength = 5*Ngenes + 2*Nenv // Length of a gene for Unicellular organism.
 
 var GenomeDensity float64 = 1.0 / float64(Ngenes)
 
@@ -24,7 +24,12 @@ var MutationRate float64 = 0.01
 var s float64 = 0.25 // selection strength
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
-var WithCue bool = true // with or without environmental cues. See Develop in indiv.go.
+var WithCue bool = false // with or without environmental cues. See Develop in indiv.go.
+var Epig bool = false // Epigenetic layer
+var HOC bool = false // Higher order complexes layer
+var HOI bool = false // Interaction between higher order complexes
+
+//Remark: defaults to Wagner model!
 
 type Spmat = [](map[int]float64) // Sparse matrix is an array of maps.
 
@@ -40,8 +45,28 @@ func sigmoid(x, omega float64) float64 {
 	return 1 / (1 + math.Exp(-x/omega))
 }
 
-func sigma(x float64) float64 { //Activation function for development
+func relu(x, omega float64) float64 {
+	if x < 0 {
+		return 0
+	} else {
+		return omega*x
+	}
+}
+
+func sigmaf(x float64) float64 { //Activation function for epigenetic markers
 	return sigmoid(x, Omega)
+}
+
+func sigmag(x float64) float64 { //Activation function for gene expression levels
+	return relu(x, Omega)
+}
+
+func sigmah(x float64) float64 { //Activation function for higher order complexes
+	if HOI { // prevent explosion by bounding
+		return sigmoid(x, Omega)
+	} else {
+		return relu(x,Omega)
+	}
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
@@ -115,8 +140,12 @@ func innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v
 	return dot 
 }
 
+func Veclength2(v Vec) float64 {
+	return innerproduct(v,v)
+}
+
 func Veclength(v Vec) float64 { //Euclidean Length of vector
-	return math.Sqrt(innerproduct(v,v))
+	return math.Sqrt(Veclength2(v))
 }
 
 func dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
