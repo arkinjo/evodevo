@@ -232,7 +232,7 @@ func (pop *Population) DevPop(gen int) Population {
 
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
 	var id_filename, id, dadid, momid string 
-	var Fitness, CuePlas, ObsPlas, Util float64
+	var Fitness, CuePlas, ObsPlas, Polyp, Util float64
 	pop := *init_pop
 
 	if test && gidfilename != ""{
@@ -283,6 +283,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		Fitness = pop.GetMeanFitness()
 		CuePlas = pop.GetMeanCuePlasticity()
 		ObsPlas = pop.GetMeanObsPlasticity()
+		Polyp = pop.GetMeanPp()
 		Util = pop.GetMeanUtility()
 
 		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -290,13 +291,13 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 
-		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\n" ,epoch, istep, Fitness, CuePlas, ObsPlas, Util)
+		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\t%e\n" ,epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Util)
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Epg>:%e\t <Pl>:%e\t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Util)
+		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Util)
 		pop = pop.Reproduce(MaxPop)
 	}
 	if test && gidfilename!= ""{
@@ -312,8 +313,6 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 	}
 	return pop
 }
-
-//BOOKMARK
 
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) {
 	var pproj, gproj float64

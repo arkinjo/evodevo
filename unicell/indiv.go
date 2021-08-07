@@ -341,16 +341,15 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 
 func (cell *Cell) get_fitness(env Cue) float64 {
 	d2 := dist2Vecs(env.C,cell.P.C)
-	return math.Exp(-s * d2)
+	return math.Exp(-s * d2/float64(Ncells))
 }
 
 
 func (cells *Cells) get_fitness(envs Cues) float64 {
-	ncells := len(cells.Ctypes)
-	fitness := 0.0
+	fitness := 1.0
 	for i,c := range cells.Ctypes {
 		env := envs.Es[i]
-		fitness += c.get_fitness(env)/float64(ncells)
+		fitness *= c.get_fitness(env)
 	}
 	return fitness
 }
@@ -408,7 +407,7 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 	var diff float64
 	
 	h0 := make([]float64,Ngenes) //No higher order complexes in embryonic stage
-	ve := make([]float64,Nenv)
+	ve := make([]float64,Ngenes)
 	vf := make([]float64,Ngenes)
 	vg := g0
 	vh := make([]float64,Ngenes)

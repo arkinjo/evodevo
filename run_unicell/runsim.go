@@ -32,7 +32,7 @@ func main() {
 	HOCPtr := flag.Bool("HOC",false,"Add layer representing higher order complexes")
 	HOIPtr := flag.Bool("HOI",false,"Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
 	pgfilenamePtr := flag.String("pgfilename","","name of file of projected phenotypes and genotypes") //default to empty string
 	gidfilenamePtr := flag.String("gidfilename","","name of file of geneology of ids") //default to empty string
@@ -86,7 +86,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Utility") //header
+	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Utility") //header
 	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)

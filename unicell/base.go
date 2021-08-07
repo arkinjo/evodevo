@@ -102,7 +102,6 @@ func multMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
 			vout[i] += d * vin[j]
 		}
 	}
-
 	return
 }
 

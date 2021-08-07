@@ -132,28 +132,30 @@ func (cues *Cues) AddNoise(eta float64) Cues {
 }
 
 func (cues *Cues) ChangeEnv(n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
-	var cell, j int
+	var ref, cell, cue int
 	envs1 := cues.CopyCues()
 	cs := envs1.Es
-	ncells := len(cues.Es)
-	nenv := len(cues.Es[0].C)
-	N := nenv*ncells
+	N := Nenv*Ncells
 	indices := make([]int,N)
 	for i:= range indices{
 		indices[i] = i
 	}
 	rand.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] }) //
-	mutindices := make([]int,n)
-	for i := range mutindices {
-		mutindices[i] = indices[i]
+	mutcells := make([]int,0)
+	mutcues := make([]int,0)
+	for i := 0; i<n; i++ {
+		ref = indices[i]
+		cell = ref/Nenv
+		cue = ref%Nenv
+		mutcells = append(mutcells,cell)
+		mutcues = append(mutcues,cue)
 	}
-	for _,index := range mutindices {
-		cell = index/ncells //integer division
-		j = index%ncells //remainder is index of chosen cell
-		if cs[cell].C[j] == 0{
-			cs[cell].C[j] = 1
+	for j,cell := range mutcells {
+		cue = mutcues[j]
+		if cs[cell].C[cue] == 0{
+			cs[cell].C[cue] = 1
 		} else {
-			cs[cell].C[j] = 0
+			cs[cell].C[cue] = 0
 		}
 	}
 	return envs1
@@ -164,9 +166,9 @@ func (cues *Cues) GetMeanCue() Vec { //Mean of environment cue
 	ncells := len(cues.Es)
 	ncues := len(cues.Es[0].C)
 	cv := NewVec(ncues)
-	for i := 0; i < ncues; i++{
-		for _,c := range cues.Es[i].C{
-			cv[i] += c/float64(ncells)
+	for _,env := range cues.Es {
+		for j,c := range env.C{
+			cv[j] += c/float64(ncells)
 		}
 	}
 	return cv
