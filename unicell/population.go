@@ -330,10 +330,12 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 	}
 	fmt.Fprintln(fout,"Phenotype\t Genotype")
 
-	for _,indiv := range(pop.Indivs){
+	for _,indiv := range pop.Indivs {
 		pproj, gproj = 0.0, 0.0
-		for i,env := range mu.Es {
-			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C)
+		for i,env := range mu.Es { //For each environment cue
+			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C) //centralize
+			fmt.Println(len(cphen))
+			fmt.Println(len(Paxis.Es[i].C))
 			pproj += innerproduct(cphen,Paxis.Es[i].C)
 		}
 		for i, m := range indiv.Genome.E {
