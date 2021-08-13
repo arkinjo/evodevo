@@ -145,18 +145,19 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 
 	e := pop.Envs.Es
 	e0 := pop.RefEnvs.Es
-	v := NewVec(len(e))
-	
+	v := NewVec(Nenv)
 	de := NewCues(Ncells,Nenv)
+
 	for i,p := range e {
 		diffVecs(v,p.C,e0[i].C)
 		axlength2 += Veclength2(v)
 		de.Es[i] = Cue{v}
 	}
+
 	axlength := math.Sqrt(axlength2)
 	for i,c := range de.Es{
 		for j,p := range c.C {
-			de.Es[i].C[j] = p/axlength 
+			de.Es[i].C[j] = p/axlength //normalize to unit vector 
 		}
 	}
 
@@ -334,8 +335,8 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 		pproj, gproj = 0.0, 0.0
 		for i,env := range mu.Es { //For each environment cue
 			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C) //centralize
-			fmt.Println(len(cphen))
-			fmt.Println(len(Paxis.Es[i].C))
+			//fmt.Println(len(cphen))
+			//fmt.Println(len(Paxis.Es[i].C))
 			pproj += innerproduct(cphen,Paxis.Es[i].C)
 		}
 		for i, m := range indiv.Genome.E {
