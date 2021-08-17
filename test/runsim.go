@@ -14,13 +14,17 @@ import (
 
 
 var T_Filename string = "traj"
+var PG_Filename string //Dump for phenotypes and genotypes
+var Gid_Filename string //Genealogy of ID's
+var nancfilename string
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
+//var test bool = false //false : training mode, true : testing mode
 
 func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
-    epochPtr := flag.Int("nepoch", 20, "number of epochs")
+    epochPtr := flag.Int("nepoch", 1, "number of epochs")
 	ncelltypesPtr := flag.Int("celltypes",1,"number of cell types/phenotypes simultaneously trained") //default to unicellular case
     genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	cuePtr := flag.Bool("withCue", false, "develop with environmental cue")
@@ -30,15 +34,18 @@ func main() {
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
+	gidfilenamePtr := flag.String("gidfilename","","name of file of geneology of ids") //default to empty string
 	jsoninPtr := flag.String("jsonin","","json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout","popout","json file of output population")
+	//testPtr := flag.Bool("test",false,"test mode if true, defaults to train mode")
     flag.Parse()
 
 	multicell.SetSeed(int64(*seedPtr))
 	maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
-	T_Filename = fmt.Sprintf("%s.dat",*tfilenamePtr)
+	T_Filename = fmt.Sprintf("../analysis/%s.dat",*tfilenamePtr)
+	Gid_Filename = *gidfilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	multicell.WithCue = *cuePtr
@@ -47,12 +54,13 @@ func main() {
 	multicell.HOI = *HOIPtr
 	multicell.Omega = *omegaPtr
 	multicell.Ncells = *ncelltypesPtr
+	//test = *testPtr
 
 	pop0 := multicell.NewPopulation(multicell.Ncells,multicell.MaxPop)
 	
 	if  json_in != "" { //read input population as a json file, if given
-		jfilename := fmt.Sprintf("%s.json",json_in)
-		fmt.Printf("Importing initial population from %s.json \n",jfilename)
+		jfilename := fmt.Sprintf("%s.json",json_in) //Need to be in same folder/directory
+		fmt.Printf("Importing initial population from %s \n",jfilename)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)
@@ -98,35 +106,18 @@ func main() {
 		if epoch != 0 {
 			fmt.Println("Epoch ",epoch,"has environments",popstart.Envs)
 		}
+		gidfilename := fmt.Sprintf("%s_full",Gid_Filename)
 
-		pop1 := multicell.Evolve(false,T_Filename,json_out,"",epochlength, epoch, &popstart)
+		pop1 := multicell.Evolve(true,T_Filename,json_out,gidfilename,epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
 
-		if epoch == maxepochs { //Export output population
-			jfilename := fmt.Sprintf("../test/%s.json",json_out) //export output population to test file
-			jsonpop, err := json.Marshal(pop1) //JSON encoding of population as byte array
-			if err != nil {
-				log.Fatal(err)
-			}
-			popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
-			if err != nil {
-				log.Fatal(err)
-			}
-			_, err = popout.Write(jsonpop)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :",dtevol)
-
-		popstart = pop1  //Update population after evolution.
-		OldEnv := popstart.Envs.CopyCues()
-		popstart.RefEnvs = OldEnv
-		popstart.Envs = OldEnv.ChangeEnv(denv)
+		popstart.Envs = pop1.Envs.ChangeEnv(denv)
 	}
 
 	fmt.Println("Trajectory of population written to",T_Filename)
+	fmt.Printf("Genealogy of final generation written to %s.dot\n",Gid_Filename)
 	fmt.Printf("JSON encoding of evolved population written to %s.json \n", json_out)
 	fmt.Println("Trajectory of environment :", envtraj)
 	

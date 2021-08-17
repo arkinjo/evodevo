@@ -1,4 +1,4 @@
-package unicell
+package multicell
 
 import (
 	"encoding/json"
@@ -231,13 +231,13 @@ func (pop *Population) DevPop(gen int) Population {
 	return *pop
 }
 
-func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population fitness and writes file
+func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var id_filename, id, dadid, momid string 
 	var Fitness, CuePlas, ObsPlas, Polyp, Util float64
 	pop := *init_pop
 
-	if test && gidfilename != ""{
-		id_filename = fmt.Sprintf("%s.dot",gidfilename)
+	if test && gidfilename != ""{ //write genealogy in test mode
+		id_filename = fmt.Sprintf("../analysis/%s.dot",gidfilename)
 		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatal(err)
@@ -265,7 +265,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 				}
 			}
 			if jsonout!="" { //Export JSON population of each generation in test mode
-				jfilename := fmt.Sprintf("%s_%d.json",jsonout,pop.Gen)
+				jfilename := fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
 				jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
 				if err != nil {
 					log.Fatal(err)
@@ -335,8 +335,6 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 		pproj, gproj = 0.0, 0.0
 		for i,env := range mu.Es { //For each environment cue
 			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C) //centralize
-			//fmt.Println(len(cphen))
-			//fmt.Println(len(Paxis.Es[i].C))
 			pproj += innerproduct(cphen,Paxis.Es[i].C)
 		}
 		for i, m := range indiv.Genome.E {
