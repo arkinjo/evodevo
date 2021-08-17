@@ -339,19 +339,23 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
+/*
 func (cell *Cell) get_fitness(env Cue) float64 {
 	d2 := dist2Vecs(env.C,cell.P.C)
 	return math.Exp(-s * d2/float64(Ncells))
 }
-
+*/
 
 func (cells *Cells) get_fitness(envs Cues) float64 {
-	fitness := 1.0
-	for i,c := range cells.Ctypes {
-		env := envs.Es[i]
-		fitness *= c.get_fitness(env)
+	d2 := 0.0
+	env := make([]float64,Nenv)
+	p := make([]float64,Nenv)
+	for i := range cells.Ctypes{
+		env = envs.Es[i].C
+		p = cells.Ctypes[i].P.CopyCue().C
+		d2 += dist2Vecs(p,env)
 	}
-	return fitness
+	return math.Exp(-s * d2)
 }
 
 

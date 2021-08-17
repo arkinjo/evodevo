@@ -21,7 +21,7 @@ var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
 var MutationRate float64 = 0.01
 
-var s float64 = 0.25 // selection strength
+var s float64 = 0.25/float64(Ncells) // selection strength; normalized by number of cells
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var WithCue bool = false // with or without environmental cues. See Develop in indiv.go.
