@@ -18,7 +18,7 @@ var PG_Filename string //Dump for phenotypes and genotypes
 var Gid_Filename string //Genealogy of ID's
 var nancfilename string
 var jfilename string
-//var json_in string //JSON encoding of initial population; default to empty string
+var json_in string //JSON encoding of initial population; default to empty string
 //var json_out string = "popout"
 var test bool = false //false : training mode, true : testing mode
 
@@ -44,7 +44,7 @@ func main() {
 	//T_Filename = fmt.Sprintf("../analysis/%s.dat",*tfilenamePtr)
 	PG_Filename = fmt.Sprintf("../analysis/%s.dat",*pgfilenamePtr)
 	Gid_Filename = *gidfilenamePtr
-	json_in := *jsoninPtr //Why is this not parsing?
+	json_in = *jsoninPtr //Why is this not parsing?
 	//json_out = *jsonoutPtr
 	multicell.WithCue = *cuePtr
 	multicell.Epig = *epigPtr
@@ -75,7 +75,7 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println("Successfully imported initial population")
-	jfilename = fmt.Sprintf("%s_%d.json",json_in,multicell.MaxPop)
+	jfilename = fmt.Sprintf("%s_%d.json",json_in,epochlength)
 	fmt.Printf("Importing initial population from %s.json \n",jfilename)
 	popin, err = os.Open(jfilename)
 	if err != nil {
