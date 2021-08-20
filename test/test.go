@@ -32,7 +32,7 @@ func main() {
 	HOCPtr := flag.Bool("HOC",false,"Add layer representing higher order complexes")
 	HOIPtr := flag.Bool("HOI",false,"Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
 	gidfilenamePtr := flag.String("gidfilename","","name of file of geneology of ids") //default to empty string
 	jsoninPtr := flag.String("jsonin","","json file of input population") //default to empty string
@@ -113,7 +113,7 @@ func main() {
 
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :",dtevol)
-		popstart.Envs = pop1.Envs.ChangeEnv(denv)
+		popstart.Envs = pop1.Envs.ChangeEnvs(denv) //no updating population needed for test mode
 	}
 
 	fmt.Println("Trajectory of population written to",T_Filename)

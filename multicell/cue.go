@@ -118,7 +118,10 @@ func RandomEnvs(ncells, nenv int, density float64) Cues { //Randomly generate cu
 func (cues *Cues) CopyCues() Cues{
 	ncells := len(cues.Es)
 	vs := make([]Cue,ncells)
-	copy(vs,cues.Es)
+	//copy(vs,cues.Es) //Original
+	for i,c := range cues.Es { //'Proactive copying'
+		vs[i] = c.CopyCue()
+	}
 	cs := Cues{vs}
 	return cs
 }
@@ -131,25 +134,30 @@ func (cues *Cues) AddNoise(eta float64) Cues {
 	return envs1
 }
 
-func (cues *Cues) ChangeEnv(n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
+func (cues *Cues) ChangeEnvs(n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
 	var ref, cell, cue int
-	envs1 := cues.CopyCues()
+	//fmt.Println("Input:",cues)
+	envs1 := cues.CopyCues() //Make a copy to perform operations without changing original value
+	//fmt.Println("Copy:",envs1)
 	cs := envs1.Es
 	N := Nenv*Ncells
 	indices := make([]int,N)
-	for i:= range indices{
+	for i:= range indices {
 		indices[i] = i
 	}
-	rand.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] }) //
+
+	rand.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
 	mutcells := make([]int,0)
 	mutcues := make([]int,0)
-	for i := 0; i<n; i++ {
+	for i := 0; i < n; i++ {
 		ref = indices[i]
-		cell = ref/Nenv
+		cell = ref/Nenv //integer division
 		cue = ref%Nenv
 		mutcells = append(mutcells,cell)
 		mutcues = append(mutcues,cue)
 	}
+	//fmt.Println("Cell index:",mutcells)
+	//fmt.Println("Cue index:",mutcues)
 	for j,cell := range mutcells {
 		cue = mutcues[j]
 		if cs[cell].C[cue] == 0{
@@ -158,6 +166,8 @@ func (cues *Cues) ChangeEnv(n int) Cues { //Mutates precisely n bits in environm
 			cs[cell].C[cue] = 0
 		}
 	}
+	envs1.Es = cs
+	//fmt.Println("Update:",envs1)
 	return envs1
 }
 

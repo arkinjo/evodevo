@@ -95,8 +95,9 @@ func main() {
 	Gaxis := multicell.NewGenome()
 	multicell.DiffGenomes(Gaxis,g1,g0)
 	Gaxis = Gaxis.NormalizeGenome()
-	pop.Envs = pop1.Envs
-	pop.RefEnvs = pop1.RefEnvs
+	//pop.Envs = pop1.Envs
+	//pop.RefEnvs = pop1.RefEnvs
+
 	for gen := 1; gen<=epochlength; gen++ {
 		jfilename = fmt.Sprintf("%s_%d.json",json_in,gen)
 		popin, err := os.Open(jfilename)
@@ -114,6 +115,9 @@ func main() {
 		if err != nil{
 			log.Fatal(err)
 		}
+
+		pop.Envs = pop1.Envs
+		pop.RefEnvs = pop1.RefEnvs
 		pop.Dump_Projections(PG_Filename,gen,Gaxis)
 	}
 	dtdump := time.Since(tdump)
@@ -141,7 +145,7 @@ func main() {
 
 	fmt.Printf("Projections written to %s.dat \n",PG_Filename)
 	fmt.Printf("Genealogy of final generation written to %s.dot\n",Gid_Filename)
-	fmt.Printf("Number of ancestors of final generation written to %s.dat\n",nancfilename)
+	fmt.Printf("Number of ancestors of final generation written to %s \n",nancfilename)
 
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ",dt)

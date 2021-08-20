@@ -28,7 +28,7 @@ func main() {
 	HOCPtr := flag.Bool("HOC",false,"Add layer representing higher order complexes")
 	HOIPtr := flag.Bool("HOI",false,"Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
 	jsoninPtr := flag.String("jsonin","","json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout","popout","json file of output population")
@@ -38,7 +38,7 @@ func main() {
 	maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
-	T_Filename = fmt.Sprintf("%s.dat",*tfilenamePtr)
+	T_Filename = fmt.Sprintf("../analysis/%s.dat",*tfilenamePtr)
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	multicell.WithCue = *cuePtr
@@ -51,7 +51,7 @@ func main() {
 	pop0 := multicell.NewPopulation(multicell.Ncells,multicell.MaxPop)
 	
 	if  json_in != "" { //read input population as a json file, if given
-		jfilename := fmt.Sprintf("%s.json",json_in)
+		jfilename := fmt.Sprintf("%s.json",json_in) //Make sure json file is in same directory as train.go
 		fmt.Printf("Importing initial population from %s.json \n",jfilename)
 		popin, err := os.Open(jfilename)
 		if err != nil {
@@ -93,7 +93,7 @@ func main() {
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
-		envtraj = append(envtraj, popstart.Envs)
+		envtraj = append(envtraj, popstart.Envs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append?
 
 		if epoch != 0 {
 			fmt.Println("Epoch ",epoch,"has environments",popstart.Envs)
@@ -121,9 +121,10 @@ func main() {
 		fmt.Println("Time taken to simulate evolution :",dtevol)
 
 		popstart = pop1  //Update population after evolution.
-		OldEnv := popstart.Envs.CopyCues()
-		popstart.RefEnvs = OldEnv
-		popstart.Envs = OldEnv.ChangeEnv(denv)
+		
+		OldEnvs := popstart.Envs.CopyCues()
+		popstart.RefEnvs = OldEnvs
+		popstart.Envs = OldEnvs.ChangeEnvs(denv) 
 	}
 
 	fmt.Println("Trajectory of population written to",T_Filename)

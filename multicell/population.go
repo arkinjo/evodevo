@@ -143,8 +143,8 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined using difference of environment cues
 	axlength2 := 0.0
 
-	e := pop.Envs.Es
-	e0 := pop.RefEnvs.Es
+	e := pop.Envs.Es //Cue in novel (present) environment
+	e0 := pop.RefEnvs.Es //Cue in ancestral (previous) environment
 	v := NewVec(Nenv)
 	de := NewCues(Ncells,Nenv)
 
@@ -165,18 +165,18 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 }
 
 func(pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
-	e := pop.Envs.Es
-	e0 := pop.RefEnvs.Es
+	e := pop.Envs.Es // novel environment
+	e0 := pop.RefEnvs.Es // ancestral environment
 
-	me := NewCues(Ncells,Nenv)
-	v := NewVec(Nenv)
+	me := NewCues(Ncells,Nenv) // midpoint
 
-	for i,p := range e {
-		addVecs(v,p.C,e0[i].C)
-		for j := range v {
-			v[j] = v[j]/2
+	fmt.Println("Novel environment:",e)
+	fmt.Println("Ancestral environment:",e0)
+	
+	for i,c := range e {
+		for j,v := range c.C {
+			me.Es[i].C[j] = (v + e0[i].C[j])/2.0
 		}
-		me.Es[i].C = v
 	}
 	return me
 }
@@ -334,7 +334,11 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 	for _,indiv := range pop.Indivs {
 		pproj, gproj = 0.0, 0.0
 		for i,env := range mu.Es { //For each environment cue
+			//fmt.Println("Phenotype :",indiv.Copies[2].Ctypes[i].P.C) //phenotype expressed by ith cell
+			fmt.Println("Mid Cue:",env.C) //midpoint of trajectory
 			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C) //centralize
+			//fmt.Println("Normalized phenotype:",cphen) //Normalized phenotype
+			//fmt.Println("Projection weights:",Paxis.Es[i].C) //Projection weight
 			pproj += innerproduct(cphen,Paxis.Es[i].C)
 		}
 		for i, m := range indiv.Genome.E {

@@ -397,7 +397,7 @@ func(indiv *Indiv) get_vp() float64 { //Get sum of elementwise variance of pheno
 	return sigma2p
 }
 
-func(indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of individual; normalize with variance of 
+func(indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of individual; normalize with variance of environment cue
 	sigma2env := envs.GetCueVar()
 	if sigma2env == 0 {
 		return 0
