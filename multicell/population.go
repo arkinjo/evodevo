@@ -153,15 +153,19 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 		axlength2 += Veclength2(v)
 		de.Es[i] = Cue{v}
 	}
+	fmt.Println("Dir:",de)
 
 	axlength := math.Sqrt(axlength2)
-	for i,c := range de.Es{
-		for j,p := range c.C {
-			de.Es[i].C[j] = p/axlength //normalize to unit vector 
+	if axlength == 0 { //if no change in environment cue
+		return de
+	} else { //normalize
+		for i,c := range de.Es{
+			for j,p := range c.C {
+				de.Es[i].C[j] = p/axlength //normalize to unit vector 
+			}
 		}
+		return de
 	}
-
-	return de
 }
 
 func(pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
@@ -335,7 +339,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 		pproj, gproj = 0.0, 0.0
 		for i,env := range mu.Es { //For each environment cue
 			//fmt.Println("Phenotype :",indiv.Copies[2].Ctypes[i].P.C) //phenotype expressed by ith cell
-			fmt.Println("Mid Cue:",env.C) //midpoint of trajectory
+			//fmt.Println("Mid Cue:",env.C) //midpoint of trajectory
 			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C) //centralize
 			//fmt.Println("Normalized phenotype:",cphen) //Normalized phenotype
 			//fmt.Println("Projection weights:",Paxis.Es[i].C) //Projection weight

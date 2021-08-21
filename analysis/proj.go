@@ -118,6 +118,8 @@ func main() {
 
 		pop.Envs = pop1.Envs
 		pop.RefEnvs = pop1.RefEnvs
+		fmt.Println("Nov Env:",pop.Envs)
+		fmt.Println("Anc Env:",pop.RefEnvs)
 		pop.Dump_Projections(PG_Filename,gen,Gaxis)
 	}
 	dtdump := time.Since(tdump)

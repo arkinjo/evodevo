@@ -110,6 +110,8 @@ func main() {
 
 		pop1 := multicell.Evolve(true,T_Filename,json_out,gidfilename,epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
+		fmt.Println("Nov env:",pop1.Envs)
+		fmt.Println("Anc env:",pop1.RefEnvs)
 
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :",dtevol)
