@@ -95,6 +95,11 @@ func main() {
 	Gaxis := multicell.NewGenome()
 	multicell.DiffGenomes(Gaxis,g1,g0)
 	Gaxis = Gaxis.NormalizeGenome()
+	fmt.Println("pop0 Nov Env:",pop0.Envs)
+	fmt.Println("pop0 Anc Env:",pop0.RefEnvs)
+	fmt.Println("pop1 Nov Env:",pop1.Envs)
+	fmt.Println("pop1 Anc Env:",pop1.RefEnvs)
+	
 	//pop.Envs = pop1.Envs
 	//pop.RefEnvs = pop1.RefEnvs
 
@@ -118,8 +123,8 @@ func main() {
 
 		pop.Envs = pop1.Envs
 		pop.RefEnvs = pop1.RefEnvs
-		fmt.Println("Nov Env:",pop.Envs)
-		fmt.Println("Anc Env:",pop.RefEnvs)
+		//fmt.Println("Nov Env:",pop.Envs)
+		//fmt.Println("Anc Env:",pop.RefEnvs)
 		pop.Dump_Projections(PG_Filename,gen,Gaxis)
 	}
 	dtdump := time.Since(tdump)

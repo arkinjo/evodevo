@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"io/ioutil" 
 )
 
 type Population struct { //Population of individuals
@@ -164,6 +165,7 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 				de.Es[i].C[j] = p/axlength //normalize to unit vector 
 			}
 		}
+		fmt.Println("Norm:",de)
 		return de
 	}
 }
@@ -236,9 +238,10 @@ func (pop *Population) DevPop(gen int) Population {
 }
 
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
-	var id_filename, id, dadid, momid string 
+	var jfilename, id_filename, id, dadid, momid string 
 	var Fitness, CuePlas, ObsPlas, Polyp, Util float64
 	pop := *init_pop
+	bugfixpop := NewPopulation(len(pop.Envs.Es),len(pop.Indivs))
 
 	if test && gidfilename != ""{ //write genealogy in test mode
 		id_filename = fmt.Sprintf("../analysis/%s.dot",gidfilename)
@@ -269,7 +272,9 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 				}
 			}
 			if jsonout!="" { //Export JSON population of each generation in test mode
-				jfilename := fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
+				fmt.Println("Nov Env out:",pop.Envs) //Bugfixing
+				fmt.Println("Anc Env out:",pop.RefEnvs) //Bugfixing
+				jfilename = fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
 				jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
 				if err != nil {
 					log.Fatal(err)
@@ -283,6 +288,30 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 					log.Fatal(err)
 				}
 			}
+
+			if jsonout != "" {//Bugfixing
+				jfilename = fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
+
+				popin, err := os.Open(jfilename)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				byteValue, _ := ioutil.ReadAll(popin)
+				err = json.Unmarshal(byteValue, &bugfixpop)
+				if err != nil {
+					log.Fatal(err)
+				}
+		
+				err = popin.Close()
+				if err != nil{
+					log.Fatal(err)
+				}
+				fmt.Println("Nov Env in:",bugfixpop.Envs)
+				fmt.Println("Anc Env in:",bugfixpop.RefEnvs)
+			}
+
+
 		}
 
 		Fitness = pop.GetMeanFitness()
@@ -326,7 +355,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 	
 	cphen := make(Vec, Nenv)
 	mu := pop.Get_Mid_Env()
-	Paxis := pop.Get_Environment_Axis()
+	Paxis := pop.Get_Environment_Axis() //Bug with something to do with refenv in json file output giving same value to envs and refenvs.
 	Projfilename := fmt.Sprintf("%s_%d.dat",Filename,gen)
 
 	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
