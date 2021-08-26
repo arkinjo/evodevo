@@ -19,14 +19,18 @@ var Gid_Filename string //Genealogy of ID's
 var nancfilename string
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
-var test bool = false //false : training mode, true : testing mode
+//var test bool = false //false : training mode, true : testing mode
 
 func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
     //epochPtr := flag.Int("nepoch", 1, "number of epochs")
+	ncelltypesPtr := flag.Int("celltypes",1,"number of cell types/phenotypes simultaneously trained") //default to unicellular case
     genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
+	cuePtr := flag.Bool("withCue", false, "develop with environmental cue")
+	epigPtr := flag.Bool("epig",false,"Add layer representing epigenetic markers")
+	HOCPtr := flag.Bool("HOC",false,"Add layer representing higher order complexes")
+	HOIPtr := flag.Bool("HOI",false,"Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	//denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
@@ -47,10 +51,17 @@ func main() {
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	multicell.WithCue = *cuePtr
+	multicell.Epig = *epigPtr
+	multicell.HOC = *HOCPtr
+	multicell.HOI = *HOIPtr
 	multicell.Omega = *omegaPtr
+	
+	multicell.SetNcells(*ncelltypesPtr)
+	//multicell.Ncells = *ncelltypesPtr
+	//multicell.SelStrength = 0.25/float64(multicell.Ncells)
 	//test = *testPtr
 
-	pop0 := multicell.NewPopulation(multicell.Ncells,multicell.MaxPop)
+	pop0 := multicell.NewPopulation(multicell.GetNcells(),multicell.MaxPop)
 	
 	if  json_in != "" { //read input population as a json file, if given
 		fmt.Println("Importing initial population")
@@ -85,7 +96,7 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.Envs = multicell.RandomEnvs(multicell.Ncells,multicell.Nenv,0.5)
+	popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(),multicell.Nenv,0.5)
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
@@ -100,9 +111,10 @@ func main() {
 	fmt.Println("Novel environment :",popstart.Envs)
 	gidfilename := fmt.Sprintf("%s_full",Gid_Filename)
 
-	pop1 := multicell.Evolve(test,T_Filename,json_out,gidfilename,epochlength, 1, &popstart)
+	pop1 := multicell.Evolve(true,T_Filename,json_out,gidfilename,epochlength, 1, &popstart)
 	fmt.Println("End of epoch")
 
+	/*
 	jfilename := fmt.Sprintf("%s.json",json_out)
 	jsonpop, err := json.Marshal(pop1) //JSON encoding of population as byte array
 	if err != nil {
@@ -116,11 +128,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	*/
 	dtevol := time.Since(tevol)
 	fmt.Println("Time taken to simulate evolution :",dtevol)
 	fmt.Println("Dumping projections")
 	tdump := time.Now()
-	pop := multicell.NewPopulation(multicell.Ncells,multicell.MaxPop)
+	pop := multicell.NewPopulation(multicell.GetNcells(),multicell.MaxPop)
 	g0 := pop0.GetMeanGenome()
 	g1 := pop1.GetMeanGenome()
 	Gaxis := multicell.NewGenome()
@@ -128,7 +141,7 @@ func main() {
 	Gaxis = Gaxis.NormalizeGenome()
 
 	for gen := 1; gen<=epochlength; gen++ {
-		jfilename := fmt.Sprintf("%s_%d.json",json_out,gen)
+		jfilename := fmt.Sprintf("../analysis/%s_%d.json",json_out,gen)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)
@@ -158,7 +171,7 @@ func main() {
 	dtdot := time.Since(tdot)
 	fmt.Println("Time taken to make dot file :",dtdot)
 	fmt.Println("Dumping number of ancestors")
-	nancfilename = fmt.Sprintf("%s_nanc.dat",Gid_Filename)
+	nancfilename = fmt.Sprintf("../analysis/%s_nanc.dat",Gid_Filename)
 	fout, err = os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
 	if err != nil {
 		log.Fatal(err)

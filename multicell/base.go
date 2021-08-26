@@ -8,7 +8,7 @@ import (
 var MaxPop int = 1000 // population size
 var Ngenes int = 400 // number of genes
 var Nenv int = 20    // number of environmental cues/phenotypic values per face
-var Ncells int = 1 //number of cell types/phenotypes to be trained simultaneously
+var ncells int = 1 //number of cell types/phenotypes to be trained simultaneously; not exported
 
 var MaxDevStep int = 200    // Maximum steps for development.
 var epsDev float64 = 1.0e-8 // convergence criterion of development.
@@ -21,7 +21,8 @@ var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
 var MutationRate float64 = 0.01
 
-var s float64 = 0.25/float64(Ncells) // selection strength; normalized by number of cells
+const defaultSelStrength float64 = 0.25 // default selection strength; to be normalized by number of cells
+var selStrength float64 //declaration
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var WithCue bool = false // with or without environmental cues. See Develop in indiv.go.
@@ -39,6 +40,15 @@ type Vec = []float64 //Vector is a slice
 
 func SetSeed(seed int64) {
 	rand.Seed(seed)
+}
+
+func SetNcells(n int) {
+	ncells = n
+	selStrength = defaultSelStrength/float64(n)
+}
+
+func GetNcells() int {
+	return ncells 
 }
 
 func sigmoid(x, omega float64) float64 {

@@ -7,7 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"io/ioutil" 
+//	"io/ioutil" 
 )
 
 type Population struct { //Population of individuals
@@ -81,7 +81,7 @@ func (pop *Population) GetMeanPp() float64 { //average degree of polyphenism of 
 
 func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
 	npop := len(pop.Indivs)
-	MeanPhenotype := NewCues(Ncells,Nenv)
+	MeanPhenotype := NewCues(ncells,Nenv)
 	pop.DevPop(gen)
 
 	for _,indiv := range(pop.Indivs) {
@@ -147,14 +147,13 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 	e := pop.Envs.Es //Cue in novel (present) environment
 	e0 := pop.RefEnvs.Es //Cue in ancestral (previous) environment
 	v := NewVec(Nenv)
-	de := NewCues(Ncells,Nenv)
+	de := NewCues(ncells,Nenv)
 
 	for i,p := range e {
 		diffVecs(v,p.C,e0[i].C)
 		axlength2 += Veclength2(v)
 		de.Es[i] = Cue{v}
 	}
-	fmt.Println("Dir:",de)
 
 	axlength := math.Sqrt(axlength2)
 	if axlength == 0 { //if no change in environment cue
@@ -165,7 +164,6 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 				de.Es[i].C[j] = p/axlength //normalize to unit vector 
 			}
 		}
-		fmt.Println("Norm:",de)
 		return de
 	}
 }
@@ -174,10 +172,7 @@ func(pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previou
 	e := pop.Envs.Es // novel environment
 	e0 := pop.RefEnvs.Es // ancestral environment
 
-	me := NewCues(Ncells,Nenv) // midpoint
-
-	fmt.Println("Novel environment:",e)
-	fmt.Println("Ancestral environment:",e0)
+	me := NewCues(ncells,Nenv) // midpoint
 	
 	for i,c := range e {
 		for j,v := range c.C {
@@ -217,8 +212,8 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 }
 
 func (pop *Population) DevPop(gen int) Population {
-	novenv := NewCues(Ncells,Nenv)
-	ancenv := NewCues(Ncells,Nenv)
+	novenv := NewCues(ncells,Nenv)
+	ancenv := NewCues(ncells,Nenv)
 
 	pop.Gen = gen
 
@@ -241,7 +236,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 	var jfilename, id_filename, id, dadid, momid string 
 	var Fitness, CuePlas, ObsPlas, Polyp, Util float64
 	pop := *init_pop
-	bugfixpop := NewPopulation(len(pop.Envs.Es),len(pop.Indivs))
+	//bugfixpop := NewPopulation(len(pop.Envs.Es),len(pop.Indivs))
 
 	if test && gidfilename != ""{ //write genealogy in test mode
 		id_filename = fmt.Sprintf("../analysis/%s.dot",gidfilename)
@@ -272,8 +267,8 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 				}
 			}
 			if jsonout!="" { //Export JSON population of each generation in test mode
-				fmt.Println("Nov Env out:",pop.Envs) //Bugfixing
-				fmt.Println("Anc Env out:",pop.RefEnvs) //Bugfixing
+				//fmt.Println("Nov Env out:",pop.Envs) //Bugfixing
+				//fmt.Println("Anc Env out:",pop.RefEnvs) //Bugfixing
 				jfilename = fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
 				jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
 				if err != nil {
@@ -289,6 +284,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 				}
 			}
 
+			/*
 			if jsonout != "" {//Bugfixing
 				jfilename = fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
 
@@ -310,6 +306,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 				fmt.Println("Nov Env in:",bugfixpop.Envs)
 				fmt.Println("Anc Env in:",bugfixpop.RefEnvs)
 			}
+			*/
 
 
 		}
@@ -356,7 +353,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 	cphen := make(Vec, Nenv)
 	mu := pop.Get_Mid_Env()
 	Paxis := pop.Get_Environment_Axis() //Bug with something to do with refenv in json file output giving same value to envs and refenvs.
-	Projfilename := fmt.Sprintf("%s_%d.dat",Filename,gen)
+	Projfilename := fmt.Sprintf("../analysis/%s_%d.dat",Filename,gen)
 
 	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -367,11 +364,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 	for _,indiv := range pop.Indivs {
 		pproj, gproj = 0.0, 0.0
 		for i,env := range mu.Es { //For each environment cue
-			//fmt.Println("Phenotype :",indiv.Copies[2].Ctypes[i].P.C) //phenotype expressed by ith cell
-			//fmt.Println("Mid Cue:",env.C) //midpoint of trajectory
 			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C) //centralize
-			//fmt.Println("Normalized phenotype:",cphen) //Normalized phenotype
-			//fmt.Println("Projection weights:",Paxis.Es[i].C) //Projection weight
 			pproj += innerproduct(cphen,Paxis.Es[i].C)
 		}
 		for i, m := range indiv.Genome.E {

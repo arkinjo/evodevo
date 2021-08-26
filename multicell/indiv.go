@@ -243,7 +243,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	genome := NewGenome()
 	cellcopies := make([]Cells,3)
 	for i := range(cellcopies) {
-		cellcopies[i] = NewCells(Ncells)
+		cellcopies[i] = NewCells(ncells)
 	}
 
 	z := NewVec(Ngenes)
@@ -323,11 +323,11 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 
 	cells0 := make([]Cells,3)
 	for i := range cells0 {
-		cells0[i] = NewCells(Ncells)
+		cells0[i] = NewCells(ncells)
 	}
 	cells1 := make([]Cells,3)
 	for i := range cells1 {
-		cells1[i] = NewCells(Ncells)
+		cells1[i] = NewCells(ncells)
 	}
 
 	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0,  cells0, g0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
@@ -355,7 +355,9 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 		p = cells.Ctypes[i].P.CopyCue().C
 		d2 += dist2Vecs(p,env)
 	}
-	return math.Exp(-s * d2)
+	// s := ScaleSelStrength(Ncell)
+	// return(...(-s*d2))
+	return math.Exp(-selStrength * d2)
 }
 
 
@@ -369,7 +371,7 @@ func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individua
 		p0 = Copies[0].Ctypes[i].P.C
 		d2 += dist2Vecs(p,p0)
 	}
-	d2 = dist2Vecs(p,p0)/float64(Nenv*Ncells) //Divide by number of phenotypes to normalize
+	d2 = dist2Vecs(p,p0)/float64(Nenv*ncells) //Divide by number of phenotypes to normalize
 	return d2
 }
 
@@ -383,7 +385,7 @@ func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individua
 		p0 = Copies[1].Ctypes[i].P.C
 		d2 += dist2Vecs(p,p0)
 	}
-	d2 = dist2Vecs(p,p0)/float64(Nenv*Ncells) //Divide by number of phenotypes to normalize
+	d2 = dist2Vecs(p,p0)/float64(Nenv*ncells) //Divide by number of phenotypes to normalize
 	return d2
 }
 

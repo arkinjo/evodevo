@@ -140,7 +140,7 @@ func (cues *Cues) ChangeEnvs(n int) Cues { //Mutates precisely n bits in environ
 	envs1 := cues.CopyCues() //Make a copy to perform operations without changing original value
 	//fmt.Println("Copy:",envs1)
 	cs := envs1.Es
-	N := Nenv*Ncells
+	N := Nenv*ncells
 	indices := make([]int,N)
 	for i:= range indices {
 		indices[i] = i

@@ -44,10 +44,10 @@ func main() {
 	multicell.HOC = *HOCPtr
 	multicell.HOI = *HOIPtr
 	multicell.Omega = *omegaPtr
-	multicell.Ncells = *ncelltypesPtr
+	multicell.SetNcells(*ncelltypesPtr)
 
-	pop0 := multicell.NewPopulation(multicell.Ncells,multicell.MaxPop)
-	pop1 := multicell.NewPopulation(multicell.Ncells,multicell.MaxPop)
+	pop0 := multicell.NewPopulation(multicell.GetNcells(),multicell.MaxPop)
+	pop1 := multicell.NewPopulation(multicell.GetNcells(),multicell.MaxPop)
 	
 	jfilename = fmt.Sprintf("%s_1.json",json_in)
 	fmt.Printf("Importing initial population from %s \n",jfilename)
@@ -88,7 +88,7 @@ func main() {
 
 	fmt.Println("Dumping projections")
 	tdump := time.Now()
-	pop := multicell.NewPopulation(multicell.Ncells,multicell.MaxPop)
+	pop := multicell.NewPopulation(multicell.GetNcells(),multicell.MaxPop)
 
 	g0 := pop0.GetMeanGenome() //Average genome before evolution
 	g1 := pop1.GetMeanGenome() //Average genome after evolution

@@ -46,9 +46,10 @@ func main() {
 	multicell.HOC = *HOCPtr
 	multicell.HOI = *HOIPtr
 	multicell.Omega = *omegaPtr
-	multicell.Ncells = *ncelltypesPtr
 
-	pop0 := multicell.NewPopulation(multicell.Ncells,multicell.MaxPop)
+	multicell.SetNcells(*ncelltypesPtr)
+
+	pop0 := multicell.NewPopulation(multicell.GetNcells(),multicell.MaxPop)
 	
 	if  json_in != "" { //read input population as a json file, if given
 		jfilename := fmt.Sprintf("%s.json",json_in) //Make sure json file is in same directory as train.go
@@ -83,7 +84,7 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.Envs = multicell.RandomEnvs(multicell.Ncells,multicell.Nenv,0.5)
+	popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(),multicell.Nenv,0.5)
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
@@ -103,6 +104,7 @@ func main() {
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population
+			pop1.RefEnvs = pop1.Envs //Update to environment just before epoch change
 			jfilename := fmt.Sprintf("../test/%s.json",json_out) //export output population to test file
 			jsonpop, err := json.Marshal(pop1) //JSON encoding of population as byte array
 			if err != nil {
