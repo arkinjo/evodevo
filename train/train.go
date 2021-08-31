@@ -77,7 +77,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Utility") //header
+	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
 	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)

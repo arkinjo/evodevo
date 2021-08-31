@@ -89,8 +89,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Utility") //header
+	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
+	pop0.Envs = pop0.RefEnvs //Generation zero; just before environment change
+	pop0.DevPop(0)
+
+	fmt.Fprintf(fout, "1 \t 0 \t %e \t %e \t %e \t %e \t %e \t %e \n",pop0.GetMeanFitness(),pop0.GetMeanCuePlasticity(),pop0.GetMeanObsPlasticity(),pop0.GetMeanPp(),pop0.GetDiversity(),pop0.GetMeanUtility())
+
 	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	jfilename := fmt.Sprintf("../analysis/%s_0.json",json_out)
+	jsonpop, err := json.Marshal(pop0) //JSON encoding of population as byte array
+	if err != nil {
+		log.Fatal(err)
+	}
+	popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = popout.Write(jsonpop)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = popout.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -140,7 +164,7 @@ func main() {
 	multicell.DiffGenomes(Gaxis,g1,g0)
 	Gaxis = Gaxis.NormalizeGenome()
 
-	for gen := 1; gen<=epochlength; gen++ {
+	for gen := 0; gen<=epochlength; gen++ {
 		jfilename := fmt.Sprintf("../analysis/%s_%d.json",json_out,gen)
 		popin, err := os.Open(jfilename)
 		if err != nil {

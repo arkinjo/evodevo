@@ -79,6 +79,18 @@ func (pop *Population) GetMeanPp() float64 { //average degree of polyphenism of 
 	return mu / fn
 }
 
+func (pop *Population) GetDiversity() float64 { //To be used after development
+	cv := make([]Cue,0)
+	for _,ind := range pop.Indivs {
+		for _,cell := range ind.Copies[2].Ctypes {
+			cv = append(cv, cell.P)
+		}
+	}
+	ccues := Cues{cv}
+
+	return ccues.GetCueVar()
+}
+
 func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
 	npop := len(pop.Indivs)
 	MeanPhenotype := NewCues(ncells,Nenv)
@@ -234,7 +246,7 @@ func (pop *Population) DevPop(gen int) Population {
 
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string 
-	var Fitness, CuePlas, ObsPlas, Polyp, Util float64
+	var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
 	pop := *init_pop
 	//bugfixpop := NewPopulation(len(pop.Envs.Es),len(pop.Indivs))
 
@@ -267,8 +279,6 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 				}
 			}
 			if jsonout!="" { //Export JSON population of each generation in test mode
-				//fmt.Println("Nov Env out:",pop.Envs) //Bugfixing
-				//fmt.Println("Anc Env out:",pop.RefEnvs) //Bugfixing
 				jfilename = fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
 				jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
 				if err != nil {
@@ -281,6 +291,10 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 				_, err = popout.Write(jsonpop)
 				if err != nil {
 					log.Fatal(err)
+				}
+				err = popout.Close()
+				if err != nil {
+					log.Fatal()
 				}
 			}
 
@@ -315,6 +329,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		CuePlas = pop.GetMeanCuePlasticity()
 		ObsPlas = pop.GetMeanObsPlasticity()
 		Polyp = pop.GetMeanPp()
+		Div = pop.GetDiversity()
 		Util = pop.GetMeanUtility()
 
 		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -322,13 +337,13 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 
-		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\t%e\n" ,epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Util)
+		fmt.Fprintf(fout,"%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n" ,epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Util)
+		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 		pop = pop.Reproduce(MaxPop)
 	}
 	if test && gidfilename!= ""{

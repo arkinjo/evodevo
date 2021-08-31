@@ -1,22 +1,10 @@
 
-#trajs <- read.table("traj1.dat",header=TRUE)
-#fit <- trajs$Fitness
-#dfit = diff(fit)
-#plot(dfit,main="Change in fitness",xlab="Generation",type="l")
-#abline(h=0,col="red")
-
-#nancs <- read.table("gen1_nanc.dat",header=TRUE)
-#nanc <- nancs$Ancestors
-
-#plot(nanc,xlab="Generation",ylim=c(0,1000),main="Shape of graph",type="l")
-
-
 phat <- c()
 ghat <- c()
 
-pdf("PGtraj1.pdf")
-for (i in c(1:200)){
-  filename <- paste("pg20210823_",i,".dat",sep="")
+pdf("m2poptraj20210829pg.pdf")
+for (i in c(0:200)){
+  filename <- paste("m2pop20210829pg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
   p <- pg$Phenotype
   g <- pg$Genotype
