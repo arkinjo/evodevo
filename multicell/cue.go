@@ -12,6 +12,7 @@ var EnvNoise float64 = 0.00 // Selection environment noise
 
 
 type Cue struct {
+	id Vec //id vector of cue
 	C Vec //Environment cue is a vector
 }
 
@@ -19,16 +20,17 @@ type Cues struct {
 	Es []Cue //Cue array object
 }
 
-func NewCue(nenv int) Cue { //Initialize a new cue type object
+func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 	cv := NewVec(nenv)
-	cue := Cue{cv}
+	idv := UnitVec(ncells, id)
+	cue := Cue{idv,cv}
 	return cue
 }
 
 
-func RandomEnv(nenv int, density float64) Cue { //Fake up a boolean environment vector
+func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environment vector
 	var r float64
-	env := NewCue(nenv)
+	env := NewCue(nenv, id)
 	v := make([]float64, nenv)
 	for i := range v {
 		r = rand.Float64()
@@ -45,17 +47,23 @@ func RandomEnv(nenv int, density float64) Cue { //Fake up a boolean environment 
 
 func (cue *Cue) CopyCue() Cue { //Returns a copy of an environment cue
 	c0 := cue.C
-	l := len(c0)
-	v := make([]float64,l)
-	copy(v,c0)
-	c1 := Cue{v}
+	lc := len(c0)
+	cv := make([]float64,lc)
+	copy(cv,c0)
+
+	id0 := cue.id
+	lid := len(id0)
+	idv := make([]float64,lid)
+	copy(idv,id0)
+
+	c1 := Cue{idv,cv}
 	return c1
 }
 
 func (cue *Cue) AddNoise(eta float64) Cue {
 	var r float64
 	env1 := cue.CopyCue()
-	v1 := env1.C
+	v1 := env1.C //ignore id vector!
 	for i, c := range v1 {
 		r = rand.Float64()
 		if r < eta {
@@ -72,7 +80,7 @@ func (cue *Cue) AddNoise(eta float64) Cue {
 }
 
 
-func (cue *Cue) ChangeEnv(n int) Cue {// Mutate precisely n bits of environment cue.
+func (cue *Cue) ChangeEnv(n int) Cue {// Mutate precisely n bits of environment cue; ignore id part
 	env1 := cue.CopyCue() //make a copy of the environmental cue to perform operations without affecting original value
 	v1 := env1.C
 	indices := make([]int,len(v1))
@@ -99,8 +107,8 @@ func (cue *Cue) ChangeEnv(n int) Cue {// Mutate precisely n bits of environment 
 
 func NewCues(ncells, nenv int) Cues {
 	vs := make([]Cue,ncells)
-	for i := range vs { 
-		vs[i] = NewCue(nenv)
+	for id := range vs { 
+		vs[id] = NewCue(id,nenv)
 	}
 	cs := Cues{vs}
 	return cs
@@ -108,8 +116,8 @@ func NewCues(ncells, nenv int) Cues {
 
 func RandomEnvs(ncells, nenv int, density float64) Cues { //Randomly generate cue array
 	vs := make([]Cue,ncells)
-	for i := range vs { 
-		vs[i] = RandomEnv(nenv,density)
+	for id := range vs { 
+		vs[id] = RandomEnv(nenv,id,density)
 	}
 	cs := Cues{vs}
 	return cs
@@ -120,7 +128,7 @@ func (cues *Cues) CopyCues() Cues{
 	vs := make([]Cue,ncells)
 	//copy(vs,cues.Es) //Original
 	for i,c := range cues.Es { //'Proactive copying'
-		vs[i] = c.CopyCue()
+		vs[i] = c.CopyCue() //No bugs with this implementation here
 	}
 	cs := Cues{vs}
 	return cs

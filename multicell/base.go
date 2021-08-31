@@ -13,13 +13,13 @@ var ncells int = 1 //number of cell types/phenotypes to be trained simultaneousl
 var MaxDevStep int = 200    // Maximum steps for development.
 var epsDev float64 = 1.0e-8 // convergence criterion of development.
 
-var GeneLength = 5*Ngenes + 2*Nenv // Length of a gene for Unicellular organism.
+var GeneLength = 5*Ngenes + 2*Nenv +2*ncells// Length of a gene for Unicellular organism.
 
 var GenomeDensity float64 = 1.0 / float64(Ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
-var MutationRate float64 = 0.01
+const baseMutationRate float64 = 0.01
 
 const defaultSelStrength float64 = 0.25 // default selection strength; to be normalized by number of cells
 var selStrength float64 //declaration
@@ -97,8 +97,14 @@ func NewSpmat(nrow, ncol int, density float64) Spmat { //Generate a new sparse m
 	return mat
 }
 
-func NewVec(len int) Vec { //Generate a new vector of length len
+func NewVec(len int) Vec { //Generate a new (zero) vector of length len
 	v := make([]float64, len)
+	return v
+}
+
+func UnitVec(len, dir int) Vec { //Generate a unit vector of length len with dir-th element = 1.0
+	v := NewVec(len)
+	v[dir] = 1.0
 	return v
 }
 
@@ -189,7 +195,7 @@ func applyFnVec(f func(float64) float64, vec Vec) { //Apply function f to a vect
 
 func mutateSpmat(mat Spmat, ncol int) { //mutating a sparse matrix
 	nrow := len(mat)
-	nmut := int(MutationRate * float64(nrow*ncol))
+	nmut := int(baseMutationRate * float64(nrow*ncol))
 	for n := 0; n < nmut; n++ {
 		i := rand.Intn(nrow)
 		j := rand.Intn(ncol)

@@ -114,10 +114,15 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 	MeanGenome := NewGenome()
 	for _,indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
-		for i := range Gtilde.E {
+		for i := range Gtilde.Ec {
 			for j:=0 ; j<Nenv ; j++ {
-				MeanGenome.E[i][j] += Gtilde.E[i][j]/float64(len(pop.Indivs))
+				MeanGenome.Ec[i][j] += Gtilde.Ec[i][j]/float64(len(pop.Indivs))
 			} 
+		}
+		for i := range Gtilde.Eid {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.Eid[i][j] += Gtilde.Eid[i][j]/float64(len(pop.Indivs))
+			}
 		}
 		for i := range Gtilde.F {
 			for j:=0 ; j<Nenv ; j++ {
@@ -139,9 +144,14 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 				MeanGenome.Hh[i][j] += Gtilde.Hh[i][j]/float64(len(pop.Indivs))
 			} 
 		}
-		for i := range Gtilde.P {
+		for i := range Gtilde.Pc {
 			for j:=0 ; j<Nenv ; j++ {
-				MeanGenome.P[i][j] += Gtilde.P[i][j]/float64(len(pop.Indivs))
+				MeanGenome.Pc[i][j] += Gtilde.Pc[i][j]/float64(len(pop.Indivs))
+			}
+		}
+		for i := range Gtilde.Pc {
+			for j:=0 ; j<Nenv ; j++ {
+				MeanGenome.Pid[i][j] += Gtilde.Pid[i][j]/float64(len(pop.Indivs))
 			}
 		}
 		for i := range Gtilde.Z {
@@ -164,7 +174,7 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 	for i,p := range e {
 		diffVecs(v,p.C,e0[i].C)
 		axlength2 += Veclength2(v)
-		de.Es[i] = Cue{v}
+		de.Es[i] = Cue{NewVec(ncells),v} //ids must stay the same
 	}
 
 	axlength := math.Sqrt(axlength2)
@@ -382,9 +392,14 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C) //centralize
 			pproj += innerproduct(cphen,Paxis.Es[i].C)
 		}
-		for i, m := range indiv.Genome.E {
+		for i, m := range indiv.Genome.Ec {
 			for j, d := range m {
-				gproj += d * Gaxis.E[i][j]
+				gproj += d * Gaxis.Ec[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.Eid {
+			for j, d := range m {
+				gproj += d*Gaxis.Eid[i][j]
 			}
 		}
 		for i, m := range indiv.Genome.F {
@@ -407,9 +422,14 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 				gproj += d * Gaxis.Hg[i][j]
 			}
 		}
-		for i, m := range indiv.Genome.P {
+		for i, m := range indiv.Genome.Pc {
 			for j, d := range m {
-				gproj += d * Gaxis.P[i][j]
+				gproj += d * Gaxis.Pc[i][j]
+			}
+		}
+		for i, m := range indiv.Genome.Pid {
+			for j, d := range m {
+				gproj += d * Gaxis.Pid[i][j]
 			}
 		}
 		for i, m := range indiv.Genome.Z {
