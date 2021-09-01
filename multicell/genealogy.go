@@ -15,7 +15,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 
 	nanctraj := []int{}
 	rnanctraj := []int{}
-	pop := NewPopulation(Nenv,npop)
+	pop := NewPopulation(ncells,npop)
 	genfile := fmt.Sprintf("../analysis/%s.dot",dotfilename)
 	fout, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -32,7 +32,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 	}
 	pars := make(map[int]bool)
 	for gen := ngen; gen>0; gen-- {
-		jfilename := fmt.Sprintf("../analysis/%s_%d.json",popfilename,gen)
+		jfilename := fmt.Sprintf("../pops/%s_%d.json",popfilename,gen)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)

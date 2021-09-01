@@ -45,7 +45,7 @@ func main() {
 	//maxepochs := *epochPtr
 	epochlength := *genPtr
 	//denv := *denvPtr
-	T_Filename = fmt.Sprintf("%s.dat",*tfilenamePtr)
+	T_Filename = fmt.Sprintf("../analysis/%s.dat",*tfilenamePtr)
 	PG_Filename = *pgfilenamePtr
 	Gid_Filename = *gidfilenamePtr
 	json_in = *jsoninPtr
@@ -65,7 +65,7 @@ func main() {
 	
 	if  json_in != "" { //read input population as a json file, if given
 		fmt.Println("Importing initial population")
-		jfilename := fmt.Sprintf("%s.json",json_in)
+		jfilename := fmt.Sprintf("../pops/%s.json",json_in)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)
@@ -100,7 +100,7 @@ func main() {
 		log.Fatal(err)
 	}
 	
-	jfilename := fmt.Sprintf("../analysis/%s_0.json",json_out)
+	jfilename := fmt.Sprintf("../pops/%s_0.json",json_out)
 	jsonpop, err := json.Marshal(pop0) //JSON encoding of population as byte array
 	if err != nil {
 		log.Fatal(err)
@@ -165,7 +165,7 @@ func main() {
 	Gaxis = Gaxis.NormalizeGenome()
 
 	for gen := 0; gen<=epochlength; gen++ {
-		jfilename := fmt.Sprintf("../analysis/%s_%d.json",json_out,gen)
+		jfilename := fmt.Sprintf("../pops/%s_%d.json",json_out,gen)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)
@@ -210,9 +210,9 @@ func main() {
 	}
 
 	fmt.Println("Trajectory of population written to",T_Filename)
-	fmt.Printf("Projections written to %s.dat \n",PG_Filename)
+	fmt.Printf("Projections written to %s*.dat \n",PG_Filename)
 	fmt.Printf("Genealogy of final generation written to %s.dot\n",Gid_Filename)
-	fmt.Printf("Number of ancestors of final generation written to %s.dat\n",nancfilename)
+	fmt.Printf("Number of ancestors of final generation written to %s\n",nancfilename)
 	fmt.Printf("JSON encoding of evolved population written to %s.json \n", json_out)
 	fmt.Println("Trajectory of environment :", envtraj)
 	

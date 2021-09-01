@@ -164,9 +164,10 @@ func Veclength(v Vec) float64 { //Euclidean Length of vector
 }
 
 func dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
+	var dev float64
 	dist := 0.0
 	for i, v := range v0 {
-		dev := v - v1[i]
+		dev = v - v1[i]
 		dist += dev * dev
 	}
 	return dist

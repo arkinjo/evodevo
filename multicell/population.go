@@ -289,7 +289,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 				}
 			}
 			if jsonout!="" { //Export JSON population of each generation in test mode
-				jfilename = fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
+				jfilename = fmt.Sprintf("../pops/%s_%d.json",jsonout,pop.Gen)
 				jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
 				if err != nil {
 					log.Fatal(err)

@@ -108,7 +108,7 @@ func (cue *Cue) ChangeEnv(n int) Cue {// Mutate precisely n bits of environment 
 func NewCues(ncells, nenv int) Cues {
 	vs := make([]Cue,ncells)
 	for id := range vs { 
-		vs[id] = NewCue(id,nenv)
+		vs[id] = NewCue(nenv,id)
 	}
 	cs := Cues{vs}
 	return cs

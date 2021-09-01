@@ -407,12 +407,16 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 	id := make([]float64,ncells)
 	idp := make([]float64,ncells)
 	for i := range cells.Ctypes{
+		
 		env = envs.Es[i].C
 		p = cells.Ctypes[i].P.CopyCue().C
 		d2 += dist2Vecs(p,env)
+
 		//Also add difference of id of cell type
 		id = envs.Es[i].id
 		idp = cells.Ctypes[i].P.CopyCue().id
+		//fmt.Println("env id:",id)
+		//fmt.Println("cell id:",idp)
 		d2 += dist2Vecs(idp,id)
 	}
 	// s := ScaleSelStrength(Ncell)
@@ -479,7 +483,7 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 	vg := g0
 	vh := make([]float64,Ngenes)
 	vpc := make([]float64,Nenv)
-	vpid := make([]float64,Nenv)
+	vpid := make([]float64,ncells)
 	e1 := make([]float64,Ngenes)
 	f1 := make([]float64,Ngenes)
 	g1 := make([]float64,Ngenes)
@@ -517,7 +521,7 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 		multMatVec_T(vpc,G.Pc,h1)
 		applyFnVec(rho,vpc)
 		multMatVec_T(vpid,G.Pid,h1)
-		applyFnVec(rho,veid)
+		applyFnVec(rho,vpid)
 		diff = dist2Vecs(vg,g0)
 		g0 = g1
 		h0 = h1
@@ -526,11 +530,15 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 		}
 
 	}
+	//fmt.Println("Phenotype after development:",vpc)
+	//fmt.Println("Id after development:",vpid)
+
+
 	cell.E = env
 	cell.F = f1
 	cell.G = g1
 	cell.H = h1
-	cell.P = Cue{vpc,vpid}
+	cell.P = Cue{vpid,vpc}
 	
 	return *cell
 }

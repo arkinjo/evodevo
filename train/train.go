@@ -16,6 +16,7 @@ import (
 var T_Filename string = "traj"
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
+var jfilename string
 
 func main() {
 	t0 := time.Now()
@@ -38,7 +39,7 @@ func main() {
 	maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
-	T_Filename = fmt.Sprintf("../analysis/%s.dat",*tfilenamePtr)
+	T_Filename = fmt.Sprintf("../analysis/%s.dat",*tfilenamePtr)//all trajectories go to analysis directory
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	multicell.WithCue = *cuePtr
@@ -52,8 +53,8 @@ func main() {
 	pop0 := multicell.NewPopulation(multicell.GetNcells(),multicell.MaxPop)
 	
 	if  json_in != "" { //read input population as a json file, if given
-		jfilename := fmt.Sprintf("%s.json",json_in) //Make sure json file is in same directory as train.go
-		fmt.Printf("Importing initial population from %s.json \n",jfilename)
+		jfilename = fmt.Sprintf("../pops/%s.json",json_in) //Make sure json file is in pops directory
+		fmt.Printf("Importing initial population from %s \n",jfilename)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)
@@ -89,12 +90,12 @@ func main() {
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
 	
-	envtraj := make([]multicell.Cues,1) //Trajectory of environment cue
-	envtraj[0] = popstart.RefEnvs
+//	envtraj := make([]multicell.Cues,1) //Trajectory of environment cue
+//	envtraj[0] = popstart.RefEnvs
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
-		envtraj = append(envtraj, popstart.Envs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append?
+//		envtraj = append(envtraj, popstart.Envs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append?
 
 		if epoch != 0 {
 			fmt.Println("Epoch ",epoch,"has environments",popstart.Envs)
@@ -105,7 +106,7 @@ func main() {
 
 		if epoch == maxepochs { //Export output population
 			pop1.RefEnvs = pop1.Envs //Update to environment just before epoch change
-			jfilename := fmt.Sprintf("../test/%s.json",json_out) //export output population to test file
+			jfilename = fmt.Sprintf("../pops/%s.json",json_out) //export output population to test file
 			jsonpop, err := json.Marshal(pop1) //JSON encoding of population as byte array
 			if err != nil {
 				log.Fatal(err)
@@ -130,8 +131,8 @@ func main() {
 	}
 
 	fmt.Println("Trajectory of population written to",T_Filename)
-	fmt.Printf("JSON encoding of evolved population written to %s.json \n", json_out)
-	fmt.Println("Trajectory of environment :", envtraj)
+	fmt.Printf("JSON encoding of evolved population written to %s \n", jfilename)
+//	fmt.Println("Trajectory of environment :", envtraj)
 	
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ",dt)
