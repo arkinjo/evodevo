@@ -27,10 +27,10 @@ func main() {
     //epochPtr := flag.Int("nepoch", 1, "number of epochs")
 	ncelltypesPtr := flag.Int("celltypes",1,"number of cell types/phenotypes simultaneously trained") //default to unicellular case
     genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	cuePtr := flag.Bool("withCue", false, "develop with environmental cue")
-	epigPtr := flag.Bool("epig",false,"Add layer representing epigenetic markers")
-	HOCPtr := flag.Bool("HOC",false,"Add layer representing higher order complexes")
-	HOIPtr := flag.Bool("HOI",false,"Allow interactions between higher order complexes")
+	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
+	epigPtr := flag.Bool("epig",true,"Add layer representing epigenetic markers")
+	HOCPtr := flag.Bool("HOC",true,"Add layer representing higher order complexes")
+	HOIPtr := flag.Bool("HOI",true,"Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	//denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename","traj","name of file of trajectories")
@@ -50,10 +50,7 @@ func main() {
 	Gid_Filename = *gidfilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
-	multicell.WithCue = *cuePtr
-	multicell.Epig = *epigPtr
-	multicell.HOC = *HOCPtr
-	multicell.HOI = *HOIPtr
+	multicell.SetLayers(*cuePtr,*epigPtr,*HOCPtr,*HOIPtr)
 	multicell.Omega = *omegaPtr
 	
 	multicell.SetNcells(*ncelltypesPtr)

@@ -114,35 +114,42 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 	MeanGenome := NewGenome()
 	for _,indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
-		for i := range Gtilde.Ec {
-			for j:=0 ; j<Nenv ; j++ {
-				MeanGenome.Ec[i][j] += Gtilde.Ec[i][j]/float64(len(pop.Indivs))
-			} 
-		}
-		for i := range Gtilde.Eid {
-			for j:=0 ; j<Nenv ; j++ {
-				MeanGenome.Eid[i][j] += Gtilde.Eid[i][j]/float64(len(pop.Indivs))
+			for i := range Gtilde.Ec {
+				for j:=0 ; j<Nenv ; j++ {
+					MeanGenome.Ec[i][j] += Gtilde.Ec[i][j]/float64(len(pop.Indivs))
+				} 
+			}
+			for i := range Gtilde.Eid {
+				for j:=0 ; j<Nenv ; j++ {
+					MeanGenome.Eid[i][j] += Gtilde.Eid[i][j]/float64(len(pop.Indivs))
+				}
 			}
 		}
-		for i := range Gtilde.F {
-			for j:=0 ; j<Nenv ; j++ {
-				MeanGenome.F[i][j] += Gtilde.F[i][j]/float64(len(pop.Indivs))
-			} 
+		if epig {
+			for i := range Gtilde.F {
+				for j:=0 ; j<Nenv ; j++ {
+					MeanGenome.F[i][j] += Gtilde.F[i][j]/float64(len(pop.Indivs))
+				} 
+			}	
 		}
 		for i := range Gtilde.G {
 			for j:=0 ; j<Ngenes ; j++ {
 				MeanGenome.G[i][j] += Gtilde.G[i][j]/float64(len(pop.Indivs))
 			} 
 		}
-		for i := range Gtilde.Hg {
-			for j:=0 ; j<Nenv ; j++ {
-				MeanGenome.Hg[i][j] += Gtilde.Hg[i][j]/float64(len(pop.Indivs))
-			} 
-		}
-		for i := range Gtilde.Hh {
-			for j:=0 ; j<Nenv ; j++ {
-				MeanGenome.Hh[i][j] += Gtilde.Hh[i][j]/float64(len(pop.Indivs))
-			} 
+		if hoc {
+			for i := range Gtilde.Hg {
+				for j:=0 ; j<Nenv ; j++ {
+					MeanGenome.Hg[i][j] += Gtilde.Hg[i][j]/float64(len(pop.Indivs))
+				} 
+			}
+			if hoi {
+				for i := range Gtilde.Hh {
+					for j:=0 ; j<Nenv ; j++ {
+						MeanGenome.Hh[i][j] += Gtilde.Hh[i][j]/float64(len(pop.Indivs))
+					} 
+				}
+			}
 		}
 		for i := range Gtilde.Pc {
 			for j:=0 ; j<Nenv ; j++ {
@@ -392,19 +399,23 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 			diffVecs(cphen,indiv.Copies[2].Ctypes[i].P.C,env.C) //centralize
 			pproj += innerproduct(cphen,Paxis.Es[i].C)
 		}
-		for i, m := range indiv.Genome.Ec {
-			for j, d := range m {
-				gproj += d * Gaxis.Ec[i][j]
+		if cue {
+			for i, m := range indiv.Genome.Ec {
+				for j, d := range m {
+					gproj += d * Gaxis.Ec[i][j]
+				}
+			}
+			for i, m := range indiv.Genome.Eid {
+				for j, d := range m {
+					gproj += d*Gaxis.Eid[i][j]
+				}
 			}
 		}
-		for i, m := range indiv.Genome.Eid {
-			for j, d := range m {
-				gproj += d*Gaxis.Eid[i][j]
-			}
-		}
-		for i, m := range indiv.Genome.F {
-			for j, d := range m {
-				gproj += d * Gaxis.F[i][j]
+		if epig {
+			for i, m := range indiv.Genome.F {
+				for j, d := range m {
+					gproj += d * Gaxis.F[i][j]
+				}
 			}
 		}
 		for i, m := range indiv.Genome.G {
@@ -412,14 +423,18 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 				gproj += d * Gaxis.G[i][j]
 			}
 		}
-		for i, m := range indiv.Genome.Hg {
-			for j, d := range m {
-				gproj += d * Gaxis.Hg[i][j]
+		if hoc {
+			for i, m := range indiv.Genome.Hg {
+				for j, d := range m {
+					gproj += d * Gaxis.Hg[i][j]
+				}
 			}
-		}
-		for i, m := range indiv.Genome.Hh {
-			for j, d := range m {
-				gproj += d * Gaxis.Hg[i][j]
+			if hoi {
+				for i, m := range indiv.Genome.Hh {
+					for j, d := range m {
+						gproj += d * Gaxis.Hg[i][j]
+					}
+				}
 			}
 		}
 		for i, m := range indiv.Genome.Pc {

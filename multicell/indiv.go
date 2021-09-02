@@ -135,23 +135,32 @@ func (parent *Genome) Copy() Genome { //creates copy of parent's genome
 
 func DiffGenomes(Gout, G1, G0 Genome){ //Elementwise difference between two genomes
 	for i := 0 ; i < Ngenes ; i++ {
-		for j := 0; j < Nenv; j++ {
-			Gout.Ec[i][j] = G1.Ec[i][j] - G0.Ec[i][j]
+		if cue {
+			for j := 0; j < Nenv; j++ {
+				Gout.Ec[i][j] = G1.Ec[i][j] - G0.Ec[i][j]
+			}
+			for j := 0; j < ncells; j++ {
+				Gout.Eid[i][j] = G1.Eid[i][j] - G0.Eid[i][j]
+			}
 		}
-		for j := 0; j < ncells; j++ {
-			Gout.Eid[i][j] = G1.Eid[i][j] - G0.Eid[i][j]
-		}
-		for j := 0; j < Ngenes; j++ {
-			Gout.F[i][j] = G1.F[i][j] - G0.F[i][j]
+		if epig {
+			for j := 0; j < Ngenes; j++ {
+				Gout.F[i][j] = G1.F[i][j] - G0.F[i][j]
+			}
+	
 		}
 		for j := 0; j < Ngenes; j++ {
 			Gout.G[i][j] = G1.G[i][j] - G0.G[i][j]
 		}
-		for j := 0; j < Ngenes; j++ {
-			Gout.Hg[i][j] = G1.Hg[i][j] - G0.Hg[i][j]
-		}
-		for j := 0; j < Ngenes; j++ {
-			Gout.Hh[i][j] = G1.Hh[i][j] - G0.Hh[i][j]
+		if hoc {
+			for j := 0; j < Ngenes; j++ {
+				Gout.Hg[i][j] = G1.Hg[i][j] - G0.Hg[i][j]
+			}
+			if hoi {
+				for j := 0; j < Ngenes; j++ {
+					Gout.Hh[i][j] = G1.Hh[i][j] - G0.Hh[i][j]
+				}
+			}	
 		}
 		for j := 0; j < Nenv; j++ {
 			Gout.Pc[i][j] = G1.Pc[i][j] - G0.Pc[i][j]
@@ -168,41 +177,48 @@ func DiffGenomes(Gout, G1, G0 Genome){ //Elementwise difference between two geno
 func(G *Genome) NormalizeGenome() Genome{
 	lambda2 := 0.0
 	eG := G.Copy()
-	for _,m := range G.Ec{
-		for _,v := range m{
-			lambda2 += v*v
+	if cue {
+		for _,m := range G.Ec{
+			for _,v := range m{
+				lambda2 += v*v
+			}
+		}
+		for _,m := range G.Eid{
+			for _,v := range m{
+				lambda2 += v*v
+			}
 		}
 	}
-	for _,m := range G.Eid{
-		for _,v := range m{
-			lambda2 += v*v
-		}
-	}
-	for _,m := range G.F{
-		for _,v := range m{
-			lambda2 += v*v
-		}
+	if epig {
+		for _,m := range G.F{
+			for _,v := range m{
+				lambda2 += v*v
+			}
+		}	
 	}
 	for _,m := range G.G{
 		for _,v := range m{
 			lambda2 += v*v
 		}
 	}
-	for _,m := range G.Hg{
-		for _,v := range m{
-			lambda2 += v*v
+	if hoc {
+		for _,m := range G.Hg{
+			for _,v := range m{
+				lambda2 += v*v
+			}
 		}
-	}
-	for _,m := range G.Hh{
-		for _,v := range m{
-			lambda2 += v*v
+		if hoi {
+			for _,m := range G.Hh{
+				for _,v := range m{
+					lambda2 += v*v
+				}
+			}
 		}
 	}
 	for _,m := range G.Pc{
 		for _,v := range m{
 			lambda2 += v*v
 		}
-	}
 	for _,m := range G.Pid{
 		for _,v := range m{
 			lambda2 += v*v
@@ -214,19 +230,23 @@ func(G *Genome) NormalizeGenome() Genome{
 		}
 	}
 	lambda := math.Sqrt(lambda2)
-	for i,m := range eG.Ec{
-		for j := range m{
-			eG.Ec[i][j] = eG.Ec[i][j]/lambda
+	if cue {
+		for i,m := range eG.Ec{
+			for j := range m{
+				eG.Ec[i][j] = eG.Ec[i][j]/lambda
+			}
+		}
+		for i,m := range eG.Eid{
+			for j := range m{
+				eG.Eid[i][j] = eG.Eid[i][j]/lambda
+			}
 		}
 	}
-	for i,m := range eG.Eid{
-		for j := range m{
-			eG.Eid[i][j] = eG.Eid[i][j]/lambda
-		}
-	}
-	for i,m := range eG.F{
-		for j := range m{
-			eG.F[i][j] = eG.F[i][j]/lambda
+	if epig {
+		for i,m := range eG.F{
+			for j := range m{
+				eG.F[i][j] = eG.F[i][j]/lambda
+			}
 		}
 	}
 	for i,m := range eG.G{
@@ -234,16 +254,21 @@ func(G *Genome) NormalizeGenome() Genome{
 			eG.G[i][j] = eG.G[i][j]/lambda
 		}
 	}
-	for i,m := range eG.Hg{
-		for j := range m{
-			eG.Hg[i][j] = eG.Hg[i][j]/lambda
+	if hoc {
+		for i,m := range eG.Hg{
+			for j := range m{
+				eG.Hg[i][j] = eG.Hg[i][j]/lambda
+			}
+		}
+		if hoi {
+			for i,m := range eG.Hh{
+				for j := range m{
+					eG.Hh[i][j] = eG.Hh[i][j]/lambda
+				}
+			}
 		}
 	}
-	for i,m := range eG.Hh{
-		for j := range m{
-			eG.Hh[i][j] = eG.Hh[i][j]/lambda
-		}
-	}
+	
 	for i,m := range eG.Pc{
 		for j := range m{
 			eG.Pc[i][j] = eG.Pc[i][j]/lambda
@@ -314,12 +339,13 @@ func (indiv *Indiv) Mutate() { //Mutates genome of an individual
 	} else if ipos < 2*Nenv + 4*Ngenes + ncells{
 		mutateSpmat(indiv.Genome.Pc,Nenv)
 	} else if ipos < 2*Nenv + 4*Ngenes + 2*ncells {
-		mutateSpmat(indiv.Genome.Eid,ncells)
+		mutateSpmat(indiv.Genome.Pid,ncells)
 	} else {
 		mutateSpmat(indiv.Genome.Z,Ngenes)
 	}
 
 	//May need variations based on model used (E.g. no mutations to E when withCue == false)
+	//Maybe some kind of logical system?
 
 	return
 }
@@ -415,12 +441,8 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 		//Also add difference of id of cell type
 		id = envs.Es[i].id
 		idp = cells.Ctypes[i].P.CopyCue().id
-		//fmt.Println("env id:",id)
-		//fmt.Println("cell id:",idp)
 		d2 += dist2Vecs(idp,id)
 	}
-	// s := ScaleSelStrength(Ncell)
-	// return(...(-s*d2))
 	return math.Exp(-selStrength * d2)
 }
 
@@ -494,22 +516,22 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 		multMatVec(veid,G.Eid,cell.E.id)
 		addVecs(e1,vec,veid)
 		multMatVec(vf,G.G,g0)
-		if WithCue { //Model with or without cues
+		if withCue { //Model with or without cues
 			addVecs(f1,vf,e1)
 		} else {
 			f1 = vf
 		}
 		applyFnVec(sigmaf,f1)
-		if Epig { //Allow or disallow epigenetic layer
+		if epig { //Allow or disallow epigenetic layer
 			multMatVec(g1,G.F,f1)
 			applyFnVec(sigmag,g1)
 		} else { //Remove epigenetic layer if false
 			g1 = f1
 		}
-		if HOC { //If layer for higher order complexes is present
+		if hoc { //If layer for higher order complexes is present
 			multMatVec(vg,G.Hg,g1)
 			multMatVec(vh,G.Hh,h0)
-			if HOI { //If interactions between higher order complexes is present
+			if hoi { //If interactions between higher order complexes is present
 				addVecs(h1,vg,vh)
 			} else {
 				h1 = vg

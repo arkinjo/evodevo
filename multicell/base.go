@@ -19,18 +19,18 @@ var GenomeDensity float64 = 1.0 / float64(Ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
-const baseMutationRate float64 = 0.01
+const baseMutationRate float64 = 0.01 // default probability of mutation of genome
 
-const defaultSelStrength float64 = 0.25 // default selection strength; to be normalized by number of cells
+const baseSelStrength float64 = 0.25 // default selection strength; to be normalized by number of cells
 var selStrength float64 //declaration
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
-var WithCue bool = false // with or without environmental cues. See Develop in indiv.go.
-var Epig bool = false // Epigenetic layer
-var HOC bool = false // Higher order complexes layer
-var HOI bool = false // Interaction between higher order complexes
+var withCue bool = true // with or without environmental cues.
+var epig bool = true // Epigenetic marker layer
+var hoc bool = true // Higher order complexes layer
+var hoi bool = true // Interaction between higher order complexes
 
-//Remark: defaults to Wagner model!
+//Remark: defaults to full model!
 
 type Spmat = [](map[int]float64) // Sparse matrix is an array of maps.
 
@@ -44,7 +44,14 @@ func SetSeed(seed int64) {
 
 func SetNcells(n int) {
 	ncells = n
-	selStrength = defaultSelStrength/float64(n)
+	selStrength = baseSelStrength/float64(n)
+}
+
+func SetLayers(cue, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
+	withCue = cue //Whether environment cue has effect on development
+	epig = epigm //Layer representing epigenetic markers
+	hoc = HOC //Layer representing higher-order complexes
+	hoi = HOI //Allow interaction between higher-order complexes
 }
 
 func GetNcells() int {
@@ -72,7 +79,7 @@ func sigmag(x float64) float64 { //Activation function for gene expression level
 }
 
 func sigmah(x float64) float64 { //Activation function for higher order complexes
-	if HOI { // prevent explosion by bounding
+	if hoi { // prevent explosion by bounding
 		return sigmoid(x, Omega)
 	} else {
 		return relu(x,Omega)
