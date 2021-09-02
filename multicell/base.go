@@ -6,29 +6,29 @@ import (
 )
 
 var MaxPop int = 1000 // population size
-var Ngenes int = 400 // number of genes
-var Nenv int = 20    // number of environmental cues/phenotypic values per face
-var ncells int = 1 //number of cell types/phenotypes to be trained simultaneously; not exported
+var Ngenes int = 400  // number of genes
+var Nenv int = 20     // number of environmental cues/phenotypic values per face
+var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
 var MaxDevStep int = 200    // Maximum steps for development.
 var epsDev float64 = 1.0e-8 // convergence criterion of development.
 
-var GeneLength = 5*Ngenes + 2*Nenv +2*ncells// Length of a gene for Unicellular organism.
+var fullGeneLength = 5*Ngenes + 2*Nenv + 2*ncells // Length of a gene for Unicellular organism.
 
 var GenomeDensity float64 = 1.0 / float64(Ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
 const baseMutationRate float64 = 0.01 // default probability of mutation of genome
-
-const baseSelStrength float64 = 0.25 // default selection strength; to be normalized by number of cells
-var selStrength float64 //declaration
-var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
+var mutRate float64                   //declaration
+const baseSelStrength float64 = 0.25  // default selection strength; to be normalized by number of cells
+var selStrength float64               //declaration
+var Omega float64 = 1.0               // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var withCue bool = true // with or without environmental cues.
-var epig bool = true // Epigenetic marker layer
-var hoc bool = true // Higher order complexes layer
-var hoi bool = true // Interaction between higher order complexes
+var epig bool = true    // Epigenetic marker layer
+var hoc bool = true     // Higher order complexes layer
+var hoi bool = true     // Interaction between higher order complexes
 
 //Remark: defaults to full model!
 
@@ -44,18 +44,34 @@ func SetSeed(seed int64) {
 
 func SetNcells(n int) {
 	ncells = n
-	selStrength = baseSelStrength/float64(n)
+	selStrength = baseSelStrength / float64(n)
 }
 
 func SetLayers(cue, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
 	withCue = cue //Whether environment cue has effect on development
-	epig = epigm //Layer representing epigenetic markers
-	hoc = HOC //Layer representing higher-order complexes
-	hoi = HOI //Allow interaction between higher-order complexes
+	epig = epigm  //Layer representing epigenetic markers
+	hoc = HOC     //Layer representing higher-order complexes
+	hoi = HOI     //Allow interaction between higher-order complexes
+
+	genelength := 2*Ngenes + Nenv + ncells
+	if cue {
+		genelength += Nenv + ncells
+	}
+	if epig {
+		genelength += Ngenes
+	}
+	if hoc {
+		genelength += Ngenes
+		if hoi {
+			genelength += Ngenes
+		}
+	}
+
+	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
 }
 
 func GetNcells() int {
-	return ncells 
+	return ncells
 }
 
 func sigmoid(x, omega float64) float64 {
@@ -66,7 +82,7 @@ func relu(x, omega float64) float64 {
 	if x < 0 {
 		return 0
 	} else {
-		return omega*x
+		return omega * x
 	}
 }
 
@@ -82,7 +98,7 @@ func sigmah(x float64) float64 { //Activation function for higher order complexe
 	if hoi { // prevent explosion by bounding
 		return sigmoid(x, Omega)
 	} else {
-		return relu(x,Omega)
+		return relu(x, Omega)
 	}
 }
 
@@ -156,14 +172,14 @@ func diffVecs(vout, v0, v1 Vec) { //Difference of vectors
 
 func innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v1, use for axis projection
 	dot := 0.0
-	for i,v := range v0 {
+	for i, v := range v0 {
 		dot += v * v1[i]
 	}
-	return dot 
+	return dot
 }
 
 func Veclength2(v Vec) float64 {
-	return innerproduct(v,v)
+	return innerproduct(v, v)
 }
 
 func Veclength(v Vec) float64 { //Euclidean Length of vector
