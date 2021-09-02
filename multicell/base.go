@@ -219,7 +219,7 @@ func applyFnVec(f func(float64) float64, vec Vec) { //Apply function f to a vect
 
 func mutateSpmat(mat Spmat, ncol int) { //mutating a sparse matrix
 	nrow := len(mat)
-	nmut := int(baseMutationRate * float64(nrow*ncol))
+	nmut := int(mutRate * float64(nrow*ncol))
 	for n := 0; n < nmut; n++ {
 		i := rand.Intn(nrow)
 		j := rand.Intn(ncol)
