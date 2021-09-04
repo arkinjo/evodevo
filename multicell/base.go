@@ -14,6 +14,7 @@ var MaxDevStep int = 200    // Maximum steps for development.
 var epsDev float64 = 1.0e-8 // convergence criterion of development.
 
 var fullGeneLength = 5*Ngenes + 2*Nenv + 2*ncells // Length of a gene for Unicellular organism.
+var genelength int                                //calculated from layers present or absent.
 
 var GenomeDensity float64 = 1.0 / float64(Ngenes)
 
@@ -53,7 +54,7 @@ func SetLayers(cue, epigm, HOC, HOI bool) { //Define whether each layer or inter
 	hoc = HOC     //Layer representing higher-order complexes
 	hoi = HOI     //Allow interaction between higher-order complexes
 
-	genelength := 2*Ngenes + Nenv + ncells
+	genelength = 2*Ngenes + Nenv + ncells
 	if cue {
 		genelength += Nenv + ncells
 	}
@@ -229,5 +230,6 @@ func mutateSpmat(mat Spmat, ncol int) { //mutating a sparse matrix
 			mat[i][j] = rand.NormFloat64()
 		}
 	}
+	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.
 	return
 }

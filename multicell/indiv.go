@@ -337,30 +337,82 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	return indiv
 }
 
-func (indiv *Indiv) Mutate() { //Mutates genome of an individual
-	ipos := rand.Intn(fullGeneLength)
-	if ipos < Nenv {
-		mutateSpmat(indiv.Genome.Ec, Nenv)
-	} else if ipos < Nenv+ncells {
-		mutateSpmat(indiv.Genome.Eid, ncells)
-	} else if ipos < Nenv+Ngenes+ncells {
-		mutateSpmat(indiv.Genome.F, Ngenes)
-	} else if ipos < Nenv+2*Ngenes+ncells {
+func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
+	r := rand.Intn(genelength) //Randomly choose one of the genome matrices to mutate; with prob proportional to no. of columns
+	t := 0
+
+	//This version is specialized for current definition of full model.
+
+	if withCue {
+		t += Nenv
+		if r < t {
+			mutateSpmat(indiv.Genome.Ec, Nenv)
+		}
+		t += ncells
+		if r < t {
+			mutateSpmat(indiv.Genome.Eid, ncells)
+		}
+	}
+	if epig {
+		t += Ngenes
+		if r < t {
+			mutateSpmat(indiv.Genome.F, Ngenes)
+		}
+	}
+	t += Ngenes
+	if r < t {
 		mutateSpmat(indiv.Genome.G, Ngenes)
-	} else if ipos < Nenv+3*Ngenes+ncells {
-		mutateSpmat(indiv.Genome.Hg, Ngenes)
-	} else if ipos < Nenv+4*Ngenes+ncells {
-		mutateSpmat(indiv.Genome.Hh, Ngenes)
-	} else if ipos < 2*Nenv+4*Ngenes+ncells {
+	}
+	if hoc {
+		t += Ngenes
+		if r < t {
+			mutateSpmat(indiv.Genome.Hg, Ngenes)
+		}
+		if hoi {
+			t += Ngenes
+			if r < t {
+				mutateSpmat(indiv.Genome.Hh, Ngenes)
+			}
+		}
+	}
+	t += Nenv
+	if r < t {
 		mutateSpmat(indiv.Genome.Pc, Nenv)
-	} else if ipos < 2*Nenv+4*Ngenes+2*ncells {
+	}
+	t += ncells
+	if r < t {
 		mutateSpmat(indiv.Genome.Pid, ncells)
-	} else {
+	}
+	t += Ngenes
+	if r < t {
 		mutateSpmat(indiv.Genome.Z, Ngenes)
 	}
 
-	//May need variations based on model used (E.g. no mutations to E when withCue == false)
-	//Maybe some kind of logical system?
+	/*
+		OLD VERSION
+		if ipos < Nenv {
+			mutateSpmat(indiv.Genome.Ec, Nenv)
+		} else if ipos < Nenv+ncells {
+			mutateSpmat(indiv.Genome.Eid, ncells)
+		} else if ipos < Nenv+Ngenes+ncells {
+			mutateSpmat(indiv.Genome.F, Ngenes)
+		} else if ipos < Nenv+2*Ngenes+ncells {
+			mutateSpmat(indiv.Genome.G, Ngenes)
+		} else if ipos < Nenv+3*Ngenes+ncells {
+			mutateSpmat(indiv.Genome.Hg, Ngenes)
+		} else if ipos < Nenv+4*Ngenes+ncells {
+			mutateSpmat(indiv.Genome.Hh, Ngenes)
+		} else if ipos < 2*Nenv+4*Ngenes+ncells {
+			mutateSpmat(indiv.Genome.Pc, Nenv)
+		} else if ipos < 2*Nenv+4*Ngenes+2*ncells {
+			mutateSpmat(indiv.Genome.Pid, ncells)
+		} else {
+			mutateSpmat(indiv.Genome.Z, Ngenes)
+		}
+
+		Remark: Main difficulty here is that matrices are in sparse matrix format rather than dense matrix format
+		So need to specify max number of columns of each matrix.
+	*/
 
 	return
 }
@@ -430,16 +482,10 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 
 	kid0.Mutate()
 	kid1.Mutate()
+	//Mutation happens with 100% probability
 
 	return kid0, kid1
 }
-
-/*
-func (cell *Cell) get_fitness(env Cue) float64 {
-	d2 := dist2Vecs(env.C,cell.P.C)
-	return math.Exp(-s * d2/float64(Ncells))
-}
-*/
 
 func (cells *Cells) get_fitness(envs Cues) float64 {
 	d2 := 0.0
@@ -450,7 +496,6 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 	id := make([]float64, ncells)
 	idp := make([]float64, ncells)
 	for i := range cells.Ctypes {
-
 		env = envs.Es[i].C
 		p = cells.Ctypes[i].P.CopyCue().C
 		d2 += dist2Vecs(p, env)
