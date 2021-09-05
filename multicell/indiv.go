@@ -7,23 +7,21 @@ import (
 )
 
 type Genome struct { //Genome of an individual
-	Ec  Spmat //Environment cue effect on epigenome
-	Eid Spmat //Environment input of cell type
-	F   Spmat //Regulatory effect of epigenetic markers on gene expression
-	G   Spmat //Regulatory effect of gene expression on epigenetic markers
-	Hg  Spmat //Contribution of gene expression on higher order complexes
-	Hh  Spmat //Interaction between higher order complexes
-	Pc  Spmat //Resulting expressed phenotype
-	Pid Spmat //Mimiced cell type
-	Z   Spmat //Gene expression of offspring
+	E  Spmat //Environment cue effect on epigenome
+	F  Spmat //Regulatory effect of epigenetic markers on gene expression
+	G  Spmat //Regulatory effect of gene expression on epigenetic markers
+	Hg Spmat //Contribution of gene expression on higher order complexes
+	Hh Spmat //Interaction between higher order complexes
+	P  Spmat //Resulting expressed phenotype
+	Z  Spmat //Gene expression of offspring
 }
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	E Cue // Environment encountered by cell; id already in cue
+	E Vec // Environment encountered by cell; id already in cue
 	F Vec // Epigenetic markers
 	G Vec // Gene expression
 	H Vec // Higher order complexes
-	P Cue // Phenotype; id already in cue
+	P Vec // Phenotype; id already in cue
 }
 
 type Cells struct {
@@ -46,42 +44,32 @@ type Indiv struct { //An individual as an unicellular organism
 }
 
 func NewGenome() Genome { //Generate new genome matrix ensemble
-	Ec := NewSpmat(Ngenes, Nenv, GenomeDensity)
-	Eid := NewSpmat(Ngenes, ncells, GenomeDensity)
-	F := NewSpmat(Ngenes, Ngenes, GenomeDensity)
-	G := NewSpmat(Ngenes, Ngenes, GenomeDensity)
-	Hg := NewSpmat(Ngenes, Ngenes, GenomeDensity)
-	Hh := NewSpmat(Ngenes, Ngenes, GenomeDensity)
-	Pc := NewSpmat(Ngenes, Nenv, GenomeDensity)
-	Pid := NewSpmat(Ngenes, ncells, GenomeDensity)
-	Z := NewSpmat(Ngenes, Ngenes, GenomeDensity)
+	E := NewSpmat(ngenes, nenv+ncells, GenomeDensity)
+	F := NewSpmat(ngenes, ngenes, GenomeDensity)
+	G := NewSpmat(ngenes, ngenes, GenomeDensity)
+	Hg := NewSpmat(ngenes, ngenes, GenomeDensity)
+	Hh := NewSpmat(ngenes, ngenes, GenomeDensity)
+	P := NewSpmat(ngenes, nenv+ncells, GenomeDensity)
+	Z := NewSpmat(ngenes, ngenes, GenomeDensity)
 
-	genome := Genome{Ec, Eid, F, G, Hg, Hh, Pc, Pid, Z}
+	genome := Genome{E, F, G, Hg, Hh, P, Z}
 
 	return genome
 }
 
 func (parent *Genome) Copy() Genome { //creates copy of parent's genome
-	ec := make(Spmat, Ngenes)
-	eid := make(Spmat, Ngenes)
-	f := make(Spmat, Ngenes)
-	g := make(Spmat, Ngenes)
-	hg := make(Spmat, Ngenes)
-	hh := make(Spmat, Ngenes)
-	pc := make(Spmat, Ngenes)
-	pid := make(Spmat, Ngenes)
-	z := make(Spmat, Ngenes)
+	e := make(Spmat, ngenes)
+	f := make(Spmat, ngenes)
+	g := make(Spmat, ngenes)
+	hg := make(Spmat, ngenes)
+	hh := make(Spmat, ngenes)
+	p := make(Spmat, ngenes)
+	z := make(Spmat, ngenes)
 
-	for i, m := range parent.Ec {
-		ec[i] = make(map[int]float64)
+	for i, m := range parent.E {
+		e[i] = make(map[int]float64)
 		for j, v := range m {
-			ec[i][j] = v
-		}
-	}
-	for i, m := range parent.Eid {
-		eid[i] = make(map[int]float64)
-		for j, v := range m {
-			eid[i][j] = v
+			e[i][j] = v
 		}
 	}
 	for i, m := range parent.F {
@@ -108,16 +96,10 @@ func (parent *Genome) Copy() Genome { //creates copy of parent's genome
 			hh[i][j] = v
 		}
 	}
-	for i, m := range parent.Pc {
-		pc[i] = make(map[int]float64)
+	for i, m := range parent.P {
+		p[i] = make(map[int]float64)
 		for j, v := range m {
-			pc[i][j] = v
-		}
-	}
-	for i, m := range parent.Pid {
-		pid[i] = make(map[int]float64)
-		for j, v := range m {
-			pid[i][j] = v
+			p[i][j] = v
 		}
 	}
 	for i, m := range parent.Z {
@@ -127,51 +109,45 @@ func (parent *Genome) Copy() Genome { //creates copy of parent's genome
 		}
 	}
 
-	genome := Genome{ec, eid, f, g, hg, hh, pc, pid, z}
+	genome := Genome{e, f, g, hg, hh, p, z}
 
 	return genome
 }
 
 func DiffGenomes(Gout, G1, G0 Genome) { //Elementwise difference between two genomes
-	for i := 0; i < Ngenes; i++ {
+	for i := 0; i < ngenes; i++ {
 
 		if withCue {
-			for j := 0; j < Nenv; j++ {
-				Gout.Ec[i][j] = G1.Ec[i][j] - G0.Ec[i][j]
-			}
-			for j := 0; j < ncells; j++ {
-				Gout.Eid[i][j] = G1.Eid[i][j] - G0.Eid[i][j]
+			for j := 0; j < nenv+ncells; j++ {
+				Gout.E[i][j] = G1.E[i][j] - G0.E[i][j]
 			}
 		}
 
 		if epig {
-			for j := 0; j < Ngenes; j++ {
+			for j := 0; j < ngenes; j++ {
 				Gout.F[i][j] = G1.F[i][j] - G0.F[i][j]
 			}
 		}
 
-		for j := 0; j < Ngenes; j++ {
+		for j := 0; j < ngenes; j++ {
 			Gout.G[i][j] = G1.G[i][j] - G0.G[i][j]
 		}
 
 		if hoc {
-			for j := 0; j < Ngenes; j++ {
+			for j := 0; j < ngenes; j++ {
 				Gout.Hg[i][j] = G1.Hg[i][j] - G0.Hg[i][j]
 			}
 			if hoi {
-				for j := 0; j < Ngenes; j++ {
+				for j := 0; j < ngenes; j++ {
 					Gout.Hh[i][j] = G1.Hh[i][j] - G0.Hh[i][j]
 				}
 			}
 		}
 
-		for j := 0; j < Nenv; j++ {
-			Gout.Pc[i][j] = G1.Pc[i][j] - G0.Pc[i][j]
+		for j := 0; j < nenv+ncells; j++ {
+			Gout.P[i][j] = G1.P[i][j] - G0.P[i][j]
 		}
-		for j := 0; j < ncells; j++ {
-			Gout.Pid[i][j] = G1.Pid[i][j] - G1.Pid[i][j]
-		}
-		for j := 0; j < Ngenes; j++ {
+		for j := 0; j < ngenes; j++ {
 			Gout.Z[i][j] = G1.Z[i][j] - G0.Z[i][j]
 		}
 	}
@@ -182,12 +158,7 @@ func (G *Genome) NormalizeGenome() Genome {
 	eG := G.Copy()
 
 	if withCue {
-		for _, m := range G.Ec {
-			for _, v := range m {
-				lambda2 += v * v
-			}
-		}
-		for _, m := range G.Eid {
+		for _, m := range G.E {
 			for _, v := range m {
 				lambda2 += v * v
 			}
@@ -224,12 +195,7 @@ func (G *Genome) NormalizeGenome() Genome {
 		}
 	}
 
-	for _, m := range G.Pc {
-		for _, v := range m {
-			lambda2 += v * v
-		}
-	}
-	for _, m := range G.Pid {
+	for _, m := range G.P {
 		for _, v := range m {
 			lambda2 += v * v
 		}
@@ -243,14 +209,9 @@ func (G *Genome) NormalizeGenome() Genome {
 	lambda := math.Sqrt(lambda2)
 
 	if withCue {
-		for i, m := range eG.Ec {
+		for i, m := range eG.E {
 			for j := range m {
-				eG.Ec[i][j] = eG.Ec[i][j] / lambda
-			}
-		}
-		for i, m := range eG.Eid {
-			for j := range m {
-				eG.Eid[i][j] = eG.Eid[i][j] / lambda
+				eG.E[i][j] = eG.E[i][j] / lambda
 			}
 		}
 	}
@@ -284,14 +245,9 @@ func (G *Genome) NormalizeGenome() Genome {
 		}
 	}
 
-	for i, m := range eG.Pc {
+	for i, m := range eG.P {
 		for j := range m {
-			eG.Pc[i][j] = eG.Pc[i][j] / lambda
-		}
-	}
-	for i, m := range eG.Pid {
-		for j := range m {
-			eG.Pid[i][j] = eG.Pid[i][j] / lambda
+			eG.P[i][j] = eG.P[i][j] / lambda
 		}
 	}
 	for i, m := range eG.Z {
@@ -303,11 +259,11 @@ func (G *Genome) NormalizeGenome() Genome {
 }
 
 func NewCell(id int) Cell { //Creates a new cell
-	e := NewCue(Nenv, id)
-	f := NewVec(Ngenes)
-	g := NewVec(Ngenes)
-	h := NewVec(Ngenes)
-	p := NewCue(Nenv, id)
+	e := NewCue(nenv, id)
+	f := NewVec(ngenes)
+	g := NewVec(ngenes)
+	h := NewVec(ngenes)
+	p := NewCue(nenv, id)
 
 	cell := Cell{e, f, g, h, p}
 
@@ -330,7 +286,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 		cellcopies[i] = NewCells(ncells)
 	}
 
-	z := NewVec(Ngenes)
+	z := NewVec(ngenes)
 
 	indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
@@ -344,48 +300,40 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	//This version is specialized for current definition of full model.
 
 	if withCue {
-		t += Nenv
+		t += nenv + ncells
 		if r < t {
-			mutateSpmat(indiv.Genome.Ec, Nenv)
-		}
-		t += ncells
-		if r < t {
-			mutateSpmat(indiv.Genome.Eid, ncells)
+			mutateSpmat(indiv.Genome.E, nenv+ncells)
 		}
 	}
 	if epig {
-		t += Ngenes
+		t += ngenes
 		if r < t {
-			mutateSpmat(indiv.Genome.F, Ngenes)
+			mutateSpmat(indiv.Genome.F, ngenes)
 		}
 	}
-	t += Ngenes
+	t += ngenes
 	if r < t {
-		mutateSpmat(indiv.Genome.G, Ngenes)
+		mutateSpmat(indiv.Genome.G, ngenes)
 	}
 	if hoc {
-		t += Ngenes
+		t += ngenes
 		if r < t {
-			mutateSpmat(indiv.Genome.Hg, Ngenes)
+			mutateSpmat(indiv.Genome.Hg, ngenes)
 		}
 		if hoi {
-			t += Ngenes
+			t += ngenes
 			if r < t {
-				mutateSpmat(indiv.Genome.Hh, Ngenes)
+				mutateSpmat(indiv.Genome.Hh, ngenes)
 			}
 		}
 	}
-	t += Nenv
+	t += nenv + ncells
 	if r < t {
-		mutateSpmat(indiv.Genome.Pc, Nenv)
+		mutateSpmat(indiv.Genome.P, nenv+ncells)
 	}
-	t += ncells
+	t += ngenes
 	if r < t {
-		mutateSpmat(indiv.Genome.Pid, ncells)
-	}
-	t += Ngenes
-	if r < t {
-		mutateSpmat(indiv.Genome.Z, Ngenes)
+		mutateSpmat(indiv.Genome.Z, ngenes)
 	}
 
 	/*
@@ -423,39 +371,33 @@ func Crossover(dadg, momg *Genome, dadz, momz Vec) (Genome, Genome, Vec, Vec) { 
 	nz0 := dadz
 	nz1 := momz
 
-	for i := 0; i < Ngenes; i++ {
+	for i := 0; i < ngenes; i++ {
 		r := rand.Float64()
 		if r < 0.5 {
-			ec := ng0.Ec[i]
-			eid := ng0.Eid[i]
+			e := ng0.E[i]
 			f := ng0.F[i]
 			g := ng0.G[i]
 			hg := ng0.Hg[i]
 			hh := ng0.Hh[i]
-			pc := ng0.Pc[i]
-			pid := ng0.Pid[i]
+			p := ng0.P[i]
 			z := ng0.Z[i]
 			z0 := nz0[i]
 
-			ng0.Ec[i] = ng1.Ec[i]
-			ng0.Eid[i] = ng1.Eid[i]
+			ng0.E[i] = ng1.E[i]
 			ng0.F[i] = ng1.F[i]
 			ng0.G[i] = ng1.G[i]
 			ng0.Hg[i] = ng1.Hg[i]
 			ng0.Hh[i] = ng1.Hh[i]
-			ng0.Pc[i] = ng1.Pc[i]
-			ng0.Pid[i] = ng1.Pid[i]
+			ng0.P[i] = ng1.P[i]
 			ng0.Z[i] = ng1.Z[i]
 			nz0[i] = nz1[i]
 
-			ng1.Ec[i] = ec
-			ng1.Eid[i] = eid
+			ng1.E[i] = e
 			ng1.F[i] = f
 			ng1.G[i] = g
 			ng1.Hg[i] = hg
 			ng1.Hh[i] = hh
-			ng1.Pc[i] = pc
-			ng1.Pid[i] = pid
+			ng1.P[i] = p
 			ng1.Z[i] = z
 			nz1[i] = z0
 		}
@@ -491,48 +433,43 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 	d2 := 0.0
 
 	//declaring arrays to be filled
-	env := make([]float64, Nenv)
-	p := make([]float64, Nenv)
-	id := make([]float64, ncells)
-	idp := make([]float64, ncells)
-	for i := range cells.Ctypes {
-		env = envs.Es[i].C
-		p = cells.Ctypes[i].P.CopyCue().C
+	env := make([]float64, nenv+ncells)
+	p := make([]float64, nenv+ncells)
+	//id := make([]float64, ncells)
+	//idp := make([]float64, ncells)
+	for i, cell := range cells.Ctypes {
+		env = envs[i]
+		p = cell.P
 		d2 += dist2Vecs(p, env)
-
-		//Also add difference of id of cell type
-		id = envs.Es[i].id
-		idp = cells.Ctypes[i].P.CopyCue().id
-		d2 += dist2Vecs(idp, id)
 	}
 	return math.Exp(-selStrength * d2)
 }
 
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
 	d2 := 0.0
-	p0 := NewVec(Nenv)
-	p := NewVec(Nenv)
+	p0 := NewVec(nenv)
+	p := NewVec(nenv)
 	Copies := indiv.Copies
 	for i, cell := range Copies[2].Ctypes {
-		p = cell.P.C
-		p0 = Copies[0].Ctypes[i].P.C
+		p = cell.P
+		p0 = Copies[0].Ctypes[i].P
 		d2 += dist2Vecs(p, p0)
 	}
-	d2 = dist2Vecs(p, p0) / float64(Nenv*ncells) //Divide by number of phenotypes to normalize
+	d2 = dist2Vecs(p, p0) / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d2
 }
 
 func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individual
 	d2 := 0.0
-	p0 := NewVec(Nenv)
-	p := NewVec(Nenv)
+	p0 := NewVec(nenv)
+	p := NewVec(nenv)
 	Copies := indiv.Copies
 	for i, cell := range Copies[2].Ctypes {
-		p = cell.P.C
-		p0 = Copies[1].Ctypes[i].P.C
+		p = cell.P
+		p0 = Copies[1].Ctypes[i].P
 		d2 += dist2Vecs(p, p0)
 	}
-	d2 = dist2Vecs(p, p0) / float64(Nenv*ncells) //Divide by number of phenotypes to normalize
+	d2 = dist2Vecs(p, p0) / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d2
 }
 
@@ -541,13 +478,13 @@ func (indiv *Indiv) get_vp() float64 { //Get sum of elementwise variance of phen
 	for _, c := range indiv.Copies[2].Ctypes {
 		pvec = append(pvec, c.P) //Note: To be used AFTER development
 	}
-	phens := Cues{pvec}
-	sigma2p := phens.GetCueVar()
+	//phens := Cues{pvec}
+	sigma2p := GetCueVar(pvec)
 	return sigma2p
 }
 
 func (indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of individual; normalize with variance of environment cue
-	sigma2env := envs.GetCueVar()
+	sigma2env := GetCueVar(envs)
 	if sigma2env == 0 {
 		return 0
 	} else {
@@ -559,23 +496,22 @@ func (indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of indiv
 func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell given cue
 	var diff float64
 
-	h0 := make([]float64, Ngenes) //No higher order complexes in embryonic stage
-	vec := make([]float64, Ngenes)
-	veid := make([]float64, Ngenes)
-	vf := make([]float64, Ngenes)
+	h0 := make([]float64, ngenes) //No higher order complexes in embryonic stage
+	ve := make([]float64, ngenes)
+	//ve := make([]float64, Ngenes)
+	vf := make([]float64, ngenes)
 	vg := g0
-	vh := make([]float64, Ngenes)
-	vpc := make([]float64, Nenv)
-	vpid := make([]float64, ncells)
-	e1 := make([]float64, Ngenes)
-	f1 := make([]float64, Ngenes)
-	g1 := make([]float64, Ngenes)
-	h1 := make([]float64, Ngenes)
+	vh := make([]float64, ngenes)
+	vp := make([]float64, nenv+ncells)
+	e1 := make([]float64, ngenes)
+	f1 := make([]float64, ngenes)
+	g1 := make([]float64, ngenes)
+	h1 := make([]float64, ngenes)
 
 	for nstep := 0; nstep < MaxDevStep; nstep++ {
-		multMatVec(vec, G.Ec, cell.E.C)
-		multMatVec(veid, G.Eid, cell.E.id)
-		addVecs(e1, vec, veid)
+		multMatVec(ve, G.E, cell.E)
+		//multMatVec(veid, G.Eid, cell.E.id)
+		//addVecs(e1, vec, veid)
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
 			addVecs(f1, vf, e1)
@@ -601,10 +537,7 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 			h1 = g1
 		}
 		applyFnVec(sigmah, h1)
-		multMatVec_T(vpc, G.Pc, h1)
-		applyFnVec(rho, vpc)
-		multMatVec_T(vpid, G.Pid, h1)
-		applyFnVec(rho, vpid)
+		multMatVec_T(vp, G.P, h1)
 		diff = dist2Vecs(vg, g0)
 		g0 = g1
 		h0 = h1
@@ -620,16 +553,16 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 	cell.F = f1
 	cell.G = g1
 	cell.H = h1
-	cell.P = Cue{vpid, vpc}
+	cell.P = vp
 
 	return *cell
 }
 
 func (cells *Cells) DevCells(G Genome, g0 Vec, envs Cues) Cells {
-	env := NewCue(Nenv, 0)
+	env := NewCue(nenv, 0)
 
 	for i := range cells.Ctypes {
-		env = envs.Es[i]
+		env = envs[i]
 		cells.Ctypes[i].DevCell(G, g0, env)
 	}
 
@@ -638,13 +571,13 @@ func (cells *Cells) DevCells(G Genome, g0 Vec, envs Cues) Cells {
 
 func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
 
-	devenv := env.AddNoise(DevNoise)
-	devenv0 := env0.AddNoise(DevNoise)
-	selenv := env.AddNoise(EnvNoise)
+	devenv := AddNoisetoCues(env, DevNoise)
+	devenv0 := AddNoisetoCues(env0, DevNoise)
+	selenv := AddNoisetoCues(env, EnvNoise)
 	Clist := indiv.Copies
-	ncells := len(Clist[2].Ctypes)
-	nenv := len(Clist[2].Ctypes[0].E.C)
-	zero := NewCues(ncells, nenv)
+	//ncells := len(Clist[2].Ctypes)
+	//nenv := len(Clist[2].Ctypes[0].E)
+	zero := NewCues(ncells, nenv+ncells)
 
 	Clist[0].DevCells(indiv.Genome, indiv.Z, zero)    //Develop without cues
 	Clist[1].DevCells(indiv.Genome, indiv.Z, devenv0) //Develop in ancestral (previous) environment

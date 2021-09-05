@@ -81,13 +81,18 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(), multicell.Nenv, 0.5)
+	popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5)
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
 
 	//	envtraj := make([]multicell.Cues,1) //Trajectory of environment cue
 	//	envtraj[0] = popstart.RefEnvs
+
+	OldEnvs := make([][]float64, multicell.GetNcells())
+	for i := range OldEnvs {
+		OldEnvs[i] = make([]float64, multicell.GetNenv()+multicell.GetNcells())
+	}
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
@@ -121,9 +126,9 @@ func main() {
 
 		popstart = pop1 //Update population after evolution.
 
-		OldEnvs := popstart.Envs.CopyCues()
+		OldEnvs := popstart.Envs
 		popstart.RefEnvs = OldEnvs
-		popstart.Envs = OldEnvs.ChangeEnvs(denv)
+		popstart.Envs = multicell.ChangeEnvs(OldEnvs, denv)
 	}
 
 	fmt.Println("Trajectory of population written to", T_Filename)

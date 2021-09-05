@@ -6,17 +6,17 @@ import (
 )
 
 var MaxPop int = 1000 // population size
-var Ngenes int = 400  // number of genes
-var Nenv int = 20     // number of environmental cues/phenotypic values per face
+var ngenes int = 400  // number of genes
+var nenv int = 20     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
 var MaxDevStep int = 200    // Maximum steps for development.
 var epsDev float64 = 1.0e-8 // convergence criterion of development.
 
-var fullGeneLength = 5*Ngenes + 2*Nenv + 2*ncells // Length of a gene for Unicellular organism.
+var fullGeneLength = 5*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.
 
-var GenomeDensity float64 = 1.0 / float64(Ngenes)
+var GenomeDensity float64 = 1.0 / float64(ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
@@ -54,17 +54,17 @@ func SetLayers(cue, epigm, HOC, HOI bool) { //Define whether each layer or inter
 	hoc = HOC     //Layer representing higher-order complexes
 	hoi = HOI     //Allow interaction between higher-order complexes
 
-	genelength = 2*Ngenes + Nenv + ncells
+	genelength = 2*ngenes + nenv + ncells
 	if cue {
-		genelength += Nenv + ncells
+		genelength += nenv + ncells
 	}
 	if epig {
-		genelength += Ngenes
+		genelength += ngenes
 	}
 	if hoc {
-		genelength += Ngenes
+		genelength += ngenes
 		if hoi {
-			genelength += Ngenes
+			genelength += ngenes
 		}
 	}
 
@@ -73,6 +73,10 @@ func SetLayers(cue, epigm, HOC, HOI bool) { //Define whether each layer or inter
 
 func GetNcells() int {
 	return ncells
+}
+
+func GetNenv() int {
+	return nenv
 }
 
 func sigmoid(x, omega float64) float64 {

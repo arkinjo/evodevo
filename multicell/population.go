@@ -23,7 +23,7 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 		indivs[i] = NewIndiv(i)
 	}
 
-	envs := NewCues(ncell, Nenv)
+	envs := NewCues(ncell, nenv)
 
 	p := Population{0, envs, envs, indivs}
 	return p
@@ -86,20 +86,20 @@ func (pop *Population) GetDiversity() float64 { //To be used after development
 			cv = append(cv, cell.P)
 		}
 	}
-	ccues := Cues{cv}
+	//ccues := Cues{cv}
 
-	return ccues.GetCueVar()
+	return GetCueVar(cv)
 }
 
 func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
 	npop := len(pop.Indivs)
-	MeanPhenotype := NewCues(ncells, Nenv)
+	MeanPhenotype := NewCues(ncells, nenv)
 	pop.DevPop(gen)
 
 	for _, indiv := range pop.Indivs {
 		for i, c := range indiv.Copies[2].Ctypes {
-			for j, p := range c.P.C {
-				MeanPhenotype.Es[i].C[j] += p / float64(npop)
+			for j, p := range c.P {
+				MeanPhenotype[i][j] += p / float64(npop)
 			}
 		}
 	}
@@ -115,55 +115,45 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 	for _, indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
 		if withCue {
-			for i := range Gtilde.Ec {
-				for j := 0; j < Nenv; j++ {
-					MeanGenome.Ec[i][j] += Gtilde.Ec[i][j] / float64(len(pop.Indivs))
-				}
-			}
-			for i := range Gtilde.Eid {
-				for j := 0; j < Nenv; j++ {
-					MeanGenome.Eid[i][j] += Gtilde.Eid[i][j] / float64(len(pop.Indivs))
+			for i := range Gtilde.E {
+				for j := 0; j < nenv+ncells; j++ {
+					MeanGenome.E[i][j] += Gtilde.E[i][j] / float64(len(pop.Indivs))
 				}
 			}
 		}
 		if epig {
 			for i := range Gtilde.F {
-				for j := 0; j < Nenv; j++ {
+				for j := 0; j < ngenes; j++ {
 					MeanGenome.F[i][j] += Gtilde.F[i][j] / float64(len(pop.Indivs))
 				}
 			}
 		}
 		for i := range Gtilde.G {
-			for j := 0; j < Ngenes; j++ {
+			for j := 0; j < ngenes; j++ {
 				MeanGenome.G[i][j] += Gtilde.G[i][j] / float64(len(pop.Indivs))
 			}
 		}
 		if hoc {
 			for i := range Gtilde.Hg {
-				for j := 0; j < Nenv; j++ {
+				for j := 0; j < ngenes; j++ {
 					MeanGenome.Hg[i][j] += Gtilde.Hg[i][j] / float64(len(pop.Indivs))
 				}
 			}
 			if hoi {
 				for i := range Gtilde.Hh {
-					for j := 0; j < Nenv; j++ {
+					for j := 0; j < ngenes; j++ {
 						MeanGenome.Hh[i][j] += Gtilde.Hh[i][j] / float64(len(pop.Indivs))
 					}
 				}
 			}
 		}
-		for i := range Gtilde.Pc {
-			for j := 0; j < Nenv; j++ {
-				MeanGenome.Pc[i][j] += Gtilde.Pc[i][j] / float64(len(pop.Indivs))
-			}
-		}
-		for i := range Gtilde.Pc {
-			for j := 0; j < Nenv; j++ {
-				MeanGenome.Pid[i][j] += Gtilde.Pid[i][j] / float64(len(pop.Indivs))
+		for i := range Gtilde.P {
+			for j := 0; j < nenv+ncells; j++ {
+				MeanGenome.P[i][j] += Gtilde.P[i][j] / float64(len(pop.Indivs))
 			}
 		}
 		for i := range Gtilde.Z {
-			for j := 0; j < Ngenes; j++ {
+			for j := 0; j < ngenes; j++ {
 				MeanGenome.Z[i][j] += Gtilde.Z[i][j] / float64(len(pop.Indivs))
 			}
 		}
@@ -175,24 +165,24 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined using difference of environment cues
 	axlength2 := 0.0
 
-	e := pop.Envs.Es     //Cue in novel (present) environment
-	e0 := pop.RefEnvs.Es //Cue in ancestral (previous) environment
-	v := NewVec(Nenv)
-	de := NewCues(ncells, Nenv)
+	e := pop.Envs     //Cue in novel (present) environment
+	e0 := pop.RefEnvs //Cue in ancestral (previous) environment
+	v := NewVec(nenv + ncells)
+	de := NewCues(ncells, nenv)
 
 	for i, p := range e {
-		diffVecs(v, p.C, e0[i].C)
+		diffVecs(v, p, e0[i])
 		axlength2 += Veclength2(v)
-		de.Es[i] = Cue{NewVec(ncells), v} //ids must stay the same
+		de[i] = v //ids must stay the same
 	}
 
 	axlength := math.Sqrt(axlength2)
 	if axlength == 0 { //if no change in environment cue
 		return de
 	} else { //normalize
-		for i, c := range de.Es {
-			for j, p := range c.C {
-				de.Es[i].C[j] = p / axlength //normalize to unit vector
+		for i, c := range de {
+			for j, p := range c {
+				de[i][j] = p / axlength //normalize to unit vector
 			}
 		}
 		return de
@@ -200,14 +190,14 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 }
 
 func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
-	e := pop.Envs.Es     // novel environment
-	e0 := pop.RefEnvs.Es // ancestral environment
+	e := pop.Envs     // novel environment
+	e0 := pop.RefEnvs // ancestral environment
 
-	me := NewCues(ncells, Nenv) // midpoint
+	me := NewCues(ncells, nenv) // midpoint
 
 	for i, c := range e {
-		for j, v := range c.C {
-			me.Es[i].C[j] = (v + e0[i].C[j]) / 2.0
+		for j, v := range c {
+			me[i][j] = (v + e0[i][j]) / 2.0
 		}
 	}
 	return me
@@ -243,8 +233,8 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 }
 
 func (pop *Population) DevPop(gen int) Population {
-	novenv := NewCues(ncells, Nenv)
-	ancenv := NewCues(ncells, Nenv)
+	novenv := NewCues(ncells, nenv)
+	ancenv := NewCues(ncells, nenv)
 
 	pop.Gen = gen
 
@@ -383,7 +373,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 
 	pop.DevPop(gen)
 
-	cphen := make(Vec, Nenv)
+	cphen := make(Vec, nenv+ncells)
 	mu := pop.Get_Mid_Env()
 	Paxis := pop.Get_Environment_Axis() //Bug with something to do with refenv in json file output giving same value to envs and refenvs.
 	Projfilename := fmt.Sprintf("../analysis/%s_%d.dat", Filename, gen)
@@ -396,19 +386,14 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 
 	for _, indiv := range pop.Indivs {
 		pproj, gproj = 0.0, 0.0
-		for i, env := range mu.Es { //For each environment cue
-			diffVecs(cphen, indiv.Copies[2].Ctypes[i].P.C, env.C) //centralize
-			pproj += innerproduct(cphen, Paxis.Es[i].C)
+		for i, env := range mu { //For each environment cue
+			diffVecs(cphen, indiv.Copies[2].Ctypes[i].P, env) //centralize
+			pproj += innerproduct(cphen, Paxis[i])
 		}
 		if withCue {
-			for i, m := range indiv.Genome.Ec {
+			for i, m := range indiv.Genome.E {
 				for j, d := range m {
-					gproj += d * Gaxis.Ec[i][j]
-				}
-			}
-			for i, m := range indiv.Genome.Eid {
-				for j, d := range m {
-					gproj += d * Gaxis.Eid[i][j]
+					gproj += d * Gaxis.E[i][j]
 				}
 			}
 		}
@@ -438,14 +423,9 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 				}
 			}
 		}
-		for i, m := range indiv.Genome.Pc {
+		for i, m := range indiv.Genome.P {
 			for j, d := range m {
-				gproj += d * Gaxis.Pc[i][j]
-			}
-		}
-		for i, m := range indiv.Genome.Pid {
-			for j, d := range m {
-				gproj += d * Gaxis.Pid[i][j]
+				gproj += d * Gaxis.P[i][j]
 			}
 		}
 		for i, m := range indiv.Genome.Z {

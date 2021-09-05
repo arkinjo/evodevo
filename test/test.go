@@ -114,7 +114,7 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(), multicell.Nenv, 0.5)
+	popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5)
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
