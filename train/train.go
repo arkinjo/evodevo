@@ -89,10 +89,7 @@ func main() {
 	envtraj := make([]multicell.Cues,1) //Trajectory of environment cue
 	envtraj[0] = popstart.RefEnvs
 
-	OldEnvs := make([][]float64, multicell.GetNcells())
-	for i := range OldEnvs {
-		OldEnvs[i] = make([]float64, multicell.GetNenv()+multicell.GetNcells())
-	}
+	OldEnvs := multicell.NewCues(multicell.GetNcells(),multicell.GetNenv())
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
@@ -129,9 +126,9 @@ func main() {
 		fmt.Println("Novel environment before :",popstart.Envs)
 		fmt.Println("Ancestral environment before :",popstart.RefEnvs)
 
-		copy(OldEnvs,popstart.Envs)
+		OldEnvs = popstart.Envs.CopyCues()
 		popstart.RefEnvs = OldEnvs
-		popstart.Envs = multicell.ChangeEnvs(&OldEnvs, denv)
+		popstart.Envs = OldEnvs.ChangeEnvs(denv)
 		fmt.Println("Novel environment after :",popstart.Envs)
 		fmt.Println("Ancestral environment after :",popstart.RefEnvs)
 	}

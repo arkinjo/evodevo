@@ -86,9 +86,10 @@ func (pop *Population) GetDiversity() float64 { //To be used after development
 			cv = append(cv, cell.P)
 		}
 	}
-	//ccues := Cues{cv}
+	ccues := Cues{cv}
+	div := ccues.GetCueVar()
 
-	return GetCueVar(cv)
+	return div
 }
 
 func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
@@ -98,8 +99,8 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 
 	for _, indiv := range pop.Indivs {
 		for i, c := range indiv.Copies[2].Ctypes {
-			for j, p := range c.P {
-				MeanPhenotype[i][j] += p / float64(npop)
+			for j, p := range c.P.C {
+				MeanPhenotype.Es[i].C[j] += p / float64(npop)
 			}
 		}
 	}
@@ -170,19 +171,19 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 	v := NewVec(nenv + ncells)
 	de := NewCues(ncells, nenv)
 
-	for i, p := range e {
-		diffVecs(v, p, e0[i])
+	for i, p := range e.Es {
+		diffVecs(v, p.C, e0.Es[i].C)
 		axlength2 += Veclength2(v)
-		de[i] = v //ids must stay the same
+		de.Es[i].C = v //ids must stay the same
 	}
 
 	axlength := math.Sqrt(axlength2)
 	if axlength == 0 { //if no change in environment cue
 		return de
 	} else { //normalize
-		for i, c := range de {
-			for j, p := range c {
-				de[i][j] = p / axlength //normalize to unit vector
+		for i, c := range de.Es {
+			for j, p := range c.C {
+				de.Es[i].C[j] = p / axlength //normalize to unit vector
 			}
 		}
 		return de
@@ -195,9 +196,9 @@ func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previo
 
 	me := NewCues(ncells, nenv) // midpoint
 
-	for i, c := range e {
-		for j, v := range c {
-			me[i][j] = (v + e0[i][j]) / 2.0
+	for i, c := range e.Es {
+		for j, v := range c.C {
+			me.Es[i].C[j] = (v + e0.Es[i].C[j]) / 2.0
 		}
 	}
 	return me
@@ -386,9 +387,9 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) 
 
 	for _, indiv := range pop.Indivs {
 		pproj, gproj = 0.0, 0.0
-		for i, env := range mu { //For each environment cue
-			diffVecs(cphen, indiv.Copies[2].Ctypes[i].P, env) //centralize
-			pproj += innerproduct(cphen, Paxis[i])
+		for i, env := range mu.Es { //For each environment cue
+			diffVecs(cphen, indiv.Copies[2].Ctypes[i].P.C, env.C) //centralize
+			pproj += innerproduct(cphen, Paxis.Es[i].C)
 		}
 		if withCue {
 			for i, m := range indiv.Genome.E {
