@@ -569,7 +569,7 @@ func (cells *Cells) DevCells(G Genome, g0 Vec, envs Cues) Cells {
 	return *cells
 }
 
-func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
+func (indiv *Indiv) CompareDev(env, env0 *Cues) Indiv { //Compare developmental process under different conditions
 
 	devenv := AddNoisetoCues(env, DevNoise)
 	devenv0 := AddNoisetoCues(env0, DevNoise)

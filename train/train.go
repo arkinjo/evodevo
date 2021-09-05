@@ -86,8 +86,8 @@ func main() {
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
 
-	//	envtraj := make([]multicell.Cues,1) //Trajectory of environment cue
-	//	envtraj[0] = popstart.RefEnvs
+	envtraj := make([]multicell.Cues,1) //Trajectory of environment cue
+	envtraj[0] = popstart.RefEnvs
 
 	OldEnvs := make([][]float64, multicell.GetNcells())
 	for i := range OldEnvs {
@@ -96,7 +96,7 @@ func main() {
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
-		//		envtraj = append(envtraj, popstart.Envs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append?
+		envtraj = append(envtraj, popstart.Envs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append? This bug resurfaced after implementing in concatenated vector format!
 
 		if epoch != 0 {
 			fmt.Println("Epoch ", epoch, "has environments", popstart.Envs)
@@ -124,16 +124,21 @@ func main() {
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :", dtevol)
 
-		popstart = pop1 //Update population after evolution.
 
-		OldEnvs := popstart.Envs
+		popstart = pop1 //Update population after evolution.
+		fmt.Println("Novel environment before :",popstart.Envs)
+		fmt.Println("Ancestral environment before :",popstart.RefEnvs)
+
+		copy(OldEnvs,popstart.Envs)
 		popstart.RefEnvs = OldEnvs
-		popstart.Envs = multicell.ChangeEnvs(OldEnvs, denv)
+		popstart.Envs = multicell.ChangeEnvs(&OldEnvs, denv)
+		fmt.Println("Novel environment after :",popstart.Envs)
+		fmt.Println("Ancestral environment after :",popstart.RefEnvs)
 	}
 
 	fmt.Println("Trajectory of population written to", T_Filename)
 	fmt.Printf("JSON encoding of evolved population written to %s \n", jfilename)
-	//	fmt.Println("Trajectory of environment :", envtraj)
+	fmt.Println("Trajectory of environment :", envtraj)
 
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ", dt)

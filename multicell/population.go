@@ -243,7 +243,7 @@ func (pop *Population) DevPop(gen int) Population {
 		go func(indiv Indiv) {
 			novenv = pop.Envs    //Novel environment
 			ancenv = pop.RefEnvs //Ancestral environment
-			ch <- indiv.CompareDev(novenv, ancenv)
+			ch <- indiv.CompareDev(&novenv, &ancenv)
 		}(indiv)
 	}
 	for i := range pop.Indivs {

@@ -70,32 +70,35 @@ func CopyCue(c Cue) Cue { //Returns a copy of an environment cue
 	return cv
 }
 */
-func AddNoisetoCue(cue Cue, eta float64) Cue {
+func AddNoisetoCue(cue *Cue, eta float64) Cue {
 	var r float64
+	c := *cue
 	env1 := make(Cue, nenv)
-	copy(env1, cue)
-	for i, c := range env1 {
+	copy(env1, c)
+	for i, t := range env1 {
 		r = rand.Float64()
 		if r < eta {
-			if c == 0 {
+			if t == 0 {
 				env1[i] = 1
 			} else {
 				env1[i] = 0
 			}
 		}
 	}
-	idv := GetId(cue)
+	idv := GetId(c)
 	ncue := append(env1, idv...)
 
 	return ncue
 }
 
-func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment cue; ignore id part
+func ChangeEnv(cue *Cue, n int) Cue { // Mutate precisely n bits of environment cue; ignore id part
 	//env1 := cue.CopyCue() //make a copy of the environmental cue to perform operations without affecting original value
 	//v1 := env1.C
 
+	c := *cue
+
 	v1 := make([]float64, nenv)
-	copy(v1, cue)
+	copy(v1, c)
 
 	indices := make([]int, len(v1))
 	for i := range indices {
@@ -114,7 +117,7 @@ func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment c
 		}
 	}
 
-	idv := GetId(cue)
+	idv := GetId(c)
 	env1 := append(v1, idv...)
 
 	return env1
@@ -151,23 +154,28 @@ func (cues *Cues) CopyCues() Cues{
 }
 */
 
-func AddNoisetoCues(cues Cues, eta float64) Cues {
+func AddNoisetoCues(cues *Cues, eta float64) Cues {
 	//envs1 := cues.CopyCues()
+	cs := *cues
 
 	envs1 := make([]Cue, ncells)
+	c := make(Cue,nenv)
 	for i := range envs1 {
-		envs1[i] = AddNoisetoCue(cues[i], eta)
+		c = cs[i]
+		envs1[i] = AddNoisetoCue(&c, eta) //hope this works; I actually don't know what I'm doing here
 	}
 
 	return envs1
 }
 
-func ChangeEnvs(cues Cues, n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
+func ChangeEnvs(cues *Cues, n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
 	var ref, cell, cue int
 	//envs1 := cues.CopyCues() //Make a copy to perform operations without changing original value
+
+	cs := *cues
 	envs1 := make([]Cue, ncells)
 
-	copy(envs1, cues)
+	copy(envs1, cs)
 	N := nenv * ncells
 	indices := make([]int, N)
 	for i := range indices {
