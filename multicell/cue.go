@@ -9,34 +9,24 @@ import (
 var DevNoise float64 = 0.00 // Development environment cue noise
 var EnvNoise float64 = 0.00 // Selection environment noise
 
+type Cue = Vec //Environment cue is a vector
 
-type Cue struct {
-	C Vec //Environment cue is a vector
-}
-
-
-type Cues struct {
-	Es []Cue //Cue array object
-}
-
+type Cues = []Cue //Cue array object
 
 func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 	tv := NewVec(nenv)         //trait part of vector
 	idv := UnitVec(ncells, id) //id part of vector
-	v := append(tv, idv...)  //format: cue|id
-	cue := Cue{v}
-	return cue
+	v := append(tv, idv...)    //format: cue|id
+	return v
 }
 
-func (cue *Cue) GetTrait() []float64 { //Extract trait part of cue
-	c := cue.C
-	tv := c[0:nenv]
+func GetTrait(cue Cue) []float64 { //Extract trait part of cue
+	tv := cue[0:nenv]
 	return tv
 }
 
-func (cue *Cue) GetId() []float64 { //Extract ID part of cue
-	c := cue.C
-	idv := c[nenv:] //ID part is appended at end
+func GetId(cue Cue) []float64 { //Extract ID part of cue
+	idv := cue[nenv:] //ID part is appended at end
 	return idv
 }
 
@@ -54,28 +44,24 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 	}
 	idv := UnitVec(ncells, id)
 	v := append(tv, idv...)
-	cue := Cue{v}
 
-	return cue
+	return v
 }
 
-
-func (cue *Cue) CopyCue() Cue { //Returns a copy of an environment cue
-	c0 := cue.C //this already includes id part
+func CopyCue(cue Cue) Cue { //Returns a copy of an environment cue
+	c0 := cue //this already includes id part
 	lc := len(c0)
-	cv := make([]float64,lc)
-	copy(cv,c0)
-	c1 := Cue{cv}
+	cv := make([]float64, lc)
+	copy(cv, c0)
 
-	return c1
+	return cv
 }
 
-
-func (cue *Cue) AddNoise(eta float64) Cue {
+func AddNoisetoCue(cue Cue, eta float64) Cue {
 	var r float64
-	
-	tv := cue.GetTrait()
-	idv := cue.GetId()
+
+	tv := GetTrait(cue)
+	idv := GetId(cue)
 
 	for i, t := range tv {
 		r = rand.Float64()
@@ -88,22 +74,21 @@ func (cue *Cue) AddNoise(eta float64) Cue {
 		}
 	}
 	v := append(tv, idv...)
-	cue1 := Cue{v}
 
-	return cue1
+	return v
 }
 
-func (cue *Cue) ChangeEnv(n int) Cue { // Mutate precisely n bits of environment cue; ignore id part
-	env1 := cue.CopyCue() //make a copy of the environmental cue to perform operations without affecting original value
+func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment cue; ignore id part
+	env1 := CopyCue(cue) //make a copy of the environmental cue to perform operations without affecting original value
 	//Splitting trait part and id part
-	tv1 := env1.GetTrait()
-	idv := env1.GetId()
+	tv1 := GetTrait(env1)
+	idv := GetId(env1)
 
-	indices := make([]int, len(tv1)) 
+	indices := make([]int, len(tv1))
 	for i := range indices {
 		indices[i] = i
 	}
-	rand.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] }) //
+	rand.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
 	mutindices := make([]int, n)
 	for i := range mutindices {
 		mutindices[i] = indices[i]
@@ -117,10 +102,8 @@ func (cue *Cue) ChangeEnv(n int) Cue { // Mutate precisely n bits of environment
 	}
 
 	v1 := append(tv1, idv...) //glue back id part
-	
-	env1 = Cue{v1}
 
-	return env1
+	return v1
 }
 
 func NewCues(ncells, nenv int) Cues {
@@ -128,8 +111,7 @@ func NewCues(ncells, nenv int) Cues {
 	for id := range vs {
 		vs[id] = NewCue(nenv, id)
 	}
-	cs := Cues{vs}
-	return cs
+	return vs
 }
 
 func RandomEnvs(ncells, nenv int, density float64) Cues { //Randomly generate cue array
@@ -137,35 +119,32 @@ func RandomEnvs(ncells, nenv int, density float64) Cues { //Randomly generate cu
 	for id := range vs {
 		vs[id] = RandomEnv(nenv, id, density)
 	}
-	cs := Cues{vs}
-	return cs
+	return vs
 }
 
-func (cues *Cues) CopyCues() Cues{
-	ncells := len(cues.Es)
-	vs := make([]Cue,ncells)
-	//copy(vs,cues.Es) //Original
-	for i,c := range cues.Es { //'Proactive copying'
-		vs[i] = c.CopyCue() //No bugs with this implementation here
+func CopyCues(cues Cues) Cues {
+	ncells := len(cues)
+	vs := make([]Cue, ncells)
+	for i, c := range cues { //'Proactive copying'
+		vs[i] = CopyCue(c)
 	}
-	cs := Cues{vs}
-	return cs
+	return vs
 }
 
-func (cues *Cues) AddNoise(eta float64) Cues {
-	envs1 := cues.CopyCues()
+func AddNoisetoCues(cues Cues, eta float64) Cues {
+	envs1 := CopyCues(cues)
 
-	for i,c := range envs1.Es {
-		envs1.Es[i] = c.AddNoise(eta) //hope this works; I actually don't know what I'm doing here
+	for i, c := range envs1 {
+		envs1[i] = AddNoisetoCue(c, eta) //hope this works; I actually don't know what I'm doing here
 	}
 
 	return envs1
 }
 
-func (cues *Cues) ChangeEnvs(n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
+func ChangeEnvs(cues Cues, n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
 	var ref, cell, cue int
-	
-	envs1 := cues.CopyCues() //Make a copy to perform operations without changing original value
+
+	envs1 := CopyCues(cues) //Make a copy to perform operations without changing original value
 	N := nenv * ncells
 	indices := make([]int, N)
 	for i := range indices {
@@ -186,10 +165,10 @@ func (cues *Cues) ChangeEnvs(n int) Cues { //Mutates precisely n bits in environ
 	//fmt.Println("Cue index:",mutcues)
 	for j, cell := range mutcells {
 		cue = mutcues[j]
-		if envs1.Es[cell].C[cue] == 0 {
-			envs1.Es[cell].C[cue] = 1
+		if envs1[cell][cue] == 0 {
+			envs1[cell][cue] = 1
 		} else {
-			envs1.Es[cell].C[cue] = 0
+			envs1[cell][cue] = 0
 		}
 	}
 	//envs1.Es = cs
@@ -197,29 +176,28 @@ func (cues *Cues) ChangeEnvs(n int) Cues { //Mutates precisely n bits in environ
 	return envs1
 }
 
-func (cues *Cues) GetMeanCue() Cue { //elementwise arithmetic mean of environment cue
+func GetMeanCue(cues Cues) Cue { //elementwise arithmetic mean of environment cue
 	//ncells := len(cues)
 	//ncues := len(cues)
 	cv := NewVec(nenv + ncells)
-	for _, env := range cues.Es {
-		for j, t := range env.C {
+	for _, env := range cues {
+		for j, t := range env {
 			cv[j] += t / float64(ncells)
 		}
 	}
-	mu := Cue{cv}
 
-	return mu
+	return cv
 }
 
-func (cues *Cues) GetCueVar() float64 { //Sum of elementwise variance in environment cue
-	mu := cues.GetMeanCue().C
+func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment cue
+	mu := GetMeanCue(cues)
 	//ncells := len(cues)
 	//ncues := len(cues[0])
 	cvec := NewVec(nenv + ncells)
 	v := NewVec(nenv + ncells)
 	sigma2 := 0.0
-	for _, c := range cues.Es {
-		cvec = c.C
+	for _, c := range cues {
+		cvec = c
 		diffVecs(v, cvec, mu)
 		sigma2 += Veclength2(v) / float64(ncells)
 	}

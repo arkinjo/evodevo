@@ -86,10 +86,10 @@ func main() {
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
 
-	envtraj := make([]multicell.Cues,1) //Trajectory of environment cue
+	envtraj := make([]multicell.Cues, 1) //Trajectory of environment cue
 	envtraj[0] = popstart.RefEnvs
 
-	OldEnvs := multicell.NewCues(multicell.GetNcells(),multicell.GetNenv())
+	OldEnvs := multicell.NewCues(multicell.GetNcells(), multicell.GetNenv())
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
@@ -121,16 +121,15 @@ func main() {
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :", dtevol)
 
-
 		popstart = pop1 //Update population after evolution.
-		fmt.Println("Novel environment before :",popstart.Envs)
-		fmt.Println("Ancestral environment before :",popstart.RefEnvs)
+		fmt.Println("Novel environment before :", popstart.Envs)
+		fmt.Println("Ancestral environment before :", popstart.RefEnvs)
 
-		OldEnvs = popstart.Envs.CopyCues()
+		OldEnvs = multicell.CopyCues(popstart.Envs)
 		popstart.RefEnvs = OldEnvs
-		popstart.Envs = OldEnvs.ChangeEnvs(denv)
-		fmt.Println("Novel environment after :",popstart.Envs)
-		fmt.Println("Ancestral environment after :",popstart.RefEnvs)
+		popstart.Envs = multicell.ChangeEnvs(OldEnvs, denv)
+		fmt.Println("Novel environment after :", popstart.Envs)
+		fmt.Println("Ancestral environment after :", popstart.RefEnvs)
 	}
 
 	fmt.Println("Trajectory of population written to", T_Filename)

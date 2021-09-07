@@ -17,11 +17,11 @@ type Genome struct { //Genome of an individual
 }
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	E Cue // Environment encountered by cell; id already in cue
+	E Vec // Environment encountered by cell; id already in cue
 	F Vec // Epigenetic markers
 	G Vec // Gene expression
 	H Vec // Higher order complexes
-	P Cue // Phenotype; id already in cue
+	P Vec // Phenotype; id already in cue
 }
 
 type Cells struct {
@@ -438,8 +438,8 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 	//id := make([]float64, ncells)
 	//idp := make([]float64, ncells)
 	for i, cell := range cells.Ctypes {
-		env = envs.Es[i].C
-		p = cell.P.C
+		env = envs[i]
+		p = cell.P
 		d2 += dist2Vecs(p, env)
 	}
 	return math.Exp(-selStrength * d2)
@@ -451,8 +451,8 @@ func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individua
 	p := NewVec(nenv)
 	Copies := indiv.Copies
 	for i, cell := range Copies[2].Ctypes {
-		p = cell.P.C
-		p0 = Copies[0].Ctypes[i].P.C
+		p = cell.P
+		p0 = Copies[0].Ctypes[i].P
 		d2 += dist2Vecs(p, p0)
 	}
 	d2 = dist2Vecs(p, p0) / float64(nenv*ncells) //Divide by number of phenotypes to normalize
@@ -465,8 +465,8 @@ func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individua
 	p := NewVec(nenv)
 	Copies := indiv.Copies
 	for i, cell := range Copies[2].Ctypes {
-		p = cell.P.C
-		p0 = Copies[1].Ctypes[i].P.C
+		p = cell.P
+		p0 = Copies[1].Ctypes[i].P
 		d2 += dist2Vecs(p, p0)
 	}
 	d2 = dist2Vecs(p, p0) / float64(nenv*ncells) //Divide by number of phenotypes to normalize
@@ -478,13 +478,12 @@ func (indiv *Indiv) get_vp() float64 { //Get sum of elementwise variance of phen
 	for _, c := range indiv.Copies[2].Ctypes {
 		pvec = append(pvec, c.P) //Note: To be used AFTER development
 	}
-	phens := Cues{pvec}
-	sigma2p := phens.GetCueVar()
+	sigma2p := GetCueVar(pvec)
 	return sigma2p
 }
 
 func (indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of individual; normalize with variance of environment cue
-	sigma2env := envs.GetCueVar()
+	sigma2env := GetCueVar(envs)
 	if sigma2env == 0 {
 		return 0
 	} else {
@@ -509,7 +508,7 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 	h1 := make([]float64, ngenes)
 
 	for nstep := 0; nstep < MaxDevStep; nstep++ {
-		multMatVec(ve, G.E, cell.E.C)
+		multMatVec(ve, G.E, cell.E)
 		//multMatVec(veid, G.Eid, cell.E.id)
 		//addVecs(e1, vec, veid)
 		multMatVec(vf, G.G, g0)
@@ -553,7 +552,7 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 	cell.F = f1
 	cell.G = g1
 	cell.H = h1
-	cell.P = Cue{vp}
+	cell.P = vp
 
 	return *cell
 }
@@ -562,18 +561,18 @@ func (cells *Cells) DevCells(G Genome, g0 Vec, envs Cues) Cells {
 	env := NewCue(nenv, 0)
 
 	for i := range cells.Ctypes {
-		env = envs.Es[i]
+		env = envs[i]
 		cells.Ctypes[i].DevCell(G, g0, env)
 	}
 
 	return *cells
 }
 
-func (indiv *Indiv) CompareDev(env, env0 *Cues) Indiv { //Compare developmental process under different conditions
+func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
 
-	devenv := env.AddNoise(DevNoise)
-	devenv0 := env0.AddNoise(DevNoise)
-	selenv := env.AddNoise(EnvNoise)
+	devenv := AddNoisetoCues(env, DevNoise)
+	devenv0 := AddNoisetoCues(env0, DevNoise)
+	selenv := AddNoisetoCues(env, EnvNoise)
 	Clist := indiv.Copies
 	//ncells := len(Clist[2].Ctypes)
 	//nenv := len(Clist[2].Ctypes[0].E)
