@@ -78,23 +78,7 @@ func main() {
 		fmt.Println("Successfully imported population")
 	}
 
-	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
-	pop0.Envs = pop0.RefEnvs                                                                                            //Generation zero; just before environment change
-	pop0.DevPop(0)
-
-	fmt.Fprintf(fout, "1 \t 0 \t %e \t %e \t %e \t %e \t %e \t %e \n", pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
-
-	err = fout.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jfilename := fmt.Sprintf("../pops/%s_0.json", json_out)
+	jfilename := fmt.Sprintf("../pops/%s_0.json", json_out) //Make a new json file; with exactly same population encoded
 	jsonpop, err := json.Marshal(pop0) //JSON encoding of population as byte array
 	if err != nil {
 		log.Fatal(err)
@@ -109,6 +93,24 @@ func main() {
 	}
 
 	err = popout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//Bug in JSON encoding?! Genotype should be unchanged by reading and then writing same json file!
+
+	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
+	//pop0.Envs = pop0.RefEnvs //Generation zero; just before environment change; NOT NEEDED, population is exported just before environment change
+	pop0.DevPop(0)
+
+	fmt.Fprintf(fout, "1 \t 0 \t %e \t %e \t %e \t %e \t %e \t %e \n", pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
+
+	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -171,7 +173,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	jfilename = fmt.Sprintf("%s_%d.json", json_out, epochlength+1)
+	jfilename = fmt.Sprintf("../pops/%s_%d.json", json_out, epochlength+1)
 	jsonpop, err = json.Marshal(pop1) //JSON encoding of population as byte array
 	if err != nil {
 		log.Fatal(err)

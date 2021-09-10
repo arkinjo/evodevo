@@ -102,7 +102,7 @@ func main() {
 		pop1 := multicell.Evolve(false, T_Filename, json_out, "", epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
 
-		if epoch == maxepochs { //Export output population
+		if epoch == maxepochs { //Export output population; just before epoch change
 			pop1.RefEnvs = pop1.Envs                             //Update to environment just before epoch change
 			jfilename = fmt.Sprintf("../pops/%s.json", json_out) //export output population to test file
 			jsonpop, err := json.Marshal(pop1)                   //JSON encoding of population as byte array

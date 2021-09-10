@@ -2,18 +2,22 @@
 phat <- c()
 ghat <- c()
 
-pdf("m2poptraj20210829pg.pdf")
-for (i in c(0:200)){
-  filename <- paste("m2pop20210829pg_",i,".dat",sep="")
+pdf("upoppgtraj20210910.pdf")
+for (i in c(0:201)){
+  filename <- paste("upop20210910pg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
   p <- pg$Phenotype
   g <- pg$Genotype
   title <- paste("Generation",i,sep=" ")
-  plot(g,p,xlim=c(-15,15),ylim=c(-3,3),xlab="genotype",ylab="phenotype",main=title)
+  plot(g,p,xlim=c(-15,15),ylim=c(-50,50),xlab="genotype",ylab="phenotype",main=title)
   abline(h=0)
   abline(v=0)
-  phat = append(phat,mean(p))
-  ghat = append(ghat,mean(g))
+  mup = mean(p)
+  mug = mean(g)
+  print(mup)
+  print(mug)
+  phat = append(phat,mup)
+  ghat = append(ghat,mug)
 }
 dev.off()
 
