@@ -24,7 +24,7 @@ type Cell struct { //A 'cell' is characterized by its gene expression and phenot
 	P Vec // Phenotype; id already in cue
 }
 
-type Cells struct {
+type Cells struct { //Do we want to reimplement this?
 	Ctypes []Cell // Array of cells of different types
 }
 
@@ -57,7 +57,7 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 	return genome
 }
 
-func (parent *Genome) Copy() Genome { //creates copy of parent's genome
+func (parent *Genome) Copy() Genome { //creates copy of genome
 	e := make(Spmat, ngenes)
 	f := make(Spmat, ngenes)
 	g := make(Spmat, ngenes)
@@ -270,6 +270,18 @@ func NewCell(id int) Cell { //Creates a new cell given id of cell.
 	return cell
 }
 
+func (cell *Cell) Copy() Cell {
+	id := GetId(cell.P) //Extract id part of cell phenotype
+	cell1 := NewCell(id)
+	cell1.E = CopyVec(cell.E)
+	cell1.F = CopyVec(cell.F)
+	cell1.G = CopyVec(cell.G)
+	cell1.H = CopyVec(cell.H)
+	cell1.P = CopyVec(cell.P)
+
+	return cell1
+}
+
 func NewCells(ncells int) Cells { // Creates an array of new cells of length Ncells
 	Clist := make([]Cell, ncells)
 	for id := range Clist {
@@ -277,6 +289,17 @@ func NewCells(ncells int) Cells { // Creates an array of new cells of length Nce
 	}
 	Cellarray := Cells{Clist}
 	return Cellarray
+}
+
+func (cells *Cells) Copy() Cells {
+	//Ncells = len(cells.Ctypes)
+	Clist := cells.Ctypes
+	Cells1 := NewCells(ncells)
+	Clist1 := Cells1.Ctypes
+	for i, cell := range Clist {
+		Clist1[i] = cell.Copy()
+	}
+	return Cells1
 }
 
 func NewIndiv(id int) Indiv { //Creates a new individual
@@ -291,6 +314,25 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
+}
+
+func (indiv *Indiv) Copy() Indiv { //Deep copier
+	indiv1 := NewIndiv(indiv.Id)
+	indiv1.DadId = indiv.DadId
+	indiv1.MomId = indiv.MomId
+	indiv1.Genome = indiv.Genome.Copy()
+	for i, ccopy := range indiv.Copies {
+		indiv1.Copies[i] = ccopy.Copy()
+	}
+	indiv1.Z = CopyVec(indiv.Z)
+	indiv1.F0 = indiv.F0
+	indiv1.Fit = indiv.Fit
+	indiv1.Util = indiv.Util
+	indiv1.CuePlas = indiv.CuePlas
+	indiv1.ObsPlas = indiv.ObsPlas
+	indiv1.Pp = indiv.Pp
+
+	return indiv1
 }
 
 func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual

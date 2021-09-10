@@ -237,3 +237,10 @@ func mutateSpmat(mat Spmat, ncol int) { //mutating a sparse matrix
 	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.
 	return
 }
+
+func CopyVec(v Vec) Vec { //makes a copy of a vector
+	l := len(v)
+	v1 := make(Vec, l)
+	copy(v1, v)
+	return v1
+}

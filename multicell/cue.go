@@ -25,9 +25,21 @@ func GetTrait(cue Cue) []float64 { //Extract trait part of cue
 	return tv
 }
 
-func GetId(cue Cue) []float64 { //Extract ID part of cue
+func GetIdVec(cue Cue) []float64 { //Extract ID part of cue
 	idv := cue[nenv:] //ID part is appended at end
 	return idv
+}
+
+func GetId(cue Cue) int { //Extract id number
+	var id int
+	idv := GetIdVec(cue)
+	for i, v := range idv {
+		if v != 0 {
+			id = i
+		}
+	}
+	return id
+
 }
 
 func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environment vector for celltype id
@@ -48,6 +60,7 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 	return v
 }
 
+/* This is now redundant after introducing CopyVec function
 func CopyCue(cue Cue) Cue { //Returns a copy of an environment cue
 	c0 := cue //this already includes id part
 	lc := len(c0)
@@ -56,12 +69,13 @@ func CopyCue(cue Cue) Cue { //Returns a copy of an environment cue
 
 	return cv
 }
+*/
 
 func AddNoisetoCue(cue Cue, eta float64) Cue {
 	var r float64
 
 	tv := GetTrait(cue)
-	idv := GetId(cue)
+	idv := GetIdVec(cue)
 
 	for i, t := range tv {
 		r = rand.Float64()
@@ -79,10 +93,10 @@ func AddNoisetoCue(cue Cue, eta float64) Cue {
 }
 
 func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment cue; ignore id part
-	env1 := CopyCue(cue) //make a copy of the environmental cue to perform operations without affecting original value
+	env1 := CopyVec(cue) //make a copy of the environmental cue to perform operations without affecting original value
 	//Splitting trait part and id part
 	tv1 := GetTrait(env1)
-	idv := GetId(env1)
+	idv := GetIdVec(env1)
 
 	indices := make([]int, len(tv1))
 	for i := range indices {
@@ -126,7 +140,7 @@ func CopyCues(cues Cues) Cues {
 	ncells := len(cues)
 	vs := make([]Cue, ncells)
 	for i, c := range cues { //'Proactive copying'
-		vs[i] = CopyCue(c)
+		vs[i] = CopyVec(c)
 	}
 	return vs
 }

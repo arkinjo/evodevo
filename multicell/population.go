@@ -29,6 +29,19 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 	return p
 }
 
+func (pop *Population) Copy() Population {
+	npop := len(pop.Indivs)
+	ncell := len(pop.Indivs[0].Copy().Copies) //number of cells
+	pop1 := NewPopulation(ncell, npop)
+	pop1.Gen = pop.Gen
+	pop1.Envs = CopyCues(pop.Envs)
+	pop1.RefEnvs = CopyCues(pop.RefEnvs)
+	for i, indiv := range pop.Indivs {
+		pop1.Indivs[i] = indiv.Copy()
+	}
+	return pop1
+}
+
 func (pop *Population) GetMeanFitness() float64 { //average fitness of population
 	mf := 0.0
 	fn := float64(len(pop.Indivs))

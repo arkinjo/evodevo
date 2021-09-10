@@ -79,7 +79,7 @@ func main() {
 	}
 
 	jfilename := fmt.Sprintf("../pops/%s_0.json", json_out) //Make a new json file; with exactly same population encoded
-	jsonpop, err := json.Marshal(pop0) //JSON encoding of population as byte array
+	jsonpop, err := json.Marshal(pop0)                      //JSON encoding of population as byte array
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,7 +106,8 @@ func main() {
 
 	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
 	//pop0.Envs = pop0.RefEnvs //Generation zero; just before environment change; NOT NEEDED, population is exported just before environment change
-	pop0.DevPop(0)
+	ancpop := pop0.Copy()
+	ancpop.DevPop(0)
 
 	fmt.Fprintf(fout, "1 \t 0 \t %e \t %e \t %e \t %e \t %e \t %e \n", pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
 
@@ -115,7 +116,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	popstart := pop0 //Warning! Assigns memory address
+	popstart := pop0.Copy() //Warning! Assigns memory address
 	OldEnvs := multicell.CopyCues(pop0.Envs)
 	popstart.RefEnvs = OldEnvs
 	popstart.Envs = multicell.ChangeEnvs(OldEnvs, denv) //control size of perturbation of environment cue vector at start of epoch.
