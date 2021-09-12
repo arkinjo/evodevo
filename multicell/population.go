@@ -31,7 +31,8 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 
 func (pop *Population) Copy() Population {
 	npop := len(pop.Indivs)
-	ncell := len(pop.Indivs[0].Copy().Copies) //number of cells
+	ncell := len(pop.Indivs[0].Copy().Copies[0].Ctypes) //number of cells
+	//fmt.Println("Copying ",ncell,"-cell individuals")
 	pop1 := NewPopulation(ncell, npop)
 	pop1.Gen = pop.Gen
 	pop1.Envs = CopyCues(pop.Envs)
@@ -381,14 +382,14 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 	return pop
 }
 
-func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome) {
+func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, Paxis Cues) {
 	var pproj, gproj float64
 
 	pop.DevPop(gen)
 
 	cphen := make(Vec, nenv+ncells)
 	mu := pop.Get_Mid_Env()
-	Paxis := pop.Get_Environment_Axis() //Bug with something to do with refenv in json file output giving same value to envs and refenvs.
+	//Paxis := pop.Get_Environment_Axis() //Bug with something to do with refenv in json file output giving same value to envs and refenvs.
 	Projfilename := fmt.Sprintf("../analysis/%s_%d.dat", Filename, gen)
 
 	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)

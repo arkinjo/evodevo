@@ -160,9 +160,10 @@ func main() {
 	fmt.Println("Put evolved population back into ancestral environment")
 	AncEnvs := multicell.CopyCues(pop1.RefEnvs)
 	NovEnvs := multicell.CopyCues(pop1.Envs)
-	pop1.Envs = AncEnvs    //Put population back into ancestral environment.
-	pop1.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
-	pop1.DevPop(epochlength + 1)
+	EvPop := pop1.Copy()
+	EvPop.Envs = AncEnvs    //Put population back into ancestral environment.
+	EvPop.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
+	EvPop.DevPop(epochlength + 1)
 	//Remark: Fitness here is fitness in ancestral environment!
 	fout, err = os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -175,7 +176,7 @@ func main() {
 		log.Fatal(err)
 	}
 	jfilename = fmt.Sprintf("../pops/%s_%d.json", json_out, epochlength+1)
-	jsonpop, err = json.Marshal(pop1) //JSON encoding of population as byte array
+	jsonpop, err = json.Marshal(EvPop) //JSON encoding of population as byte array
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -195,11 +196,12 @@ func main() {
 	fmt.Println("Dumping projections")
 	tdump := time.Now()
 	pop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
-	g0 := pop0.GetMeanGenome()
+	g0 := ancpop.GetMeanGenome()
 	g1 := pop1.GetMeanGenome()
 	Gaxis := multicell.NewGenome()
 	multicell.DiffGenomes(Gaxis, g1, g0)
 	Gaxis = Gaxis.NormalizeGenome()
+	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
 
 	for gen := 0; gen <= epochlength+1; gen++ { //Also project population after pulling back to ancestral environment.
 		jfilename := fmt.Sprintf("../pops/%s_%d.json", json_out, gen)
@@ -219,9 +221,9 @@ func main() {
 			log.Fatal(err)
 		}
 
-		pop.Envs = NovEnvs
-		pop.RefEnvs = AncEnvs //Measure everything in direction of ancestral -> novel environment
-		pop.Dump_Projections(PG_Filename, gen, Gaxis)
+		//pop.Envs = NovEnvs
+		//pop.RefEnvs = AncEnvs //Measure everything in direction of ancestral -> novel environment
+		pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
 	}
 	dtdump := time.Since(tdump)
 	fmt.Println("Time taken to dump projections :", dtdump)

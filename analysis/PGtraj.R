@@ -2,9 +2,9 @@
 phat <- c()
 ghat <- c()
 
-pdf("upoppgtraj20210910.pdf")
+pdf("upoppgtraj20210911.pdf")
 for (i in c(0:201)){
-  filename <- paste("upop20210910pg_",i,".dat",sep="")
+  filename <- paste("upop20210911pg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
   p <- pg$Phenotype
   g <- pg$Genotype
@@ -14,8 +14,8 @@ for (i in c(0:201)){
   abline(v=0)
   mup = mean(p)
   mug = mean(g)
-  print(mup)
-  print(mug)
+  #print(mup)
+  #print(mug)
   phat = append(phat,mup)
   ghat = append(ghat,mug)
 }
