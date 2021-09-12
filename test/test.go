@@ -55,7 +55,7 @@ func main() {
 	multicell.SetNcells(*ncelltypesPtr)
 	multicell.SetLayers(*cuePtr, *epigPtr, *HOCPtr, *HOIPtr)
 
-	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
+	ancpop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
 
 	if json_in != "" { //read input population as a json file, if given
 		fmt.Println("Importing initial population")
@@ -66,7 +66,7 @@ func main() {
 		}
 
 		byteValue, _ := ioutil.ReadAll(popin)
-		err = json.Unmarshal(byteValue, &pop0)
+		err = json.Unmarshal(byteValue, &ancpop)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -78,7 +78,21 @@ func main() {
 		fmt.Println("Successfully imported population")
 	}
 
-	jfilename := fmt.Sprintf("../pops/%s_0.json", json_out) //Make a new json file; with exactly same population encoded
+	fmt.Println("Initialization of population complete")
+	dtint := time.Since(t0)
+	fmt.Println("Time taken for initialization : ", dtint)
+
+	//Idea: Make an ancestral environment for evolution in ancestral environment first. Only export final generation
+	AncRefEnvs := multicell.CopyCues(ancpop.Envs)
+	ancpop.RefEnvs = AncRefEnvs
+	AncEnvs := multicell.ChangeEnvs(AncRefEnvs, denv)
+	ancpop.Envs = AncEnvs
+
+	fmt.Println("Evolving in ancestral environment :", AncEnvs)
+
+	pop0 := multicell.Evolve(false, T_Filename, json_out, "", epochlength, 0, &ancpop) //Evolve in ancestral environment with epoch = 0
+
+	jfilename := fmt.Sprintf("../pops/%s_0.json", json_out) //Make a new json file encoding evolved population
 	jsonpop, err := json.Marshal(pop0)                      //JSON encoding of population as byte array
 	if err != nil {
 		log.Fatal(err)
@@ -99,33 +113,32 @@ func main() {
 
 	//Bug in JSON encoding?! Genotype should be unchanged by reading and then writing same json file!
 
-	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
-	if err != nil {
-		log.Fatal(err)
-	}
+	/*
+		fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
-	//pop0.Envs = pop0.RefEnvs //Generation zero; just before environment change; NOT NEEDED, population is exported just before environment change
-	ancpop := pop0.Copy()
-	ancpop.DevPop(0)
+			//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
+			//pop0.Envs = pop0.RefEnvs //Generation zero; just before environment change; NOT NEEDED, population is exported just before environment change
+			//ancpop := pop0.Copy()
+			//ancpop.DevPop(0)
 
-	fmt.Fprintf(fout, "1 \t 0 \t %e \t %e \t %e \t %e \t %e \t %e \n", pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
+			//fmt.Fprintf(fout, "1 \t 0 \t %e \t %e \t %e \t %e \t %e \t %e \n", pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
 
-	err = fout.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
+			err = fout.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+	*/
 
-	popstart := pop0.Copy() //Warning! Assigns memory address
+	popstart := pop0.Copy()
 	OldEnvs := multicell.CopyCues(pop0.Envs)
-	popstart.RefEnvs = OldEnvs
-	popstart.Envs = multicell.ChangeEnvs(OldEnvs, denv) //control size of perturbation of environment cue vector at start of epoch.
+	popstart.RefEnvs = AncEnvs
+	NovEnvs := multicell.ChangeEnvs(OldEnvs, denv)
+	popstart.Envs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
 
 	//popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5)
-
-	fmt.Println("Initialization of population complete")
-	dtint := time.Since(t0)
-	fmt.Println("Time taken for initialization : ", dtint)
 
 	//envtraj := make([]multicell.Cues, 1) //Trajectory of environment cue
 	//envtraj[0] = popstart.RefEnvs
@@ -158,18 +171,16 @@ func main() {
 	dtevol := time.Since(tevol)
 	fmt.Println("Time taken to simulate evolution :", dtevol)
 	fmt.Println("Put evolved population back into ancestral environment")
-	AncEnvs := multicell.CopyCues(pop1.RefEnvs)
-	NovEnvs := multicell.CopyCues(pop1.Envs)
 	EvPop := pop1.Copy()
 	EvPop.Envs = AncEnvs    //Put population back into ancestral environment.
 	EvPop.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
 	EvPop.DevPop(epochlength + 1)
 	//Remark: Fitness here is fitness in ancestral environment!
-	fout, err = os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintf(fout, "1 \t %d \t %e \t %e \t %e \t %e \t %e \t %e \n", epochlength+1, pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
+	fmt.Fprintf(fout, "2 \t %d \t %e \t %e \t %e \t %e \t %e \t %e \n", epochlength, pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
 
 	err = fout.Close()
 	if err != nil {
@@ -196,7 +207,7 @@ func main() {
 	fmt.Println("Dumping projections")
 	tdump := time.Now()
 	pop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
-	g0 := ancpop.GetMeanGenome()
+	g0 := pop0.GetMeanGenome()
 	g1 := pop1.GetMeanGenome()
 	Gaxis := multicell.NewGenome()
 	multicell.DiffGenomes(Gaxis, g1, g0)
