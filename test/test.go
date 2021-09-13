@@ -147,7 +147,7 @@ func main() {
 	tevol := time.Now()
 	//envtraj = append(envtraj, popstart.Envs)
 
-	fmt.Println("Novel environment :", popstart.Envs)
+	fmt.Println("Evolving in novel environment :", popstart.Envs)
 	gidfilename := fmt.Sprintf("%s_full", Gid_Filename)
 
 	pop1 := multicell.Evolve(true, T_Filename, json_out, gidfilename, epochlength, 1, &popstart)
@@ -213,6 +213,7 @@ func main() {
 	multicell.DiffGenomes(Gaxis, g1, g0)
 	Gaxis = Gaxis.NormalizeGenome()
 	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
+	fmt.Println("Change in environment proportional to:",Paxis)
 
 	for gen := 0; gen <= epochlength+1; gen++ { //Also project population after pulling back to ancestral environment.
 		jfilename := fmt.Sprintf("../pops/%s_%d.json", json_out, gen)

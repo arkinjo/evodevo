@@ -2,9 +2,9 @@
 phat <- c()
 ghat <- c()
 
-pdf("upoppgtraj20210911.pdf")
+pdf("upoppgtraj20210913.pdf")
 for (i in c(0:201)){
-  filename <- paste("upop20210911pg_",i,".dat",sep="")
+  filename <- paste("upop20210913pg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
   p <- pg$Phenotype
   g <- pg$Genotype
