@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"time"
 
@@ -35,6 +36,7 @@ Test json population import/export with(out) flag O_Append
 */
 
 func main() {
+	var mu0, mu1 float64
 	t0 := time.Now()
 	fmt.Println("Hello, world!")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
@@ -79,6 +81,13 @@ func main() {
 	pop0.Envs = playenv
 	zeroGenome := multicell.NewGenome()
 
+	for _, indiv := range pop0.Indivs {
+		Gdiff = multicell.TestEqualGenomes(zeroGenome, indiv.Genome)
+		fmt.Println("ID : ", indiv.Id, "; Genome metric value :", Gdiff) //Check whether this is non-zero
+		mu0 += Gdiff / float64(1000)
+	}
+	fmt.Println("Marshalling and unmarshalling")
+
 	jsonpop, err := json.Marshal(pop0) //Marshal json encoding of pop0
 	if err != nil {
 		log.Fatal(err)
@@ -91,10 +100,14 @@ func main() {
 	for _, indiv := range pop1.Indivs {
 		Gdiff = multicell.TestEqualGenomes(zeroGenome, indiv.Genome)
 		fmt.Println("ID : ", indiv.Id, "; Genome metric value :", Gdiff) //Check whether this is non-zero
+		mu1 += Gdiff / float64(1000)
 	}
 
 	JSONequalGs = multicell.TestEqualPopGenomes(pop0, pop1)
-	fmt.Println("Marshaller error :", JSONequalGs)
+	fmt.Println("Total Marshaller error :", JSONequalGs)
+	fmt.Println("Mean marshaller error :", JSONequalGs/float64(1000))
+	fmt.Println("mu_0-mu_1=", mu0-mu1)
+	fmt.Println("Error of errors :", JSONequalGs/float64(1000)-math.Abs(mu0-mu1))
 
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ", dt)
