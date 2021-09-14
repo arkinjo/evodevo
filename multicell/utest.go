@@ -4,7 +4,7 @@ import (
 	"math"
 )
 
-func TestEqualGenome(G0, G1 Genome) bool { //Elementwise difference between two genomes
+func TestEqualGenomes(G0, G1 Genome) bool { //Elementwise difference between two genomes
 	var d float64
 
 	for i := 0; i < ngenes; i++ {
@@ -45,4 +45,12 @@ func TestEqualGenome(G0, G1 Genome) bool { //Elementwise difference between two 
 	}
 	return (d == 0.0)
 
+}
+
+func TestEqualPopGenomes(pop0, pop1 Population) bool { //Test for equal genome across individuals in two populations.
+	u := true //boolean
+	for k, indiv := range pop0.Indivs {
+		u = u && TestEqualGenomes(indiv.Genome, pop1.Indivs[k].Genome) //Update whether individual wise genomes are same
+	}
+	return u //Warning! Ordering of population individuals is important.
 }

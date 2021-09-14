@@ -19,6 +19,9 @@ var nancfilename string
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
 
+var CopyequalGs bool //bugtesting variable
+var JSONequalGs bool //bugtesting variable
+
 //var test bool = false //false : training mode, true : testing mode
 
 func main() {
@@ -113,39 +116,17 @@ func main() {
 
 	//Bug in JSON encoding?! Genotype should be unchanged by reading and then writing same json file!
 
-	/*
-		fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
-		if err != nil {
-			log.Fatal(err)
-		}
-
-			//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
-			//pop0.Envs = pop0.RefEnvs //Generation zero; just before environment change; NOT NEEDED, population is exported just before environment change
-			//ancpop := pop0.Copy()
-			//ancpop.DevPop(0)
-
-			//fmt.Fprintf(fout, "1 \t 0 \t %e \t %e \t %e \t %e \t %e \t %e \n", pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
-
-			err = fout.Close()
-			if err != nil {
-				log.Fatal(err)
-			}
-	*/
-
 	popstart := pop0.Copy()
+	CopyequalGs = multicell.TestEqualPopGenomes(pop0, popstart)
+	if !CopyequalGs {
+		fmt.Println("Bug found in copier : copied population has different genotype")
+	}
 	OldEnvs := multicell.CopyCues(pop0.Envs)
 	popstart.RefEnvs = AncEnvs
 	NovEnvs := multicell.ChangeEnvs(OldEnvs, denv)
 	popstart.Envs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
 
-	//popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5)
-
-	//envtraj := make([]multicell.Cues, 1) //Trajectory of environment cue
-	//envtraj[0] = popstart.RefEnvs
-
-	//for epoch := 1; epoch <= maxepochs; epoch++ {
 	tevol := time.Now()
-	//envtraj = append(envtraj, popstart.Envs)
 
 	fmt.Println("Evolving in novel environment :", popstart.Envs)
 	gidfilename := fmt.Sprintf("%s_full", Gid_Filename)
@@ -213,7 +194,7 @@ func main() {
 	multicell.DiffGenomes(Gaxis, g1, g0)
 	Gaxis = Gaxis.NormalizeGenome()
 	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
-	fmt.Println("Change in environment proportional to:",Paxis)
+	fmt.Println("Change in environment proportional to:", Paxis)
 
 	for gen := 0; gen <= epochlength+1; gen++ { //Also project population after pulling back to ancestral environment.
 		jfilename := fmt.Sprintf("../pops/%s_%d.json", json_out, gen)
@@ -266,6 +247,13 @@ func main() {
 	fmt.Printf("Number of ancestors of final generation written to %s\n", nancfilename)
 	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_out)
 	//fmt.Println("Trajectory of environment :", envtraj)
+
+	if !CopyequalGs {
+		fmt.Println("Bug in copy genomes: Copied genome has different value")
+	}
+	if !JSONequalGs {
+		fmt.Println("Bug in JSON encodings.")
+	}
 
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ", dt)
