@@ -33,7 +33,7 @@ type Indiv struct { //An individual as an unicellular organism
 	DadId   int
 	MomId   int
 	Genome  Genome
-	Copies  []Cells
+	Copies  []Cells //0: No env; 1: Previous env; 2: Current env
 	Z       Vec     // Initial gene expression of offspring
 	F0      float64 //Fitness without cues
 	Fit     float64 //Fitness with cues
