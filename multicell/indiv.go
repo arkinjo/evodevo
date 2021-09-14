@@ -555,7 +555,7 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 		//addVecs(e1, vec, veid)
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
-			addVecs(f1, vf, e1)
+			addVecs(f1, vf, ve)
 		} else {
 			f1 = vf
 		}
