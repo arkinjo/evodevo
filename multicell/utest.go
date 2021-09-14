@@ -2,9 +2,10 @@ package multicell
 
 import (
 	"math"
+//	"sort"
 )
 
-func TestEqualGenomes(G0, G1 Genome) bool { //Elementwise difference between two genomes
+func TestEqualGenomes(G0, G1 Genome) float64 { //Elementwise difference between two genomes
 	var d float64
 
 	for i := 0; i < ngenes; i++ {
@@ -43,14 +44,17 @@ func TestEqualGenomes(G0, G1 Genome) bool { //Elementwise difference between two
 			d += math.Abs(G1.Z[i][j] - G0.Z[i][j])
 		}
 	}
-	return (d == 0.0)
+	return d
 
 }
 
-func TestEqualPopGenomes(pop0, pop1 Population) bool { //Test for equal genome across individuals in two populations.
-	u := true //boolean
+func TestEqualPopGenomes(pop0, pop1 Population) float64 { //Test for equal genome across individuals in two populations.
+	u := 0.0 
+	pop0.SortPopIndivs()
+	pop1.SortPopIndivs() //Sort before comparison
+
 	for k, indiv := range pop0.Indivs {
-		u = u && TestEqualGenomes(indiv.Genome, pop1.Indivs[k].Genome) //Update whether individual wise genomes are same
+		u += TestEqualGenomes(indiv.Genome, pop1.Indivs[k].Genome) //Update whether individual wise genomes are same
 	}
 	return u //Warning! Ordering of population individuals is important.
 }

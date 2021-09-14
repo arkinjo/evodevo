@@ -19,9 +19,9 @@ var nancfilename string
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
 
-var CopyequalGs bool //bugtesting variable
-var JSONequalGs bool //bugtesting variable
-var DevequalGs bool  //bugtesting variable
+var CopyequalGs float64 //bugtesting variable
+var JSONequalGs float64 //bugtesting variable
+var DevequalGs float64  //bugtesting variable
 
 //var test bool = false //false : training mode, true : testing mode
 
@@ -140,6 +140,9 @@ func main() {
 	EvPop.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
 	EvPop.DevPop(epochlength + 1)
 	DevequalGs = multicell.TestEqualPopGenomes(pop1, EvPop)
+	for k,indiv := range EvPop.Indivs {
+		fmt.Println(indiv.Id==EvPop.Indivs[k].Id)
+	}
 	//Remark: Fitness here is fitness in ancestral environment!
 	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -236,15 +239,15 @@ func main() {
 	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_out)
 	//fmt.Println("Trajectory of environment :", envtraj)
 
-	if !CopyequalGs {
-		fmt.Println("Possible bug in copy genomes: Copied genome has different value")
-	}
-	if !DevequalGs {
-		fmt.Println("Possible bug in development: Development changes genome values")
-	}
-	if !JSONequalGs {
-		fmt.Println("Possible bug in JSON encodings: Read genome has different value")
-	}
+	//if !CopyequalGs {
+	fmt.Println("Error in copying genomes :",CopyequalGs)
+	//}
+	//if !DevequalGs {
+	fmt.Println("Genome error in development:",DevequalGs) //This is due to misordering after development; individuals are not developed in same order.
+	//}
+	//if !JSONequalGs {
+	fmt.Println("Genome error in json:",JSONequalGs)
+	//}
 
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ", dt)

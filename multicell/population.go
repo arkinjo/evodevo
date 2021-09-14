@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"sort"
 	//	"io/ioutil"
 )
 
@@ -41,6 +42,10 @@ func (pop *Population) Copy() Population {
 		pop1.Indivs[i] = indiv.Copy()
 	}
 	return pop1
+}
+
+func (pop *Population) SortPopIndivs() {
+	sort.Slice(pop.Indivs,func(i,j int)bool {return pop.Indivs[i].Id < pop.Indivs[j].Id}) //Hopefully this works
 }
 
 func (pop *Population) GetMeanFitness() float64 { //average fitness of population
@@ -263,6 +268,7 @@ func (pop *Population) DevPop(gen int) Population {
 	for i := range pop.Indivs {
 		pop.Indivs[i] = <-ch //Update output results
 	}
+	//We might need a sorter here.
 
 	return *pop
 }
