@@ -539,20 +539,16 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 
 	h0 := make([]float64, ngenes) //No higher order complexes in embryonic stage
 	ve := make([]float64, ngenes)
-	//ve := make([]float64, Ngenes)
 	vf := make([]float64, ngenes)
 	vg := g0
 	vh := make([]float64, ngenes)
 	vp := make([]float64, nenv+ncells)
-	e1 := make([]float64, ngenes)
 	f1 := make([]float64, ngenes)
 	g1 := make([]float64, ngenes)
 	h1 := make([]float64, ngenes)
 
 	for nstep := 0; nstep < MaxDevStep; nstep++ {
 		multMatVec(ve, G.E, cell.E)
-		//multMatVec(veid, G.Eid, cell.E.id)
-		//addVecs(e1, vec, veid)
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
 			addVecs(f1, vf, ve)
