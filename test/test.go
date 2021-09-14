@@ -21,6 +21,7 @@ var json_out string = "popout"
 
 var CopyequalGs bool //bugtesting variable
 var JSONequalGs bool //bugtesting variable
+var DevequalGs bool  //bugtesting variable
 
 //var test bool = false //false : training mode, true : testing mode
 
@@ -131,21 +132,6 @@ func main() {
 	pop1 := multicell.Evolve(true, T_Filename, json_out, gidfilename, epochlength, 1, &popstart)
 	fmt.Println("End of epoch")
 
-	/*
-		jfilename := fmt.Sprintf("%s.json",json_out)
-		jsonpop, err := json.Marshal(pop1) //JSON encoding of population as byte array
-		if err != nil {
-			log.Fatal(err)
-		}
-		popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
-		if err != nil {
-			log.Fatal(err)
-		}
-		_, err = popout.Write(jsonpop)
-		if err != nil {
-			log.Fatal(err)
-		}
-	*/
 	dtevol := time.Since(tevol)
 	fmt.Println("Time taken to simulate evolution :", dtevol)
 	fmt.Println("Put evolved population back into ancestral environment")
@@ -153,6 +139,7 @@ func main() {
 	EvPop.Envs = AncEnvs    //Put population back into ancestral environment.
 	EvPop.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
 	EvPop.DevPop(epochlength + 1)
+	DevequalGs = multicell.TestEqualPopGenomes(pop1, EvPop)
 	//Remark: Fitness here is fitness in ancestral environment!
 	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -251,6 +238,9 @@ func main() {
 
 	if !CopyequalGs {
 		fmt.Println("Possible bug in copy genomes: Copied genome has different value")
+	}
+	if !DevequalGs {
+		fmt.Println("Possible bug in development: Development changes genome values")
 	}
 	if !JSONequalGs {
 		fmt.Println("Possible bug in JSON encodings: Read genome has different value")
