@@ -118,9 +118,6 @@ func main() {
 
 	popstart := pop0.Copy()
 	CopyequalGs = multicell.TestEqualPopGenomes(pop0, popstart)
-	if !CopyequalGs {
-		fmt.Println("Bug found in copier : copied population has different genotype")
-	}
 	OldEnvs := multicell.CopyCues(pop0.Envs)
 	popstart.RefEnvs = AncEnvs
 	NovEnvs := multicell.ChangeEnvs(OldEnvs, denv)
@@ -214,6 +211,10 @@ func main() {
 			log.Fatal(err)
 		}
 
+		if gen == 0 { //Only able to test first generation.
+			JSONequalGs = multicell.TestEqualPopGenomes(pop, pop0)
+		}
+
 		//pop.Envs = NovEnvs
 		//pop.RefEnvs = AncEnvs //Measure everything in direction of ancestral -> novel environment
 		pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
@@ -249,10 +250,10 @@ func main() {
 	//fmt.Println("Trajectory of environment :", envtraj)
 
 	if !CopyequalGs {
-		fmt.Println("Bug in copy genomes: Copied genome has different value")
+		fmt.Println("Possible bug in copy genomes: Copied genome has different value")
 	}
 	if !JSONequalGs {
-		fmt.Println("Bug in JSON encodings.")
+		fmt.Println("Possible bug in JSON encodings: Read genome has different value")
 	}
 
 	dt := time.Since(t0)
