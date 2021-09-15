@@ -57,6 +57,44 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 	return genome
 }
 
+func (G *Genome) Clear() { //Sets all entries of genome to zero
+	for _, r := range G.E {
+		for j := range r { //range over keys
+			delete(r, j)
+		}
+	}
+	for _, r := range G.F {
+		for j := range r { //range over keys
+			delete(r, j)
+		}
+	}
+	for _, r := range G.G {
+		for j := range r { //range over keys
+			delete(r, j)
+		}
+	}
+	for _, r := range G.Hg {
+		for j := range r { //range over keys
+			delete(r, j)
+		}
+	}
+	for _, r := range G.Hh {
+		for j := range r { //range over keys
+			delete(r, j)
+		}
+	}
+	for _, r := range G.P {
+		for j := range r { //range over keys
+			delete(r, j)
+		}
+	}
+	for _, r := range G.Z {
+		for j := range r { //range over keys
+			delete(r, j)
+		}
+	}
+}
+
 func (parent *Genome) Copy() Genome { //creates copy of genome
 	e := make(Spmat, ngenes)
 	f := make(Spmat, ngenes)
@@ -335,6 +373,11 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 	return indiv1
 }
 
+/*
+func (indiv *Indiv) ZeroGenome() { //Empties genome of individual
+	indiv.Genome.Zero()
+}
+*/
 func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	r := rand.Intn(genelength) //Randomly choose one of the genome matrices to mutate; with prob proportional to no. of columns
 	t := 0

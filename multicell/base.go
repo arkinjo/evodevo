@@ -6,7 +6,7 @@ import (
 )
 
 var MaxPop int = 1000 // population size
-var ngenes int = 400  // number of genes
+var ngenes int = 500  // number of genes
 var nenv int = 20     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
@@ -111,7 +111,7 @@ func rho(x float64) float64 { //Function for converting gene expression into phe
 	return sigmoid(x, Omega)
 }
 
-func NewSpmat(nrow, ncol int, density float64) Spmat { //Generate a new sparse matrix
+func NewSpmat(nrow, ncol int, density float64) Spmat { //Randomly generate a new sparse matrix given density
 	mat := make([](map[int]float64), nrow)
 	for i := range mat {
 		mat[i] = make(map[int]float64)

@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+
+	//"io/ioutil"
 	"log"
-	"math"
-	"os"
+	//"math"
+	//"os"
 	"time"
 
 	"github.com/arkinjo/evodevo/multicell"
@@ -25,6 +26,9 @@ var JSONequalGs float64 //bugtesting variable
 var DevequalGs float64  //bugtesting variable
 var Gdiff float64
 
+var JSONequalGs1 float64 //bugtesting variable
+var JSONequalGs2 float64 //bugtesting variable
+
 //var test bool = false //false : training mode, true : testing mode
 //This file is for playing around; testing behavior of various functions in Go etc.
 
@@ -36,7 +40,7 @@ Test json population import/export with(out) flag O_Append
 */
 
 func main() {
-	var mu0, mu1 float64
+	//var mu0, mu1 float64
 	t0 := time.Now()
 	fmt.Println("Hello, world!")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
@@ -53,62 +57,46 @@ func main() {
 	multicell.SetNcells(*ncelltypesPtr)
 	multicell.SetLayers(*cuePtr, *epigPtr, *HOCPtr, *HOIPtr)
 
-	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
+	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop) //Not cleared
+	jsonpop1, err := json.Marshal(pop0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	pop1 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
-
-	if json_in != "" { //read input population as a json file, if given
-		fmt.Println("Importing initial population")
-		jfilename := fmt.Sprintf("../pops/%s.json", json_in)
-		popin, err := os.Open(jfilename)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		byteValue, _ := ioutil.ReadAll(popin)
-		err = json.Unmarshal(byteValue, &pop0)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = popin.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Successfully imported population")
-	}
-
-	playenv := multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5) //Random environment cue
-	pop0.Envs = playenv
-	zeroGenome := multicell.NewGenome()
-
-	for _, indiv := range pop0.Indivs {
-		Gdiff = multicell.TestEqualGenomes(zeroGenome, indiv.Genome)
-		fmt.Println("ID : ", indiv.Id, "; Genome metric value :", Gdiff) //Check whether this is non-zero
-		mu0 += Gdiff / float64(1000)
-	}
-	fmt.Println("Marshalling and unmarshalling")
-
-	jsonpop, err := json.Marshal(pop0) //Marshal json encoding of pop0
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = json.Unmarshal(jsonpop, &pop1) //Unmarshal into pop1
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	fmt.Println("Before clearing")
 	for _, indiv := range pop1.Indivs {
-		Gdiff = multicell.TestEqualGenomes(zeroGenome, indiv.Genome)
-		fmt.Println("ID : ", indiv.Id, "; Genome metric value :", Gdiff) //Check whether this is non-zero
-		mu1 += Gdiff / float64(1000)
+		fmt.Println(indiv.Genome)
+	}
+	pop1.ClearGenome()
+	fmt.Println("After Clearing")
+	for _, indiv := range pop1.Indivs {
+		fmt.Println(indiv.Genome)
 	}
 
-	JSONequalGs = multicell.TestEqualPopGenomes(pop0, pop1)
-	fmt.Println("Total Marshaller error :", JSONequalGs)
-	fmt.Println("Mean marshaller error :", JSONequalGs/float64(1000))
-	fmt.Println("mu_0-mu_1=", mu0-mu1)
-	fmt.Println("Error of errors :", JSONequalGs/float64(1000)-math.Abs(mu0-mu1))
+	err = json.Unmarshal(jsonpop1, &pop1)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	JSONequalGs1 = multicell.TestEqualGenomes(pop0.Indivs[1].Genome, pop1.Indivs[1].Genome)
+	fmt.Println("0 VS 1 :", JSONequalGs1)
+
+	jsonpop2, err := json.Marshal(pop1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pop2 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
+	pop2.ClearGenome()
+	err = json.Unmarshal(jsonpop2, &pop2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	JSONequalGs2 = multicell.TestEqualGenomes(pop1.Indivs[1].Genome, pop2.Indivs[1].Genome)
+	JSONequalGs = multicell.TestEqualGenomes(pop0.Indivs[1].Genome, pop2.Indivs[1].Genome)
+	fmt.Println("1 VS 2 :", JSONequalGs2)
+	fmt.Println("0 VS 2 :", JSONequalGs)
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ", dt)
 

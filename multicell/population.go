@@ -30,6 +30,12 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 	return p
 }
 
+func (pop *Population) ClearGenome() {
+	for _, indiv := range pop.Indivs { //Sets genome of every individual to zero
+		indiv.Genome.Clear()
+	}
+}
+
 func (pop *Population) Copy() Population {
 	npop := len(pop.Indivs)
 	ncell := len(pop.Indivs[0].Copy().Copies[0].Ctypes) //number of cells
@@ -45,7 +51,7 @@ func (pop *Population) Copy() Population {
 }
 
 func (pop *Population) SortPopIndivs() {
-	sort.Slice(pop.Indivs,func(i,j int)bool {return pop.Indivs[i].Id < pop.Indivs[j].Id}) //Hopefully this works
+	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id }) //Hopefully this works
 }
 
 func (pop *Population) GetMeanFitness() float64 { //average fitness of population

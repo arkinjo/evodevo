@@ -59,7 +59,7 @@ func main() {
 	multicell.SetNcells(*ncelltypesPtr)
 	multicell.SetLayers(*cuePtr, *epigPtr, *HOCPtr, *HOIPtr)
 
-	ancpop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
+	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop) //with randomized genome to start
 
 	if json_in != "" { //read input population as a json file, if given
 		fmt.Println("Importing initial population")
@@ -70,7 +70,8 @@ func main() {
 		}
 
 		byteValue, _ := ioutil.ReadAll(popin)
-		err = json.Unmarshal(byteValue, &ancpop)
+		pop0.ClearGenome() //Clear genome before unmarshalling json
+		err = json.Unmarshal(byteValue, &pop0)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -85,16 +86,6 @@ func main() {
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
-
-	//Idea: Make an ancestral environment for evolution in ancestral environment first. Only export final generation
-	AncRefEnvs := multicell.CopyCues(ancpop.Envs)
-	ancpop.RefEnvs = AncRefEnvs
-	AncEnvs := multicell.ChangeEnvs(AncRefEnvs, denv)
-	ancpop.Envs = AncEnvs
-
-	fmt.Println("Evolving in ancestral environment :", AncEnvs)
-
-	pop0 := multicell.Evolve(false, T_Filename, json_out, "", epochlength, 0, &ancpop) //Evolve in ancestral environment with epoch = 0
 
 	jfilename := fmt.Sprintf("../pops/%s_0.json", json_out) //Make a new json file encoding evolved population
 	jsonpop, err := json.Marshal(pop0)                      //JSON encoding of population as byte array
@@ -118,9 +109,9 @@ func main() {
 	//Bug in JSON encoding?! Genotype should be unchanged by reading and then writing same json file!
 
 	popstart := pop0.Copy()
-	CopyequalGs = multicell.TestEqualPopGenomes(pop0, popstart)
+	AncEnvs := multicell.CopyCues(pop0.Envs)
 	OldEnvs := multicell.CopyCues(pop0.Envs)
-	popstart.RefEnvs = AncEnvs
+	popstart.RefEnvs = OldEnvs
 	NovEnvs := multicell.ChangeEnvs(OldEnvs, denv)
 	popstart.Envs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
 
@@ -140,9 +131,11 @@ func main() {
 	EvPop.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
 	EvPop.DevPop(epochlength + 1)
 	DevequalGs = multicell.TestEqualPopGenomes(pop1, EvPop)
-	for k,indiv := range EvPop.Indivs {
-		fmt.Println(indiv.Id==EvPop.Indivs[k].Id)
-	}
+	/*
+		for k,indiv := range EvPop.Indivs {
+			fmt.Println(indiv.Id==EvPop.Indivs[k].Id)
+		}
+	*/
 	//Remark: Fitness here is fitness in ancestral environment!
 	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -190,6 +183,7 @@ func main() {
 			log.Fatal(err)
 		}
 
+		pop.ClearGenome()
 		byteValue, _ := ioutil.ReadAll(popin)
 		err = json.Unmarshal(byteValue, &pop)
 		if err != nil {
@@ -240,13 +234,13 @@ func main() {
 	//fmt.Println("Trajectory of environment :", envtraj)
 
 	//if !CopyequalGs {
-	fmt.Println("Error in copying genomes :",CopyequalGs)
+	fmt.Println("Error in copying genomes :", CopyequalGs)
 	//}
 	//if !DevequalGs {
-	fmt.Println("Genome error in development:",DevequalGs) //This is due to misordering after development; individuals are not developed in same order.
+	fmt.Println("Genome error in development:", DevequalGs) //This is due to misordering after development; individuals are not developed in same order.
 	//}
 	//if !JSONequalGs {
-	fmt.Println("Genome error in json:",JSONequalGs)
+	fmt.Println("Genome error in json:", JSONequalGs)
 	//}
 
 	dt := time.Since(t0)
