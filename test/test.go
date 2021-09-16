@@ -86,32 +86,32 @@ func main() {
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
+	/*
+		jfilename := fmt.Sprintf("../pops/%s_0.json", json_out) //Make a new json file encoding evolved population
+		jsonpop, err := json.Marshal(pop0)                      //JSON encoding of population as byte array
+		if err != nil {
+			log.Fatal(err)
+		}
+		popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = popout.Write(jsonpop)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	jfilename := fmt.Sprintf("../pops/%s_0.json", json_out) //Make a new json file encoding evolved population
-	jsonpop, err := json.Marshal(pop0)                      //JSON encoding of population as byte array
-	if err != nil {
-		log.Fatal(err)
-	}
-	popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = popout.Write(jsonpop)
-	if err != nil {
-		log.Fatal(err)
-	}
+		err = popout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	err = popout.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//Bug in JSON encoding?! Genotype should be unchanged by reading and then writing same json file!
-
+		//Bug in JSON encoding?! Genotype should be unchanged by reading and then writing same json file!
+	*/
 	popstart := pop0.Copy()
 	AncEnvs := multicell.CopyCues(pop0.Envs)
 	OldEnvs := multicell.CopyCues(pop0.Envs)
-	popstart.RefEnvs = OldEnvs
+	popstart.RefEnvs = AncEnvs
 	NovEnvs := multicell.ChangeEnvs(OldEnvs, denv)
 	popstart.Envs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
 
@@ -125,45 +125,46 @@ func main() {
 
 	dtevol := time.Since(tevol)
 	fmt.Println("Time taken to simulate evolution :", dtevol)
-	fmt.Println("Put evolved population back into ancestral environment")
-	EvPop := pop1.Copy()
-	EvPop.Envs = AncEnvs    //Put population back into ancestral environment.
-	EvPop.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
-	EvPop.DevPop(epochlength + 1)
-	DevequalGs = multicell.TestEqualPopGenomes(pop1, EvPop)
 	/*
-		for k,indiv := range EvPop.Indivs {
-			fmt.Println(indiv.Id==EvPop.Indivs[k].Id)
+		fmt.Println("Put evolved population back into ancestral environment")
+		EvPop := pop1.Copy()
+		EvPop.Envs = AncEnvs    //Put population back into ancestral environment.
+		EvPop.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
+		EvPop.DevPop(epochlength + 1)
+		DevequalGs = multicell.TestEqualPopGenomes(pop1, EvPop)
+
+			for k,indiv := range EvPop.Indivs {
+				fmt.Println(indiv.Id==EvPop.Indivs[k].Id)
+			}
+		//Remark: Fitness here is fitness in ancestral environment!
+		fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprintf(fout, "2 \t %d \t %e \t %e \t %e \t %e \t %e \t %e \n", epochlength, pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
+
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+		jfilename = fmt.Sprintf("../pops/%s_%d.json", json_out, epochlength+1)
+		jsonpop, err = json.Marshal(EvPop) //JSON encoding of population as byte array
+		if err != nil {
+			log.Fatal(err)
+		}
+		popout, err = os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = popout.Write(jsonpop)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = popout.Close()
+		if err != nil {
+			log.Fatal(err)
 		}
 	*/
-	//Remark: Fitness here is fitness in ancestral environment!
-	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Fprintf(fout, "2 \t %d \t %e \t %e \t %e \t %e \t %e \t %e \n", epochlength, pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
-
-	err = fout.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-	jfilename = fmt.Sprintf("../pops/%s_%d.json", json_out, epochlength+1)
-	jsonpop, err = json.Marshal(EvPop) //JSON encoding of population as byte array
-	if err != nil {
-		log.Fatal(err)
-	}
-	popout, err = os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = popout.Write(jsonpop)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = popout.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	fmt.Println("Dumping projections")
 	tdump := time.Now()
@@ -213,7 +214,7 @@ func main() {
 	fmt.Println("Time taken to make dot file :", dtdot)
 	fmt.Println("Dumping number of ancestors")
 	nancfilename = fmt.Sprintf("../analysis/%s_nanc.dat", Gid_Filename)
-	fout, err = os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+	fout, err := os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -231,17 +232,20 @@ func main() {
 	fmt.Printf("Genealogy of final generation written to %s.dot\n", Gid_Filename)
 	fmt.Printf("Number of ancestors of final generation written to %s\n", nancfilename)
 	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_out)
-	//fmt.Println("Trajectory of environment :", envtraj)
 
-	//if !CopyequalGs {
-	fmt.Println("Error in copying genomes :", CopyequalGs)
-	//}
-	//if !DevequalGs {
-	fmt.Println("Genome error in development:", DevequalGs) //This is due to misordering after development; individuals are not developed in same order.
-	//}
-	//if !JSONequalGs {
-	fmt.Println("Genome error in json:", JSONequalGs)
-	//}
+	/*
+		//fmt.Println("Trajectory of environment :", envtraj)
+
+		//if !CopyequalGs {
+		fmt.Println("Error in copying genomes :", CopyequalGs)
+		//}
+		//if !DevequalGs {
+		fmt.Println("Genome error in development:", DevequalGs) //This is due to misordering after development; individuals are not developed in same order.
+		//}
+		//if !JSONequalGs {
+		fmt.Println("Genome error in json:", JSONequalGs)
+		//}
+	*/
 
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ", dt)

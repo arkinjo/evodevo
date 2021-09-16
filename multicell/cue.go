@@ -205,15 +205,12 @@ func GetMeanCue(cues Cues) Cue { //elementwise arithmetic mean of environment cu
 
 func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment cue
 	mu := GetMeanCue(cues)
-	//ncells := len(cues)
-	//ncues := len(cues[0])
-	//cvec := NewVec(nenv + ncells)
+	n := len(cues)
 	v := NewVec(nenv + ncells)
 	sigma2 := 0.0
 	for _, c := range cues {
-		//cvec = c //possibly redundant line
 		diffVecs(v, c, mu)
-		sigma2 += Veclength2(v) / float64(ncells)
+		sigma2 += Veclength2(v) / float64(n)
 	}
 	return sigma2
 }
