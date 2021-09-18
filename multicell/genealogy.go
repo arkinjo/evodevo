@@ -1,4 +1,4 @@
-package unicell
+package multicell
 
 import (
 	"encoding/json"
@@ -15,8 +15,8 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 
 	nanctraj := []int{}
 	rnanctraj := []int{}
-	pop := NewPopulation(npop)
-	genfile := fmt.Sprintf("%s.dot",dotfilename)
+	pop := NewPopulation(ncells,npop)
+	genfile := fmt.Sprintf("../analysis/%s.dot",dotfilename)
 	fout, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -32,7 +32,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 	}
 	pars := make(map[int]bool)
 	for gen := ngen; gen>0; gen-- {
-		jfilename := fmt.Sprintf("%s_%d.json",popfilename,gen)
+		jfilename := fmt.Sprintf("../pops/%s_%d.json",popfilename,gen)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)
