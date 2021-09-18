@@ -44,13 +44,13 @@ type Indiv struct { //An individual as an unicellular organism
 }
 
 func NewGenome() Genome { //Generate new genome matrix ensemble
-	E := NewSpmat(ngenes, nenv+ncells, GenomeDensity)
-	F := NewSpmat(ngenes, ngenes, GenomeDensity)
-	G := NewSpmat(ngenes, ngenes, GenomeDensity)
-	Hg := NewSpmat(ngenes, ngenes, GenomeDensity)
-	Hh := NewSpmat(ngenes, ngenes, GenomeDensity)
-	P := NewSpmat(ngenes, nenv+ncells, GenomeDensity)
-	Z := NewSpmat(ngenes, ngenes, GenomeDensity)
+	E := NewSpmat(ngenes, nenv+ncells)
+	F := NewSpmat(ngenes, ngenes)
+	G := NewSpmat(ngenes, ngenes)
+	Hg := NewSpmat(ngenes, ngenes)
+	Hh := NewSpmat(ngenes, ngenes)
+	P := NewSpmat(ngenes, nenv+ncells)
+	Z := NewSpmat(ngenes, ngenes)
 
 	genome := Genome{E, F, G, Hg, Hh, P, Z}
 
@@ -58,37 +58,37 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 }
 
 func (G *Genome) Clear() { //Sets all entries of genome to zero
-	for _, r := range G.E {
+	for _, r := range G.E.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
 	}
-	for _, r := range G.F {
+	for _, r := range G.F.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
 	}
-	for _, r := range G.G {
+	for _, r := range G.G.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
 	}
-	for _, r := range G.Hg {
+	for _, r := range G.Hg.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
 	}
-	for _, r := range G.Hh {
+	for _, r := range G.Hh.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
 	}
-	for _, r := range G.P {
+	for _, r := range G.P.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
 	}
-	for _, r := range G.Z {
+	for _, r := range G.Z.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
@@ -96,56 +96,13 @@ func (G *Genome) Clear() { //Sets all entries of genome to zero
 }
 
 func (parent *Genome) Copy() Genome { //creates copy of genome
-	e := make(Spmat, ngenes)
-	f := make(Spmat, ngenes)
-	g := make(Spmat, ngenes)
-	hg := make(Spmat, ngenes)
-	hh := make(Spmat, ngenes)
-	p := make(Spmat, ngenes)
-	z := make(Spmat, ngenes)
-
-	for i, m := range parent.E {
-		e[i] = make(map[int]float64)
-		for j, v := range m {
-			e[i][j] = v
-		}
-	}
-	for i, m := range parent.F {
-		f[i] = make(map[int]float64)
-		for j, v := range m {
-			f[i][j] = v
-		}
-	}
-	for i, m := range parent.G {
-		g[i] = make(map[int]float64)
-		for j, v := range m {
-			g[i][j] = v
-		}
-	}
-	for i, m := range parent.Hg {
-		hg[i] = make(map[int]float64)
-		for j, v := range m {
-			hg[i][j] = v
-		}
-	}
-	for i, m := range parent.Hh {
-		hh[i] = make(map[int]float64)
-		for j, v := range m {
-			hh[i][j] = v
-		}
-	}
-	for i, m := range parent.P {
-		p[i] = make(map[int]float64)
-		for j, v := range m {
-			p[i][j] = v
-		}
-	}
-	for i, m := range parent.Z {
-		z[i] = make(map[int]float64)
-		for j, v := range m {
-			z[i][j] = v
-		}
-	}
+	e := parent.E.Copy()
+	f := parent.F.Copy()
+	g := parent.G.Copy()
+	hg := parent.Hg.Copy()
+	hh := parent.Hh.Copy()
+	p := parent.P.Copy()
+	z := parent.Z.Copy()
 
 	genome := Genome{e, f, g, hg, hh, p, z}
 
@@ -153,42 +110,24 @@ func (parent *Genome) Copy() Genome { //creates copy of genome
 }
 
 func DiffGenomes(Gout, G1, G0 Genome) { //Elementwise difference between two genomes
-	for i := 0; i < ngenes; i++ {
+	if withCue {
+		Gout.E = DiffSpmat(&G1.E, &G0.E)
+	}
+	if epig {
+		Gout.F = DiffSpmat(&G1.F, &G0.F)
+	}
 
-		if withCue {
-			for j := 0; j < nenv+ncells; j++ {
-				Gout.E[i][j] = G1.E[i][j] - G0.E[i][j]
-			}
-		}
+	Gout.G = DiffSpmat(&G1.G, &G0.G)
 
-		if epig {
-			for j := 0; j < ngenes; j++ {
-				Gout.F[i][j] = G1.F[i][j] - G0.F[i][j]
-			}
-		}
-
-		for j := 0; j < ngenes; j++ {
-			Gout.G[i][j] = G1.G[i][j] - G0.G[i][j]
-		}
-
-		if hoc {
-			for j := 0; j < ngenes; j++ {
-				Gout.Hg[i][j] = G1.Hg[i][j] - G0.Hg[i][j]
-			}
-			if hoi {
-				for j := 0; j < ngenes; j++ {
-					Gout.Hh[i][j] = G1.Hh[i][j] - G0.Hh[i][j]
-				}
-			}
-		}
-
-		for j := 0; j < nenv+ncells; j++ {
-			Gout.P[i][j] = G1.P[i][j] - G0.P[i][j]
-		}
-		for j := 0; j < ngenes; j++ {
-			Gout.Z[i][j] = G1.Z[i][j] - G0.Z[i][j]
+	if hoc {
+		Gout.Hg = DiffSpmat(&G1.Hg, &G0.Hg)
+		if hoi {
+			Gout.Hh = DiffSpmat(&G1.Hh, &G0.Hh)
 		}
 	}
+
+	Gout.P = DiffSpmat(&G1.P, &G0.P)
+	Gout.Z = DiffSpmat(&G1.Z, &G0.Z)
 }
 
 func (G *Genome) NormalizeGenome() Genome {
@@ -196,7 +135,7 @@ func (G *Genome) NormalizeGenome() Genome {
 	eG := G.Copy()
 
 	if withCue {
-		for _, m := range G.E {
+		for _, m := range G.E.Mat {
 			for _, v := range m {
 				lambda2 += v * v
 			}
@@ -204,28 +143,28 @@ func (G *Genome) NormalizeGenome() Genome {
 	}
 
 	if epig {
-		for _, m := range G.F {
+		for _, m := range G.F.Mat {
 			for _, v := range m {
 				lambda2 += v * v
 			}
 		}
 	}
 
-	for _, m := range G.G {
+	for _, m := range G.G.Mat {
 		for _, v := range m {
 			lambda2 += v * v
 		}
 	}
 
 	if hoc {
-		for _, m := range G.Hg {
+		for _, m := range G.Hg.Mat {
 			for _, v := range m {
 				lambda2 += v * v
 			}
 		}
 
 		if hoi {
-			for _, m := range G.Hh {
+			for _, m := range G.Hh.Mat {
 				for _, v := range m {
 					lambda2 += v * v
 				}
@@ -233,12 +172,12 @@ func (G *Genome) NormalizeGenome() Genome {
 		}
 	}
 
-	for _, m := range G.P {
+	for _, m := range G.P.Mat {
 		for _, v := range m {
 			lambda2 += v * v
 		}
 	}
-	for _, m := range G.Z {
+	for _, m := range G.Z.Mat {
 		for _, v := range m {
 			lambda2 += v * v
 		}
@@ -247,50 +186,50 @@ func (G *Genome) NormalizeGenome() Genome {
 	lambda := math.Sqrt(lambda2)
 
 	if withCue {
-		for i, m := range eG.E {
+		for i, m := range eG.E.Mat {
 			for j := range m {
-				eG.E[i][j] = eG.E[i][j] / lambda
+				eG.E.Mat[i][j] = eG.E.Mat[i][j] / lambda
 			}
 		}
 	}
 
 	if epig {
-		for i, m := range eG.F {
+		for i, m := range eG.F.Mat {
 			for j := range m {
-				eG.F[i][j] = eG.F[i][j] / lambda
+				eG.F.Mat[i][j] = eG.F.Mat[i][j] / lambda
 			}
 		}
 	}
 
-	for i, m := range eG.G {
+	for i, m := range eG.G.Mat {
 		for j := range m {
-			eG.G[i][j] = eG.G[i][j] / lambda
+			eG.G.Mat[i][j] = eG.G.Mat[i][j] / lambda
 		}
 	}
 
 	if hoc {
-		for i, m := range eG.Hg {
+		for i, m := range eG.Hg.Mat {
 			for j := range m {
-				eG.Hg[i][j] = eG.Hg[i][j] / lambda
+				eG.Hg.Mat[i][j] = eG.Hg.Mat[i][j] / lambda
 			}
 		}
 		if hoi {
-			for i, m := range eG.Hh {
+			for i, m := range eG.Hh.Mat {
 				for j := range m {
-					eG.Hh[i][j] = eG.Hh[i][j] / lambda
+					eG.Hh.Mat[i][j] = eG.Hh.Mat[i][j] / lambda
 				}
 			}
 		}
 	}
 
-	for i, m := range eG.P {
+	for i, m := range eG.P.Mat {
 		for j := range m {
-			eG.P[i][j] = eG.P[i][j] / lambda
+			eG.P.Mat[i][j] = eG.P.Mat[i][j] / lambda
 		}
 	}
-	for i, m := range eG.Z {
+	for i, m := range eG.Z.Mat {
 		for j := range m {
-			eG.Z[i][j] = eG.Z[i][j] / lambda
+			eG.Z.Mat[i][j] = eG.Z.Mat[i][j] / lambda
 		}
 	}
 	return eG
@@ -387,65 +326,39 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if withCue {
 		t += nenv + ncells
 		if r < t {
-			mutateSpmat(indiv.Genome.E, nenv+ncells)
+			indiv.Genome.E.mutateSpmat()
 		}
 	}
 	if epig {
 		t += ngenes
 		if r < t {
-			mutateSpmat(indiv.Genome.F, ngenes)
+			indiv.Genome.F.mutateSpmat()
 		}
 	}
 	t += ngenes
 	if r < t {
-		mutateSpmat(indiv.Genome.G, ngenes)
+		indiv.Genome.G.mutateSpmat()
 	}
 	if hoc {
 		t += ngenes
 		if r < t {
-			mutateSpmat(indiv.Genome.Hg, ngenes)
+			indiv.Genome.Hg.mutateSpmat()
 		}
 		if hoi {
 			t += ngenes
 			if r < t {
-				mutateSpmat(indiv.Genome.Hh, ngenes)
+				indiv.Genome.Hh.mutateSpmat()
 			}
 		}
 	}
 	t += nenv + ncells
 	if r < t {
-		mutateSpmat(indiv.Genome.P, nenv+ncells)
+		indiv.Genome.P.mutateSpmat()
 	}
 	t += ngenes
 	if r < t {
-		mutateSpmat(indiv.Genome.Z, ngenes)
+		indiv.Genome.Z.mutateSpmat()
 	}
-
-	/*
-		OLD VERSION
-		if ipos < Nenv {
-			mutateSpmat(indiv.Genome.Ec, Nenv)
-		} else if ipos < Nenv+ncells {
-			mutateSpmat(indiv.Genome.Eid, ncells)
-		} else if ipos < Nenv+Ngenes+ncells {
-			mutateSpmat(indiv.Genome.F, Ngenes)
-		} else if ipos < Nenv+2*Ngenes+ncells {
-			mutateSpmat(indiv.Genome.G, Ngenes)
-		} else if ipos < Nenv+3*Ngenes+ncells {
-			mutateSpmat(indiv.Genome.Hg, Ngenes)
-		} else if ipos < Nenv+4*Ngenes+ncells {
-			mutateSpmat(indiv.Genome.Hh, Ngenes)
-		} else if ipos < 2*Nenv+4*Ngenes+ncells {
-			mutateSpmat(indiv.Genome.Pc, Nenv)
-		} else if ipos < 2*Nenv+4*Ngenes+2*ncells {
-			mutateSpmat(indiv.Genome.Pid, ncells)
-		} else {
-			mutateSpmat(indiv.Genome.Z, Ngenes)
-		}
-
-		Remark: Main difficulty here is that matrices are in sparse matrix format rather than dense matrix format
-		So need to specify max number of columns of each matrix.
-	*/
 
 	return
 }
@@ -459,31 +372,31 @@ func Crossover(dadg, momg *Genome, dadz, momz Vec) (Genome, Genome, Vec, Vec) { 
 	for i := 0; i < ngenes; i++ {
 		r := rand.Float64()
 		if r < 0.5 {
-			e := ng0.E[i]
-			f := ng0.F[i]
-			g := ng0.G[i]
-			hg := ng0.Hg[i]
-			hh := ng0.Hh[i]
-			p := ng0.P[i]
-			z := ng0.Z[i]
+			e := ng0.E.Mat[i]
+			f := ng0.F.Mat[i]
+			g := ng0.G.Mat[i]
+			hg := ng0.Hg.Mat[i]
+			hh := ng0.Hh.Mat[i]
+			p := ng0.P.Mat[i]
+			z := ng0.Z.Mat[i]
 			z0 := nz0[i]
 
-			ng0.E[i] = ng1.E[i]
-			ng0.F[i] = ng1.F[i]
-			ng0.G[i] = ng1.G[i]
-			ng0.Hg[i] = ng1.Hg[i]
-			ng0.Hh[i] = ng1.Hh[i]
-			ng0.P[i] = ng1.P[i]
-			ng0.Z[i] = ng1.Z[i]
+			ng0.E.Mat[i] = ng1.E.Mat[i]
+			ng0.F.Mat[i] = ng1.F.Mat[i]
+			ng0.G.Mat[i] = ng1.G.Mat[i]
+			ng0.Hg.Mat[i] = ng1.Hg.Mat[i]
+			ng0.Hh.Mat[i] = ng1.Hh.Mat[i]
+			ng0.P.Mat[i] = ng1.P.Mat[i]
+			ng0.Z.Mat[i] = ng1.Z.Mat[i]
 			nz0[i] = nz1[i]
 
-			ng1.E[i] = e
-			ng1.F[i] = f
-			ng1.G[i] = g
-			ng1.Hg[i] = hg
-			ng1.Hh[i] = hh
-			ng1.P[i] = p
-			ng1.Z[i] = z
+			ng1.E.Mat[i] = e
+			ng1.F.Mat[i] = f
+			ng1.G.Mat[i] = g
+			ng1.Hg.Mat[i] = hg
+			ng1.Hh.Mat[i] = hh
+			ng1.P.Mat[i] = p
+			ng1.Z.Mat[i] = z
 			nz1[i] = z0
 		}
 	}

@@ -135,51 +135,52 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 
 func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of population
 	var Gtilde Genome
-
+	fnpop := 1.0/float64(len(pop.Indivs))
+	
 	MeanGenome := NewGenome()
 	for _, indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
 		if withCue {
-			for i := range Gtilde.E {
+			for i := range Gtilde.E.Mat {
 				for j := 0; j < nenv+ncells; j++ {
-					MeanGenome.E[i][j] += Gtilde.E[i][j] / float64(len(pop.Indivs))
+					MeanGenome.E.Mat[i][j] += Gtilde.E.Mat[i][j] * fnpop
 				}
 			}
 		}
 		if epig {
-			for i := range Gtilde.F {
+			for i := range Gtilde.F.Mat {
 				for j := 0; j < ngenes; j++ {
-					MeanGenome.F[i][j] += Gtilde.F[i][j] / float64(len(pop.Indivs))
+					MeanGenome.F.Mat[i][j] += Gtilde.F.Mat[i][j] * fnpop
 				}
 			}
 		}
-		for i := range Gtilde.G {
+		for i := range Gtilde.G.Mat {
 			for j := 0; j < ngenes; j++ {
-				MeanGenome.G[i][j] += Gtilde.G[i][j] / float64(len(pop.Indivs))
+				MeanGenome.G.Mat[i][j] += Gtilde.G.Mat[i][j] * fnpop
 			}
 		}
 		if hoc {
-			for i := range Gtilde.Hg {
+			for i := range Gtilde.Hg.Mat {
 				for j := 0; j < ngenes; j++ {
-					MeanGenome.Hg[i][j] += Gtilde.Hg[i][j] / float64(len(pop.Indivs))
+					MeanGenome.Hg.Mat[i][j] += Gtilde.Hg.Mat[i][j] * fnpop
 				}
 			}
 			if hoi {
-				for i := range Gtilde.Hh {
+				for i := range Gtilde.Hh.Mat {
 					for j := 0; j < ngenes; j++ {
-						MeanGenome.Hh[i][j] += Gtilde.Hh[i][j] / float64(len(pop.Indivs))
+						MeanGenome.Hh.Mat[i][j] += Gtilde.Hh.Mat[i][j] * fnpop
 					}
 				}
 			}
 		}
-		for i := range Gtilde.P {
+		for i := range Gtilde.P.Mat {
 			for j := 0; j < nenv+ncells; j++ {
-				MeanGenome.P[i][j] += Gtilde.P[i][j] / float64(len(pop.Indivs))
+				MeanGenome.P.Mat[i][j] += Gtilde.P.Mat[i][j] * fnpop
 			}
 		}
-		for i := range Gtilde.Z {
+		for i := range Gtilde.Z.Mat {
 			for j := 0; j < ngenes; j++ {
-				MeanGenome.Z[i][j] += Gtilde.Z[i][j] / float64(len(pop.Indivs))
+				MeanGenome.Z.Mat[i][j] += Gtilde.Z.Mat[i][j] * fnpop
 			}
 		}
 	}
@@ -423,46 +424,46 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		}
 
 		if withCue {
-			for i, m := range indiv.Genome.E {
+			for i, m := range indiv.Genome.E.Mat {
 				for j, d := range m {
-					gproj += d * Gaxis.E[i][j]
+					gproj += d * Gaxis.E.Mat[i][j]
 				}
 			}
 		}
 		if epig {
-			for i, m := range indiv.Genome.F {
+			for i, m := range indiv.Genome.F.Mat {
 				for j, d := range m {
-					gproj += d * Gaxis.F[i][j]
+					gproj += d * Gaxis.F.Mat[i][j]
 				}
 			}
 		}
-		for i, m := range indiv.Genome.G {
+		for i, m := range indiv.Genome.G.Mat {
 			for j, d := range m {
-				gproj += d * Gaxis.G[i][j]
+				gproj += d * Gaxis.G.Mat[i][j]
 			}
 		}
 		if hoc {
-			for i, m := range indiv.Genome.Hg {
+			for i, m := range indiv.Genome.Hg.Mat {
 				for j, d := range m {
-					gproj += d * Gaxis.Hg[i][j]
+					gproj += d * Gaxis.Hg.Mat[i][j]
 				}
 			}
 			if hoi {
-				for i, m := range indiv.Genome.Hh {
+				for i, m := range indiv.Genome.Hh.Mat {
 					for j, d := range m {
-						gproj += d * Gaxis.Hg[i][j]
+						gproj += d * Gaxis.Hg.Mat[i][j]
 					}
 				}
 			}
 		}
-		for i, m := range indiv.Genome.P {
+		for i, m := range indiv.Genome.P.Mat {
 			for j, d := range m {
-				gproj += d * Gaxis.P[i][j]
+				gproj += d * Gaxis.P.Mat[i][j]
 			}
 		}
-		for i, m := range indiv.Genome.Z {
+		for i, m := range indiv.Genome.Z.Mat {
 			for j, d := range m {
-				gproj += d * Gaxis.Z[i][j]
+				gproj += d * Gaxis.Z.Mat[i][j]
 			}
 		}
 		fmt.Fprintf(fout, "%e\t %e\t %e\n", novpproj, ancpproj, gproj)
