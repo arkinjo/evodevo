@@ -67,6 +67,9 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Println("Successfully imported population")
+	} else {
+		fmt.Println("Randomizing initial population")
+		pop0.RandomizeGenome()
 	}
 
 	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory

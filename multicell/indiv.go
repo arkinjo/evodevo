@@ -57,6 +57,16 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 	return genome
 }
 
+func (G *Genome) Randomize() {
+	G.E.Randomize(GenomeDensity)
+	G.F.Randomize(GenomeDensity)
+	G.G.Randomize(GenomeDensity)
+	G.Hg.Randomize(GenomeDensity)
+	G.Hh.Randomize(GenomeDensity)
+	G.P.Randomize(GenomeDensity)
+	G.Z.Randomize(GenomeDensity)
+}
+
 func (G *Genome) Clear() { //Sets all entries of genome to zero
 	for _, r := range G.E.Mat {
 		for j := range r { //range over keys

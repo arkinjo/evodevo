@@ -81,6 +81,9 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Println("Successfully imported population")
+	} else {
+		fmt.Println("Randomizing initial population")
+		pop0.RandomizeGenome()
 	}
 
 	fmt.Println("Initialization of population complete")

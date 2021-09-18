@@ -30,6 +30,12 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 	return p
 }
 
+func (pop *Population) RandomizeGenome() {
+	for _, indiv := range pop.Indivs { //Sets genome of every individual to zero
+		indiv.Genome.Randomize()
+	}
+}
+
 func (pop *Population) ClearGenome() {
 	for _, indiv := range pop.Indivs { //Sets genome of every individual to zero
 		indiv.Genome.Clear()
@@ -136,51 +142,51 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of population
 	var Gtilde Genome
 	fnpop := 1.0/float64(len(pop.Indivs))
-	
 	MeanGenome := NewGenome()
+	
 	for _, indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
 		if withCue {
-			for i := range Gtilde.E.Mat {
-				for j := 0; j < nenv+ncells; j++ {
-					MeanGenome.E.Mat[i][j] += Gtilde.E.Mat[i][j] * fnpop
+			for i,m := range Gtilde.E.Mat {
+				for j,v := range m {
+					MeanGenome.E.Mat[i][j] += v * fnpop
 				}
 			}
 		}
 		if epig {
-			for i := range Gtilde.F.Mat {
-				for j := 0; j < ngenes; j++ {
-					MeanGenome.F.Mat[i][j] += Gtilde.F.Mat[i][j] * fnpop
+			for i,m := range Gtilde.F.Mat {
+				for j,v := range m {
+					MeanGenome.F.Mat[i][j] += v * fnpop
 				}
 			}
 		}
-		for i := range Gtilde.G.Mat {
-			for j := 0; j < ngenes; j++ {
-				MeanGenome.G.Mat[i][j] += Gtilde.G.Mat[i][j] * fnpop
+		for i,m := range Gtilde.G.Mat {
+			for j,v := range m {
+				MeanGenome.G.Mat[i][j] += v * fnpop
 			}
 		}
 		if hoc {
-			for i := range Gtilde.Hg.Mat {
-				for j := 0; j < ngenes; j++ {
-					MeanGenome.Hg.Mat[i][j] += Gtilde.Hg.Mat[i][j] * fnpop
+			for i,m := range Gtilde.Hg.Mat {
+				for j,v := range m {
+					MeanGenome.Hg.Mat[i][j] += v * fnpop
 				}
 			}
 			if hoi {
-				for i := range Gtilde.Hh.Mat {
-					for j := 0; j < ngenes; j++ {
-						MeanGenome.Hh.Mat[i][j] += Gtilde.Hh.Mat[i][j] * fnpop
+				for i,m := range Gtilde.Hh.Mat {
+					for j,v := range m {
+						MeanGenome.Hh.Mat[i][j] += v * fnpop
 					}
 				}
 			}
 		}
-		for i := range Gtilde.P.Mat {
-			for j := 0; j < nenv+ncells; j++ {
-				MeanGenome.P.Mat[i][j] += Gtilde.P.Mat[i][j] * fnpop
+		for i,m := range Gtilde.P.Mat {
+			for j,v := range m {
+				MeanGenome.P.Mat[i][j] += v * fnpop
 			}
 		}
-		for i := range Gtilde.Z.Mat {
-			for j := 0; j < ngenes; j++ {
-				MeanGenome.Z.Mat[i][j] += Gtilde.Z.Mat[i][j] * fnpop
+		for i,m := range Gtilde.Z.Mat {
+			for j,v := range m {
+				MeanGenome.Z.Mat[i][j] += v * fnpop
 			}
 		}
 	}
