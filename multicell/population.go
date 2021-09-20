@@ -416,7 +416,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintln(fout, "Novel Phenotype\t Ancestral Phenotype\t Genotype")
+	fmt.Fprintln(fout, "NovPhen \t AncPhen \t Genotype")
 
 	for _, indiv := range pop.Indivs {
 		ancpproj, novpproj, gproj = 0.0, 0.0, 0.0

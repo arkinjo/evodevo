@@ -180,7 +180,7 @@ func main() {
 	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
 	fmt.Println("Change in environment proportional to:", Paxis)
 
-	for gen := 0; gen <= epochlength+1; gen++ { //Also project population after pulling back to ancestral environment.
+	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
 		jfilename := fmt.Sprintf("../pops/%s_%d.json", json_out, gen)
 		popin, err := os.Open(jfilename)
 		if err != nil {
