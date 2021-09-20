@@ -1,31 +1,25 @@
 
-phat <- c()
+aphat <- c()
+nphat <- c()
 ghat <- c()
 
-pdf("upoppgtraj20210913.pdf")
-for (i in c(0:201)){
-  filename <- paste("upop20210913pg_",i,".dat",sep="")
+pdf("upoppgtraj20210917-5.pdf")
+for (i in c(1:200)){
+  filename <- paste("upop20210917-5pg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
-  p <- pg$Phenotype
+  ap <- pg$AncPhen
+  np <- pg$NovPhen
   g <- pg$Genotype
   title <- paste("Generation",i,sep=" ")
-  plot(g,p,xlim=c(-15,15),ylim=c(-50,50),xlab="genotype",ylab="phenotype",main=title)
+  plot(g,ap,xlim=c(-5,5),ylim=c(-5,5),xlab="genotype",ylab="phenotype",main=title,col="red")
+  points(g,np,col="blue")
   abline(h=0)
   abline(v=0)
-  mup = mean(p)
+  muap = mean(ap)
+  munp = mean(np)
   mug = mean(g)
-  #print(mup)
-  #print(mug)
-  phat = append(phat,mup)
+  aphat = append(aphat,muap)
+  nphat = append(nphat,munp)
   ghat = append(ghat,mug)
 }
 dev.off()
-
-dp = diff(phat)
-dg = diff(ghat)
-
-plot(dp,main="Change in phenotype", xlab="Generation",type="l")
-abline(h=0,col="red")
-plot(dg,main="Change in genotype", xlab="Generation",type="l")
-abline(h=0,col="red")
-
