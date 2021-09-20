@@ -3,15 +3,15 @@ aphat <- c()
 nphat <- c()
 ghat <- c()
 
-pdf("upoppgtraj20210917-5.pdf")
+pdf("upoppgtraj20210920-5.pdf")
 for (i in c(1:200)){
-  filename <- paste("upop20210917-5pg_",i,".dat",sep="")
+  filename <- paste("upop20210920-5pg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
   ap <- pg$AncPhen
   np <- pg$NovPhen
   g <- pg$Genotype
   title <- paste("Generation",i,sep=" ")
-  plot(g,ap,xlim=c(-5,5),ylim=c(-5,5),xlab="genotype",ylab="phenotype",main=title,col="red")
+  plot(g,ap,xlim=c(-10,10),ylim=c(-2,2),xlab="genotype",ylab="phenotype",main=title,col="red")
   points(g,np,col="blue")
   abline(h=0)
   abline(v=0)
