@@ -27,3 +27,4 @@ evodevo
 *.json
 *.dot
 playground/play.go
+analysis/.Rhistory
