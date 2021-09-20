@@ -143,10 +143,9 @@ func (sp *Spmat) Randomize(density float64) { //Randomize entries of sparse matr
 	}
 }
 
-func DiffSpmat(m1, m2 *Spmat) Spmat {
-	d := NewSpmat(len(m1.Mat), m1.Ncol)
+func DiffSpmat(m1, m2 *Spmat) Spmat { //This function works fine
+	d := NewSpmat(len(m1.Mat), m1.Ncol) //initialization
 	ncol := m1.Ncol
-
 	for i := range m1.Mat {
 		for j := 0; j < ncol; j++ {
 			d.Mat[i][j] = m1.Mat[i][j] - m2.Mat[i][j]

@@ -119,7 +119,7 @@ func (parent *Genome) Copy() Genome { //creates copy of genome
 	return genome
 }
 
-func DiffGenomes(Gout, G1, G0 Genome) { //Elementwise difference between two genomes
+func DiffGenomes(Gout, G1, G0 *Genome) { //Elementwise difference between two genomes
 	if withCue {
 		Gout.E = DiffSpmat(&G1.E, &G0.E)
 	}
@@ -138,7 +138,7 @@ func DiffGenomes(Gout, G1, G0 Genome) { //Elementwise difference between two gen
 
 	Gout.P = DiffSpmat(&G1.P, &G0.P)
 	Gout.Z = DiffSpmat(&G1.Z, &G0.Z)
-	//Remark: Ensure that Gout is empty before applying operation
+	//Remark: Ensure that Gout is initialized and empty before applying operation
 }
 
 func (G *Genome) NormalizeGenome() Genome {
@@ -192,6 +192,10 @@ func (G *Genome) NormalizeGenome() Genome {
 		for _, v := range m {
 			lambda2 += v * v
 		}
+	}
+
+	if lambda2 == 0 {
+		return eG //avoid division by zero
 	}
 
 	lambda := math.Sqrt(lambda2)

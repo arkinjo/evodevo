@@ -174,11 +174,23 @@ func main() {
 	pop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
 	g0 := pop0.GetMeanGenome()
 	g1 := pop1.GetMeanGenome()
+	dG := multicell.TestEqualGenomes(g0, g1)
+	fmt.Println("Difference in genome:", dG)
+
 	Gaxis := multicell.NewGenome()
-	multicell.DiffGenomes(Gaxis, g1, g0)
+	//ZeroGenome := multicell.NewGenome()
+	multicell.DiffGenomes(&Gaxis, &g1, &g0) //Pointers for bugfix; don't ask why; it just works!
+	//dG = multicell.TestEqualGenomes(ZeroGenome, Gaxis)
+	//fmt.Println("Axis length:", dG) //Should be equal to difference in genome; currently this is stuck at zero value of genome.
+
 	Gaxis = Gaxis.NormalizeGenome()
+	//dG = multicell.TestEqualGenomes(ZeroGenome, Gaxis)
+	//fmt.Println("Normalized Axis length:", dG)
+
 	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
 	fmt.Println("Change in environment proportional to:", Paxis)
+
+	//bugfixpop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop) //Bugfixing
 
 	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
 		jfilename := fmt.Sprintf("../pops/%s_%d.json", json_out, gen)
@@ -193,6 +205,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		//dG = multicell.TestEqualPopGenomes(bugfixpop, pop)
+		//fmt.Println("Norm of imported genotype :", dG)
 
 		err = popin.Close()
 		if err != nil {

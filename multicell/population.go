@@ -141,51 +141,51 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 
 func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of population
 	var Gtilde Genome
-	fnpop := 1.0/float64(len(pop.Indivs))
+	fnpop := 1.0 / float64(len(pop.Indivs))
 	MeanGenome := NewGenome()
-	
+
 	for _, indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
 		if withCue {
-			for i,m := range Gtilde.E.Mat {
-				for j,v := range m {
+			for i, m := range Gtilde.E.Mat {
+				for j, v := range m {
 					MeanGenome.E.Mat[i][j] += v * fnpop
 				}
 			}
 		}
 		if epig {
-			for i,m := range Gtilde.F.Mat {
-				for j,v := range m {
+			for i, m := range Gtilde.F.Mat {
+				for j, v := range m {
 					MeanGenome.F.Mat[i][j] += v * fnpop
 				}
 			}
 		}
-		for i,m := range Gtilde.G.Mat {
-			for j,v := range m {
+		for i, m := range Gtilde.G.Mat {
+			for j, v := range m {
 				MeanGenome.G.Mat[i][j] += v * fnpop
 			}
 		}
 		if hoc {
-			for i,m := range Gtilde.Hg.Mat {
-				for j,v := range m {
+			for i, m := range Gtilde.Hg.Mat {
+				for j, v := range m {
 					MeanGenome.Hg.Mat[i][j] += v * fnpop
 				}
 			}
 			if hoi {
-				for i,m := range Gtilde.Hh.Mat {
-					for j,v := range m {
+				for i, m := range Gtilde.Hh.Mat {
+					for j, v := range m {
 						MeanGenome.Hh.Mat[i][j] += v * fnpop
 					}
 				}
 			}
 		}
-		for i,m := range Gtilde.P.Mat {
-			for j,v := range m {
+		for i, m := range Gtilde.P.Mat {
+			for j, v := range m {
 				MeanGenome.P.Mat[i][j] += v * fnpop
 			}
 		}
-		for i,m := range Gtilde.Z.Mat {
-			for j,v := range m {
+		for i, m := range Gtilde.Z.Mat {
+			for j, v := range m {
 				MeanGenome.Z.Mat[i][j] += v * fnpop
 			}
 		}
@@ -403,13 +403,11 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, Paxis Cues) {
 	var ancpproj, novpproj, gproj float64
-
 	pop.DevPop(gen)
 
 	anccphen := make(Vec, nenv+ncells)
 	novcphen := make(Vec, nenv+ncells)
 	mu := pop.Get_Mid_Env()
-	//Paxis := pop.Get_Environment_Axis() //Bug with something to do with refenv in json file output giving same value to envs and refenvs.
 	Projfilename := fmt.Sprintf("../analysis/%s_%d.dat", Filename, gen)
 
 	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -431,47 +429,48 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 
 		if withCue {
 			for i, m := range indiv.Genome.E.Mat {
-				for j, d := range m {
+				for j, d := range m { //range over keys
 					gproj += d * Gaxis.E.Mat[i][j]
 				}
 			}
 		}
 		if epig {
 			for i, m := range indiv.Genome.F.Mat {
-				for j, d := range m {
+				for j, d := range m { //range over keys
 					gproj += d * Gaxis.F.Mat[i][j]
 				}
 			}
 		}
 		for i, m := range indiv.Genome.G.Mat {
-			for j, d := range m {
+			for j, d := range m { //range over keys
 				gproj += d * Gaxis.G.Mat[i][j]
 			}
 		}
 		if hoc {
 			for i, m := range indiv.Genome.Hg.Mat {
-				for j, d := range m {
+				for j, d := range m { //range over keys
 					gproj += d * Gaxis.Hg.Mat[i][j]
 				}
 			}
 			if hoi {
 				for i, m := range indiv.Genome.Hh.Mat {
-					for j, d := range m {
+					for j, d := range m { //range over keys
 						gproj += d * Gaxis.Hg.Mat[i][j]
 					}
 				}
 			}
 		}
 		for i, m := range indiv.Genome.P.Mat {
-			for j, d := range m {
+			for j, d := range m { //range over keys
 				gproj += d * Gaxis.P.Mat[i][j]
 			}
 		}
 		for i, m := range indiv.Genome.Z.Mat {
-			for j, d := range m {
+			for j, d := range m { //range over keys
 				gproj += d * Gaxis.Z.Mat[i][j]
 			}
 		}
+		//fmt.Printf("Nov: %e\t Anc: %e\t G: %e\n", novpproj, ancpproj, gproj)
 		fmt.Fprintf(fout, "%e\t %e\t %e\n", novpproj, ancpproj, gproj)
 	}
 	err = fout.Close()
