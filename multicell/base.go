@@ -34,8 +34,8 @@ var hoi bool = true     // Interaction between higher order complexes
 //Remark: defaults to full model!
 
 type Spmat struct {
-	Ncol int // number of columns
-	Mat [](map[int]float64) // Sparse matrix is an array of maps.
+	Ncol int                 // number of columns
+	Mat  [](map[int]float64) // Sparse matrix is an array of maps.
 }
 
 type Vec = []float64 //Vector is a slice
@@ -114,22 +114,25 @@ func rho(x float64) float64 { //Function for converting gene expression into phe
 	return sigmoid(x, Omega)
 }
 
-func NewSpmat(nrow, ncol int) Spmat { //Randomly generate a new sparse matrix given density
+func NewSpmat(nrow, ncol int) Spmat { //Initialize new sparse matrix
 	mat := make([](map[int]float64), nrow)
+	for i := range mat {
+		mat[i] = make(map[int]float64)
+	}
 	return Spmat{ncol, mat}
 }
 
 func (sp *Spmat) Copy() Spmat {
 	nsp := NewSpmat(len(sp.Mat), sp.Ncol)
-	for i,m := range sp.Mat {
-		for j,d := range m {
+	for i, m := range sp.Mat {
+		for j, d := range m {
 			nsp.Mat[i][j] = d
 		}
 	}
 	return nsp
 }
 
-func (sp *Spmat) Randomize(density float64) {
+func (sp *Spmat) Randomize(density float64) { //Randomize entries of sparse matrix
 	for i := range sp.Mat {
 		for j := 0; j < sp.Ncol; j++ {
 			r := rand.Float64()
@@ -143,7 +146,7 @@ func (sp *Spmat) Randomize(density float64) {
 func DiffSpmat(m1, m2 *Spmat) Spmat {
 	d := NewSpmat(len(m1.Mat), m1.Ncol)
 	ncol := m1.Ncol
-	
+
 	for i := range m1.Mat {
 		for j := 0; j < ncol; j++ {
 			d.Mat[i][j] = m1.Mat[i][j] - m2.Mat[i][j]

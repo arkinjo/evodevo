@@ -138,6 +138,7 @@ func DiffGenomes(Gout, G1, G0 Genome) { //Elementwise difference between two gen
 
 	Gout.P = DiffSpmat(&G1.P, &G0.P)
 	Gout.Z = DiffSpmat(&G1.Z, &G0.Z)
+	//Remark: Ensure that Gout is empty before applying operation
 }
 
 func (G *Genome) NormalizeGenome() Genome {
@@ -541,6 +542,7 @@ func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell gi
 		}
 		applyFnVec(sigmah, h1)
 		multMatVec_T(vp, G.P, h1)
+		applyFnVec(rho, vp)
 		diff = dist2Vecs(vg, g0)
 		g0 = g1
 		h0 = h1
