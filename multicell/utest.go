@@ -1,9 +1,7 @@
 package multicell
 
-import (
-	"math"
+//	"math"
 //	"sort"
-)
 
 func TestEqualGenomes(G0, G1 Genome) float64 { //Elementwise difference between two genomes
 	var d float64
@@ -12,36 +10,36 @@ func TestEqualGenomes(G0, G1 Genome) float64 { //Elementwise difference between 
 
 		if withCue {
 			for j := 0; j < nenv+ncells; j++ {
-				d += math.Abs(G1.E.Mat[i][j] - G0.E.Mat[i][j])
+				d += (G1.E.Mat[i][j] - G0.E.Mat[i][j]) * (G1.E.Mat[i][j] - G0.E.Mat[i][j])
 			}
 		}
 
 		if epig {
 			for j := 0; j < ngenes; j++ {
-				d += math.Abs(G1.F.Mat[i][j] - G0.F.Mat[i][j])
+				d += (G1.F.Mat[i][j] - G0.F.Mat[i][j]) * (G1.F.Mat[i][j] - G0.F.Mat[i][j])
 			}
 		}
 
 		for j := 0; j < ngenes; j++ {
-			d += math.Abs(G1.G.Mat[i][j] - G0.G.Mat[i][j])
+			d += (G1.G.Mat[i][j] - G0.G.Mat[i][j]) * (G1.G.Mat[i][j] - G0.G.Mat[i][j])
 		}
 
 		if hoc {
 			for j := 0; j < ngenes; j++ {
-				d += math.Abs(G1.Hg.Mat[i][j] - G0.Hg.Mat[i][j])
+				d += (G1.Hg.Mat[i][j] - G0.Hg.Mat[i][j]) * (G1.Hg.Mat[i][j] - G0.Hg.Mat[i][j])
 			}
 			if hoi {
 				for j := 0; j < ngenes; j++ {
-					d += math.Abs(G1.Hh.Mat[i][j] - G0.Hh.Mat[i][j])
+					d += (G1.Hh.Mat[i][j] - G0.Hh.Mat[i][j]) * (G1.Hh.Mat[i][j] - G0.Hh.Mat[i][j])
 				}
 			}
 		}
 
 		for j := 0; j < nenv+ncells; j++ {
-			d += math.Abs(G1.P.Mat[i][j] - G0.P.Mat[i][j])
+			d += (G1.P.Mat[i][j] - G0.P.Mat[i][j]) * (G1.P.Mat[i][j] - G0.P.Mat[i][j])
 		}
 		for j := 0; j < ngenes; j++ {
-			d += math.Abs(G1.Z.Mat[i][j] - G0.Z.Mat[i][j])
+			d += (G1.Z.Mat[i][j] - G0.Z.Mat[i][j]) * (G1.Z.Mat[i][j] - G0.Z.Mat[i][j])
 		}
 	}
 	return d
@@ -49,7 +47,7 @@ func TestEqualGenomes(G0, G1 Genome) float64 { //Elementwise difference between 
 }
 
 func TestEqualPopGenomes(pop0, pop1 Population) float64 { //Test for equal genome across individuals in two populations.
-	u := 0.0 
+	u := 0.0
 	pop0.SortPopIndivs()
 	pop1.SortPopIndivs() //Sort before comparison
 
