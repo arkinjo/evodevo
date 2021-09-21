@@ -538,8 +538,9 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 		}
 		if hoc { //If layer for higher order complexes is present
 			multMatVec(vg, G.Hg, g1)
-			multMatVec(vh, G.Hh, h0)
-			if hoi { //If interactions between higher order complexes is present
+
+			if hoi {//If interactions between higher order complexes is present
+				multMatVec(vh, G.Hh, h0)
 				addVecs(h1, vg, vh)
 			} else {
 				copy(h1, vg)
