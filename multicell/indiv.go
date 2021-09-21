@@ -505,12 +505,13 @@ func (indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of indiv
 	}
 }
 
-func (cell *Cell) DevCell(G Genome, g0 Vec, env Cue) Cell { //Develops a cell given cue
+func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell given cue
 	var diff float64
 
 	h0 := make([]float64, ngenes) //No higher order complexes in embryonic stage
 	ve := make([]float64, ngenes)
 	vf := make([]float64, ngenes)
+	g0 := ginit
 	vg := g0
 	vh := make([]float64, ngenes)
 	vp := make([]float64, nenv+ncells)
