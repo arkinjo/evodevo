@@ -445,15 +445,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 func (cells *Cells) get_fitness(envs Cues) float64 {
 	d2 := 0.0
 
-	//declaring arrays to be filled
-	env := make([]float64, nenv+ncells)
-	p := make([]float64, nenv+ncells)
-	//id := make([]float64, ncells)
-	//idp := make([]float64, ncells)
 	for i, cell := range cells.Ctypes {
-		env = envs[i]
-		p = cell.P
-		d2 += dist2Vecs(p, env)
+		d2 += dist2Vecs(cell.P, envs[i])
 	}
 	return math.Exp(-selStrength * d2)
 }
