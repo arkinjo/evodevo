@@ -508,11 +508,12 @@ func (indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of indiv
 func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell given cue
 	var diff float64
 
+	g0 := make([]float64, ngenes)
+	copy(g0, ginit)
+
 	h0 := make([]float64, ngenes) //No higher order complexes in embryonic stage
 	ve := make([]float64, ngenes)
 	vf := make([]float64, ngenes)
-	g0 := make([]float64, ngenes)
-	copy(g0, ginit)
 	vg := make([]float64, ngenes)
 	vh := make([]float64, ngenes)
 	vp := make([]float64, nenv+ncells)
@@ -526,14 +527,14 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 		if withCue { //Model with or without cues
 			addVecs(f1, vf, ve)
 		} else {
-			f1 = vf
+			copy(f1,vf)
 		}
 		applyFnVec(sigmaf, f1)
 		if epig { //Allow or disallow epigenetic layer
 			multMatVec(g1, G.F, f1)
 			applyFnVec(sigmag, g1)
 		} else { //Remove epigenetic layer if false
-			g1 = f1
+			copy(g1, f1)
 		}
 		if hoc { //If layer for higher order complexes is present
 			multMatVec(vg, G.Hg, g1)
@@ -541,17 +542,18 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 			if hoi { //If interactions between higher order complexes is present
 				addVecs(h1, vg, vh)
 			} else {
-				h1 = vg
+				copy(h1, vg)
 			}
 		} else {
-			h1 = g1
+			copy(h1, g1)
 		}
+		
 		applyFnVec(sigmah, h1)
 		multMatVec_T(vp, G.P, h1)
 		applyFnVec(rho, vp)
 		diff = dist2Vecs(h0, h1)
-		g0 = g1
-		h0 = h1
+		copy(g0, g1)
+		copy(h0, h1)
 		if diff < epsDev {
 			break
 		}
@@ -560,11 +562,11 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 	//fmt.Println("Phenotype after development:",vpc)
 	//fmt.Println("Id after development:",vpid)
 
-	cell.E = env
-	cell.F = f1
-	cell.G = g1
-	cell.H = h1
-	cell.P = vp
+	copy(cell.E, env)
+	copy(cell.F, f1)
+	copy(cell.G, g1)
+	copy(cell.H, h1)
+	copy(cell.P, vp)
 
 	return *cell
 }
