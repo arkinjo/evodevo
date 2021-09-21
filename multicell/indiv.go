@@ -517,7 +517,7 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
-	for nstep := 0; nstep < MaxDevStep; nstep++ {
+	for nstep := 0; nstep < maxDevStep; nstep++ {
 		multMatVec(ve, G.E, env)
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
