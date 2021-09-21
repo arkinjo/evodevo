@@ -501,18 +501,18 @@ func (indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of indiv
 func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell given cue
 	var diff float64
 
-	g0 := make([]float64, ngenes)
+	g0 := NewVec(ngenes)
 	copy(g0, ginit)
 
-	h0 := make([]float64, ngenes) //No higher order complexes in embryonic stage
-	ve := make([]float64, ngenes)
-	vf := make([]float64, ngenes)
-	vg := make([]float64, ngenes)
-	vh := make([]float64, ngenes)
-	vp := make([]float64, nenv+ncells)
-	f1 := make([]float64, ngenes)
-	g1 := make([]float64, ngenes)
-	h1 := make([]float64, ngenes)
+	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
+	ve := NewVec(ngenes)
+	vf := NewVec(ngenes)
+	vg := NewVec(ngenes)
+	vh := NewVec(ngenes)
+	vp := NewVec(nenv+ncells)
+	f1 := NewVec(ngenes)
+	g1 := NewVec(ngenes)
+	h1 := NewVec(ngenes)
 
 	for nstep := 0; nstep < MaxDevStep; nstep++ {
 		multMatVec(ve, G.E, env)
