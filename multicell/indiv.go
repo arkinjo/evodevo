@@ -568,12 +568,12 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 	return *cell
 }
 
-func (cells *Cells) DevCells(G Genome, g0 Vec, envs Cues) Cells {
+func (cells *Cells) DevCells(G Genome, ginit Vec, envs Cues) Cells {
 	env := NewCue(nenv, 0)
 
 	for i := range cells.Ctypes {
 		env = envs[i]
-		cells.Ctypes[i].DevCell(G, g0, env)
+		cells.Ctypes[i].DevCell(G, ginit, env)
 	}
 
 	return *cells
