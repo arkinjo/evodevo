@@ -511,7 +511,8 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 	h0 := make([]float64, ngenes) //No higher order complexes in embryonic stage
 	ve := make([]float64, ngenes)
 	vf := make([]float64, ngenes)
-	g0 := ginit
+	g0 := make([]float64, ngenes)
+	copy(g0, ginit)
 	vg := g0
 	vh := make([]float64, ngenes)
 	vp := make([]float64, nenv+ncells)
@@ -580,7 +581,6 @@ func (cells *Cells) DevCells(G Genome, ginit Vec, envs Cues) Cells {
 }
 
 func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
-
 	devenv := AddNoisetoCues(env, DevNoise)
 	devenv0 := AddNoisetoCues(env0, DevNoise)
 	selenv := AddNoisetoCues(env, EnvNoise)
