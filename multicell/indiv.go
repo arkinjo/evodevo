@@ -453,21 +453,21 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
 	d2 := 0.0
-	Copies := indiv.Copies
-	for i, cell := range Copies[2].Ctypes {
-		d2 += dist2Vecs(cell.P, Copies[0].Ctypes[i].P)
+	copies := indiv.Copies
+	for i, cell := range copies[2].Ctypes {
+		d2 += dist2Vecs(cell.P, copies[0].Ctypes[i].P)
 	}
-	d2 = dist2Vecs(p, p0) / float64(nenv*ncells) //Divide by number of phenotypes to normalize
+	d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d2
 }
 
 func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individual
 	d2 := 0.0
-	Copies := indiv.Copies
-	for i, cell := range Copies[2].Ctypes {
-		d2 += dist2Vecs(cell.P, Copies[1].Ctypes[i].P)
+	copies := indiv.Copies
+	for i, cell := range copies[2].Ctypes {
+		d2 += dist2Vecs(cell.P, copies[1].Ctypes[i].P)
 	}
-	d2 = dist2Vecs(p, p0) / float64(nenv*ncells) //Divide by number of phenotypes to normalize
+	d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d2
 }
 
