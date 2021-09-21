@@ -513,7 +513,7 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 	vf := make([]float64, ngenes)
 	g0 := make([]float64, ngenes)
 	copy(g0, ginit)
-	vg := g0
+	vg := make([]float64, ngenes)
 	vh := make([]float64, ngenes)
 	vp := make([]float64, nenv+ncells)
 	f1 := make([]float64, ngenes)
@@ -549,7 +549,7 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 		applyFnVec(sigmah, h1)
 		multMatVec_T(vp, G.P, h1)
 		applyFnVec(rho, vp)
-		diff = dist2Vecs(vg, g0)
+		diff = dist2Vecs(h0, h1)
 		g0 = g1
 		h0 = h1
 		if diff < epsDev {
