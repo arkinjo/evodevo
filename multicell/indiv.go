@@ -58,11 +58,22 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 }
 
 func (G *Genome) Randomize() {
-	G.E.Randomize(GenomeDensity)
-	G.F.Randomize(GenomeDensity)
+
+	if withCue {
+		G.E.Randomize(GenomeDensity)
+	}
+
+	if epig {
+		G.F.Randomize(GenomeDensity)
+	}
 	G.G.Randomize(GenomeDensity)
-	G.Hg.Randomize(GenomeDensity)
-	G.Hh.Randomize(GenomeDensity)
+
+	if hoc {
+		G.Hg.Randomize(GenomeDensity)
+		if hoi {
+			G.Hh.Randomize(GenomeDensity)
+		}
+	}
 	G.P.Randomize(GenomeDensity)
 	G.Z.Randomize(GenomeDensity)
 }
