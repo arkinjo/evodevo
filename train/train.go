@@ -106,7 +106,9 @@ func main() {
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population; just before epoch change
-			pop1.RefEnvs = pop1.Envs                             //Update to environment just before epoch change
+			//Update to environment just before epoch change
+			pop1.RefEnvs = multicell.CopyCues(pop1.Envs)
+			
 			jfilename = fmt.Sprintf("../pops/%s.json", json_out) //export output population to test file
 			jsonpop, err := json.Marshal(pop1)                   //JSON encoding of population as byte array
 			if err != nil {

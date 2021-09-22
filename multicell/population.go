@@ -24,9 +24,10 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 		indivs[i] = NewIndiv(i)
 	}
 
-	envs := NewCues(ncell, nenv)
+	envs0 := NewCues(ncell, nenv)
+	envs1 := NewCues(ncell, nenv)
 
-	p := Population{0, envs, envs, indivs}
+	p := Population{0, envs0, envs1, indivs}
 	return p
 }
 
