@@ -235,6 +235,16 @@ func distVecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors
 	return math.Sqrt(dist2Vecs(v0, v1))
 }
 
+func distVecs1(v0, v1 Vec) float64 { //1-norm between 2 vectors
+	var dev float64
+	dist := 0.0
+	for i, v := range v0 {
+		dev = v - v1[i]
+		dist += math.Abs(dev)
+	}
+	return dist
+}
+
 func Hammingdist(v0, v1 Vec) float64 { //Hamming distance between 2 vectors
 	dist := 0.0
 	for i, v := range v0 {

@@ -404,11 +404,12 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, Paxis Cues) {
 	var ancpproj, novpproj, gproj float64
-	pop.DevPop(gen)
+	//pop.DevPop(gen) //Not needed for bugfixing
 
 	anccphen := make(Vec, nenv+ncells)
 	novcphen := make(Vec, nenv+ncells)
 	mu := pop.Get_Mid_Env()
+	fmt.Println("Middle environment : ", mu)
 	Projfilename := fmt.Sprintf("../analysis/%s_%d.dat", Filename, gen)
 
 	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
@@ -419,11 +420,14 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 
 	for _, indiv := range pop.Indivs {
 		ancpproj, novpproj, gproj = 0.0, 0.0, 0.0
+
 		for i, env := range mu { //For each environment cue
+			copy(indiv.Copies[2].Ctypes[i].P, pop.Envs[i])       //Bugfixing test
 			diffVecs(novcphen, indiv.Copies[2].Ctypes[i].P, env) //centralize
 			novpproj += innerproduct(novcphen, Paxis[i])
 		}
 		for i, env := range mu { //For each environment cue
+			copy(indiv.Copies[1].Ctypes[i].P, pop.RefEnvs[i])    //Bugfixing test
 			diffVecs(anccphen, indiv.Copies[1].Ctypes[i].P, env) //centralize
 			ancpproj += innerproduct(anccphen, Paxis[i])         //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
