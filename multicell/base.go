@@ -26,10 +26,12 @@ const baseSelStrength float64 = 0.25  // default selection strength; to be norma
 var selStrength float64               //declaration
 var Omega float64 = 1.0               // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
-var withCue bool = true // with or without environmental cues.
-var epig bool = true    // Epigenetic marker layer
-var hoc bool = true     // Higher order complexes layer
-var hoi bool = true     // Interaction between higher order complexes
+var withCue bool = false // with or without environmental cues.
+var cuestrength float64  //declaration
+var epig bool = true     // Epigenetic marker layer
+var hoc bool = true      // Higher order complexes layer
+var hoi bool = true      // Interaction between higher order complexes
+//var propcuestrength float64 = 1//proportion of variance of environment cue contribution
 
 //Remark: defaults to full model!
 
@@ -51,16 +53,21 @@ func SetNcells(n int) {
 	selStrength = baseSelStrength / float64(n)
 }
 
-func SetLayers(cue, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
-	withCue = cue //Whether environment cue has effect on development
-	epig = epigm  //Layer representing epigenetic markers
-	hoc = HOC     //Layer representing higher-order complexes
-	hoi = HOI     //Allow interaction between higher-order complexes
+func SetLayers(c float64, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
+	cuestrength = c * float64(ngenes) / float64(nenv+1) //c multiplied by number of dimensions.
+	//withCue = cue //Whether environment cue has effect on development
+	epig = epigm //Layer representing epigenetic markers
+	hoc = HOC    //Layer representing higher-order complexes
+	hoi = HOI    //Allow interaction between higher-order complexes
 
 	genelength = 2*ngenes + nenv + ncells
-	if cue {
+	if c != 0 {
+		withCue = true
 		genelength += nenv + ncells
+	} else {
+		withCue = false
 	}
+
 	if epig {
 		genelength += ngenes
 	}
@@ -80,6 +87,10 @@ func GetNcells() int {
 
 func GetNenv() int {
 	return nenv
+}
+
+func scale(x float64) float64 {
+	return cuestrength * x
 }
 
 func sigmoid(x, omega float64) float64 {

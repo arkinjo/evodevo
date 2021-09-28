@@ -512,7 +512,7 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 	vf := NewVec(ngenes)
 	vg := NewVec(ngenes)
 	vh := NewVec(ngenes)
-	vp := NewVec(nenv+ncells)
+	vp := NewVec(nenv + ncells)
 	f1 := NewVec(ngenes)
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
@@ -521,9 +521,10 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 		multMatVec(ve, G.E, env)
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
+			applyFnVec(scale, ve) //multiply by environmental cue strength
 			addVecs(f1, vf, ve)
 		} else {
-			copy(f1,vf)
+			copy(f1, vf)
 		}
 		applyFnVec(sigmaf, f1)
 		if epig { //Allow or disallow epigenetic layer
@@ -535,7 +536,7 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 		if hoc { //If layer for higher order complexes is present
 			multMatVec(vg, G.Hg, g1)
 
-			if hoi {//If interactions between higher order complexes is present
+			if hoi { //If interactions between higher order complexes is present
 				multMatVec(vh, G.Hh, h0)
 				addVecs(h1, vg, vh)
 			} else {
@@ -544,7 +545,7 @@ func (cell *Cell) DevCell(G Genome, ginit Vec, env Cue) Cell { //Develops a cell
 		} else {
 			copy(h1, g1)
 		}
-		
+
 		applyFnVec(sigmah, h1)
 		multMatVec_T(vp, G.P, h1)
 		applyFnVec(rho, vp)
