@@ -54,7 +54,7 @@ func SetNcells(n int) {
 }
 
 func SetLayers(c float64, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
-	cuestrength = c * float64(ngenes) / float64(nenv+1) //c multiplied by number of dimensions.
+	cuestrength = c * math.Sqrt(float64(ngenes)/float64(nenv+1)) //c multiplied by number of dimensions.
 	//withCue = cue //Whether environment cue has effect on development
 	epig = epigm //Layer representing epigenetic markers
 	hoc = HOC    //Layer representing higher-order complexes
@@ -106,11 +106,11 @@ func relu(x, omega float64) float64 {
 }
 
 func sigmaf(x float64) float64 { //Activation function for epigenetic markers
-	return sigmoid(x, Omega)
+	return relu(x, Omega)
 }
 
 func sigmag(x float64) float64 { //Activation function for gene expression levels
-	return relu(x, Omega)
+	return sigmoid(x, Omega)
 }
 
 func sigmah(x float64) float64 { //Activation function for higher order complexes
