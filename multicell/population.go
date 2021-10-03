@@ -404,7 +404,11 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, Paxis Cues) {
 	var ancpproj, novpproj, gproj float64
+<<<<<<< HEAD
+	pop.DevPop(gen) //Not needed for bugfixing
+=======
 	pop.DevPop(gen)
+>>>>>>> parent of 0951cf5 (L1 norm)
 
 	anccphen := make(Vec, nenv+ncells)
 	novcphen := make(Vec, nenv+ncells)
@@ -420,10 +424,18 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	for _, indiv := range pop.Indivs {
 		ancpproj, novpproj, gproj = 0.0, 0.0, 0.0
 		for i, env := range mu { //For each environment cue
+<<<<<<< HEAD
+			//copy(indiv.Copies[2].Ctypes[i].P, pop.Envs[i])       //Bugfixing test
+=======
+>>>>>>> parent of 0951cf5 (L1 norm)
 			diffVecs(novcphen, indiv.Copies[2].Ctypes[i].P, env) //centralize
 			novpproj += innerproduct(novcphen, Paxis[i])
 		}
 		for i, env := range mu { //For each environment cue
+<<<<<<< HEAD
+			//copy(indiv.Copies[1].Ctypes[i].P, pop.RefEnvs[i])    //Bugfixing test
+=======
+>>>>>>> parent of 0951cf5 (L1 norm)
 			diffVecs(anccphen, indiv.Copies[1].Ctypes[i].P, env) //centralize
 			ancpproj += innerproduct(anccphen, Paxis[i])         //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
