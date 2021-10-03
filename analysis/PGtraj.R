@@ -3,9 +3,9 @@ aphat <- c()
 nphat <- c()
 ghat <- c()
 
-pdf("upoppgtraj20210920-5.pdf")
+pdf("m5pop20210930hienvpg.pdf")
 for (i in c(1:200)){
-  filename <- paste("upop20210920-5pg_",i,".dat",sep="")
+  filename <- paste("m5pop20210930hienvpg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
   ap <- pg$AncPhen
   np <- pg$NovPhen

@@ -23,7 +23,7 @@ func main() {
 	epochPtr := flag.Int("nepoch", 20, "number of epochs")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	cuestrengthPtr := flag.Float64("propcuestrength", 1.0, "control size of variance contribution of environmental cue")
+	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of variance contribution of environmental cue")
 	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
