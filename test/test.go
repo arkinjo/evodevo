@@ -101,6 +101,7 @@ func main() {
 	tevol := time.Now()
 
 	fmt.Println("Evolving in novel environment :", popstart.Envs)
+	fmt.Println("Ancestral environment :", popstart.RefEnvs)
 	gidfilename := fmt.Sprintf("%s_full", Gid_Filename)
 
 	pop1 := multicell.Evolve(true, T_Filename, json_out, gidfilename, epochlength, 1, &popstart)
@@ -114,8 +115,8 @@ func main() {
 	pop := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
 	g0 := pop0.GetMeanGenome()
 	g1 := pop1.GetMeanGenome()
-	dG := multicell.TestEqualGenomes(g0, g1)
-	fmt.Println("Difference in genome:", dG)
+	//dG := multicell.TestEqualGenomes(g0, g1)
+	//fmt.Println("Difference in genome:", dG)
 
 	Gaxis := multicell.NewGenome()
 	//ZeroGenome := multicell.NewGenome()
@@ -128,7 +129,8 @@ func main() {
 	//fmt.Println("Normalized Axis length:", dG)
 
 	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
-	fmt.Println("Change in environment proportional to:", Paxis)
+	//fmt.Println("Mean environment:", pop1.Get_Mid_Env())
+	//fmt.Println("Change in environment proportional to:", Paxis)
 
 	//bugfixpop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop) //Bugfixing
 
@@ -145,6 +147,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		fmt.Println("Mean environment:", pop.Get_Mid_Env())
+		fmt.Println("Change in environment proportional to:", pop.Get_Environment_Axis())
 		//dG = multicell.TestEqualPopGenomes(bugfixpop, pop)
 		//fmt.Println("Norm of imported genotype :", dG)
 
@@ -153,12 +158,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if gen == 0 { //Only able to test first generation.
-			JSONequalGs = multicell.TestEqualPopGenomes(pop, pop0)
-		}
-
-		//pop.Envs = NovEnvs
-		//pop.RefEnvs = AncEnvs //Measure everything in direction of ancestral -> novel environment
 		pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
 	}
 	dtdump := time.Since(tdump)

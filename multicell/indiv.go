@@ -454,32 +454,40 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 }
 
 func (cells *Cells) get_fitness(envs Cues) float64 {
-	d2 := 0.0
+	/*
+		d2 := 0.0
 
+		for i, cell := range cells.Ctypes {
+			d2 += dist2Vecs(cell.P, envs[i])
+		}
+		return math.Exp(-selStrength * d2)
+	*/
+	d := 0.0
+	N := nenv*ncells + ncells*ncells //Normalize by concatenated environment cue vector length
 	for i, cell := range cells.Ctypes {
-		d2 += dist2Vecs(cell.P, envs[i])
+		d += distVecs1(cell.P, envs[i])
 	}
-	return math.Exp(-selStrength * d2)
+	return 1 - d/float64(N)
 }
 
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
-	d2 := 0.0
+	d := 0.0
 	copies := indiv.Copies
 	for i, cell := range copies[2].Ctypes {
-		d2 += dist2Vecs(cell.P, copies[0].Ctypes[i].P)
+		d += distVecs1(cell.P, copies[0].Ctypes[i].P)
 	}
-	d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
-	return d2
+	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
+	return d
 }
 
 func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individual
-	d2 := 0.0
+	d := 0.0
 	copies := indiv.Copies
 	for i, cell := range copies[2].Ctypes {
-		d2 += dist2Vecs(cell.P, copies[1].Ctypes[i].P)
+		d += distVecs1(cell.P, copies[1].Ctypes[i].P)
 	}
-	d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
-	return d2
+	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
+	return d
 }
 
 func (indiv *Indiv) get_vp() float64 { //Get sum of elementwise variance of phenotype

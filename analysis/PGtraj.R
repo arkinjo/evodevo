@@ -3,9 +3,9 @@ aphat <- c()
 nphat <- c()
 ghat <- c()
 
-pdf("m5pop20210930hienvpg.pdf")
+pdf("upop20211006hienvpg.pdf")
 for (i in c(1:200)){
-  filename <- paste("m5pop20210930hienvpg_",i,".dat",sep="")
+  filename <- paste("upop20211006testpg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
   ap <- pg$AncPhen
   np <- pg$NovPhen
@@ -23,3 +23,6 @@ for (i in c(1:200)){
   ghat = append(ghat,mug)
 }
 dev.off()
+
+plot(nphat,type="l",xlab="Generation",ylab="Projected Phenotype",main="Mean phenotype")
+abline(h=0,col="red")
