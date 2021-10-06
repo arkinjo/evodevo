@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-var MaxPop int = 1000 // population size
+var maxPop int = 1000 // population size
 var ngenes int = 500  // number of genes
 var nenv int = 20     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
@@ -48,6 +48,10 @@ func SetSeed(seed int64) {
 	rand.Seed(seed)
 }
 
+func SetMaxPop(n int) {
+	maxPop = n
+}
+
 func SetNcells(n int) {
 	ncells = n
 	selStrength = baseSelStrength / float64(n)
@@ -79,6 +83,10 @@ func SetLayers(c float64, epigm, HOC, HOI bool) { //Define whether each layer or
 	}
 
 	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
+}
+
+func GetMaxPop() int {
+	return maxPop
 }
 
 func GetNcells() int {

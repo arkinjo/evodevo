@@ -21,6 +21,7 @@ func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
 	epochPtr := flag.Int("nepoch", 20, "number of epochs")
+	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of variance contribution of environmental cue")
@@ -43,10 +44,11 @@ func main() {
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
 
+	multicell.SetMaxPop(*maxpopsizePtr)
 	multicell.SetNcells(*ncelltypesPtr)
 	multicell.SetLayers(*cuestrengthPtr, *epigPtr, *HOCPtr, *HOIPtr)
 
-	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
+	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
 
 	if json_in != "" { //read input population as a json file, if given
 		jfilename = fmt.Sprintf("../pops/%s.json", json_in) //Make sure json file is in pops directory

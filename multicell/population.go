@@ -340,31 +340,6 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 					log.Fatal()
 				}
 			}
-
-			/*
-				if jsonout != "" {//Bugfixing
-					jfilename = fmt.Sprintf("../analysis/%s_%d.json",jsonout,pop.Gen)
-
-					popin, err := os.Open(jfilename)
-					if err != nil {
-						log.Fatal(err)
-					}
-
-					byteValue, _ := ioutil.ReadAll(popin)
-					err = json.Unmarshal(byteValue, &bugfixpop)
-					if err != nil {
-						log.Fatal(err)
-					}
-
-					err = popin.Close()
-					if err != nil{
-						log.Fatal(err)
-					}
-					fmt.Println("Nov Env in:",bugfixpop.Envs)
-					fmt.Println("Anc Env in:",bugfixpop.RefEnvs)
-				}
-			*/
-
 		}
 
 		Fitness = pop.GetMeanFitness()
@@ -386,7 +361,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
-		pop = pop.Reproduce(MaxPop)
+		pop = pop.Reproduce(maxPop)
 	}
 	if test && gidfilename != "" {
 		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)

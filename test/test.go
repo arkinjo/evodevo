@@ -29,6 +29,7 @@ func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
 	//epochPtr := flag.Int("nepoch", 1, "number of epochs")
+	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of variance contribution of environmental cue")
@@ -56,10 +57,11 @@ func main() {
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
 
+	multicell.SetMaxPop(*maxpopsizePtr)
 	multicell.SetNcells(*ncelltypesPtr)
 	multicell.SetLayers(*cuestrengthPtr, *epigPtr, *HOCPtr, *HOIPtr)
 
-	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop) //with randomized genome to start
+	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop()) //with randomized genome to start
 
 	if json_in != "" { //read input population as a json file, if given
 		fmt.Println("Importing initial population")
@@ -89,28 +91,6 @@ func main() {
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
-	/*
-		jfilename := fmt.Sprintf("../pops/%s_0.json", json_out) //Make a new json file encoding evolved population
-		jsonpop, err := json.Marshal(pop0)                      //JSON encoding of population as byte array
-		if err != nil {
-			log.Fatal(err)
-		}
-		popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
-		if err != nil {
-			log.Fatal(err)
-		}
-		_, err = popout.Write(jsonpop)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = popout.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		//Bug in JSON encoding?! Genotype should be unchanged by reading and then writing same json file!
-	*/
 	popstart := pop0.Copy()
 	AncEnvs := multicell.CopyCues(pop0.Envs)
 	OldEnvs := multicell.CopyCues(pop0.Envs)
@@ -128,50 +108,10 @@ func main() {
 
 	dtevol := time.Since(tevol)
 	fmt.Println("Time taken to simulate evolution :", dtevol)
-	/*
-		fmt.Println("Put evolved population back into ancestral environment")
-		EvPop := pop1.Copy()
-		EvPop.Envs = AncEnvs    //Put population back into ancestral environment.
-		EvPop.RefEnvs = NovEnvs //Measure degree of plasticity with respect to novel environment.
-		EvPop.DevPop(epochlength + 1)
-		DevequalGs = multicell.TestEqualPopGenomes(pop1, EvPop)
-
-			for k,indiv := range EvPop.Indivs {
-				fmt.Println(indiv.Id==EvPop.Indivs[k].Id)
-			}
-		//Remark: Fitness here is fitness in ancestral environment!
-		fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Fprintf(fout, "2 \t %d \t %e \t %e \t %e \t %e \t %e \t %e \n", epochlength, pop0.GetMeanFitness(), pop0.GetMeanCuePlasticity(), pop0.GetMeanObsPlasticity(), pop0.GetMeanPp(), pop0.GetDiversity(), pop0.GetMeanUtility())
-
-		err = fout.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-		jfilename = fmt.Sprintf("../pops/%s_%d.json", json_out, epochlength+1)
-		jsonpop, err = json.Marshal(EvPop) //JSON encoding of population as byte array
-		if err != nil {
-			log.Fatal(err)
-		}
-		popout, err = os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
-		if err != nil {
-			log.Fatal(err)
-		}
-		_, err = popout.Write(jsonpop)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = popout.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	*/
 
 	fmt.Println("Dumping projections")
 	tdump := time.Now()
-	pop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
+	pop := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
 	g0 := pop0.GetMeanGenome()
 	g1 := pop1.GetMeanGenome()
 	dG := multicell.TestEqualGenomes(g0, g1)
@@ -225,7 +165,7 @@ func main() {
 	fmt.Println("Time taken to dump projections :", dtdump)
 	fmt.Println("Making DOT genealogy file")
 	tdot := time.Now()
-	nanctraj := multicell.DOT_Genealogy(Gid_Filename, json_out, epochlength, multicell.MaxPop)
+	nanctraj := multicell.DOT_Genealogy(Gid_Filename, json_out, epochlength, multicell.GetMaxPop())
 	//fmt.Println(nanctraj)
 	dtdot := time.Since(tdot)
 	fmt.Println("Time taken to make dot file :", dtdot)
