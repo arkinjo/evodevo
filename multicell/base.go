@@ -17,13 +17,14 @@ var fullGeneLength = 5*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicel
 var genelength int                                //calculated from layers present or absent.
 
 var GenomeDensity float64 = 1.0 / float64(ngenes)
+var CueResponseDensity float64 = 1.0 / float64(nenv)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
 const baseMutationRate float64 = 0.01 // default probability of mutation of genome
 var mutRate float64                   //declaration
 const baseSelStrength float64 = 0.25  // default selection strength; to be normalized by number of cells
-var selStrength float64               //declaration
+var selStrength float64               //declaration; Remark: not used in L1 norm fitness.
 var Omega float64 = 1.0               // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var withCue bool = false // with or without environmental cues.
@@ -58,7 +59,7 @@ func SetNcells(n int) {
 }
 
 func SetLayers(c float64, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
-	cuestrength = c * math.Sqrt(float64(ngenes)/float64(nenv+1)) //c multiplied by number of dimensions.
+	cuestrength = c //* math.Sqrt(float64(ngenes)/float64(nenv+1)) //c multiplied by number of dimensions; default to 1 (07/10/2021)
 	//withCue = cue //Whether environment cue has effect on development
 	epig = epigm //Layer representing epigenetic markers
 	hoc = HOC    //Layer representing higher-order complexes
@@ -281,7 +282,7 @@ func applyFnVec(f func(float64) float64, vec Vec) { //Apply function f to a vect
 	return
 }
 
-func (mat *Spmat) mutateSpmat() { //mutating a sparse matrix
+func (mat *Spmat) mutateSpmat(density float64) { //mutating a sparse matrix
 	nrow := len(mat.Mat)
 	nmut := int(mutRate * float64(nrow*mat.Ncol))
 	for n := 0; n < nmut; n++ {
@@ -289,7 +290,7 @@ func (mat *Spmat) mutateSpmat() { //mutating a sparse matrix
 		j := rand.Intn(mat.Ncol)
 		r := rand.Float64()
 		delete(mat.Mat[i], j)
-		if r < GenomeDensity {
+		if r < density {
 			mat.Mat[i][j] = rand.NormFloat64()
 		}
 	}

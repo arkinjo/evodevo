@@ -60,7 +60,7 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 func (G *Genome) Randomize() {
 
 	if withCue {
-		G.E.Randomize(GenomeDensity)
+		G.E.Randomize(CueResponseDensity)
 	}
 
 	if epig {
@@ -74,7 +74,7 @@ func (G *Genome) Randomize() {
 			G.Hh.Randomize(GenomeDensity)
 		}
 	}
-	G.P.Randomize(GenomeDensity)
+	G.P.Randomize(CueResponseDensity)
 	G.Z.Randomize(GenomeDensity)
 }
 
@@ -352,38 +352,38 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if withCue {
 		t += nenv + ncells
 		if r < t {
-			indiv.Genome.E.mutateSpmat()
+			indiv.Genome.E.mutateSpmat(CueResponseDensity)
 		}
 	}
 	if epig {
 		t += ngenes
 		if r < t {
-			indiv.Genome.F.mutateSpmat()
+			indiv.Genome.F.mutateSpmat(GenomeDensity)
 		}
 	}
 	t += ngenes
 	if r < t {
-		indiv.Genome.G.mutateSpmat()
+		indiv.Genome.G.mutateSpmat(GenomeDensity)
 	}
 	if hoc {
 		t += ngenes
 		if r < t {
-			indiv.Genome.Hg.mutateSpmat()
+			indiv.Genome.Hg.mutateSpmat(GenomeDensity)
 		}
 		if hoi {
 			t += ngenes
 			if r < t {
-				indiv.Genome.Hh.mutateSpmat()
+				indiv.Genome.Hh.mutateSpmat(GenomeDensity)
 			}
 		}
 	}
 	t += nenv + ncells
 	if r < t {
-		indiv.Genome.P.mutateSpmat()
+		indiv.Genome.P.mutateSpmat(CueResponseDensity)
 	}
 	t += ngenes
 	if r < t {
-		indiv.Genome.Z.mutateSpmat()
+		indiv.Genome.Z.mutateSpmat(GenomeDensity)
 	}
 
 	return
