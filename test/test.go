@@ -91,6 +91,18 @@ func main() {
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
+
+	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	popstart := pop0.Copy()
 	AncEnvs := multicell.CopyCues(pop0.Envs)
 	OldEnvs := multicell.CopyCues(pop0.Envs)
@@ -170,7 +182,7 @@ func main() {
 	fmt.Println("Time taken to make dot file :", dtdot)
 	fmt.Println("Dumping number of ancestors")
 	nancfilename = fmt.Sprintf("../analysis/%s_nanc.dat", Gid_Filename)
-	fout, err := os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+	fout, err = os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
 	if err != nil {
 		log.Fatal(err)
 	}
