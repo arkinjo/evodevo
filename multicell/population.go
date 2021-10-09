@@ -31,6 +31,18 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 	return p
 }
 
+func (pop *Population) SetWagnerFitness() { //compute normalized fitness value similar to Wagner (1996).
+	var mf float64
+	for _, indiv := range pop.Indivs {
+		if mf < indiv.Fit {
+			mf = indiv.Fit
+		}
+	}
+	for _, indiv := range pop.Indivs {
+		indiv.WagFit = indiv.Fit / mf
+	}
+}
+
 func (pop *Population) RandomizeGenome() {
 	for _, indiv := range pop.Indivs { //Sets genome of every individual to zero
 		indiv.Genome.Randomize()
@@ -251,7 +263,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 		mom := pop.Indivs[l]
 		r0 := rand.Float64()
 		r1 := rand.Float64()
-		if r0 < dad.Fit && r1 < mom.Fit {
+		if r0 < dad.WagFit && r1 < mom.WagFit {
 			kid0, kid1 := Mate(&dad, &mom)
 			nindivs = append(nindivs, kid0)
 			nindivs = append(nindivs, kid1)

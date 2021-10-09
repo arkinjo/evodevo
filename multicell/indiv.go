@@ -37,6 +37,7 @@ type Indiv struct { //An individual as an unicellular organism
 	//Z       Vec     // Initial gene expression of offspring
 	F0      float64 //Fitness without cues
 	Fit     float64 //Fitness with cues
+	WagFit  float64 //Wagner relative fitness
 	Util    float64 //Fitness Utility of cues
 	CuePlas float64 //Cue Plasticity
 	ObsPlas float64 //Observed Plasticity
@@ -324,7 +325,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	//z := NewVec(ngenes)
 
 	//indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	indiv := Indiv{id, 0, 0, genome, cellcopies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, cellcopies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -460,8 +461,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, g1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	*/
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
