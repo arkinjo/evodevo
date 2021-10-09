@@ -36,10 +36,12 @@ func (pop *Population) SetWagnerFitness() { //compute normalized fitness value s
 	for _, indiv := range pop.Indivs {
 		if mf < indiv.Fit {
 			mf = indiv.Fit
+			//fmt.Println("Id:", indiv.Id, "Fitness:", indiv.Fit, "Current Maximum fitness value:", mf)
 		}
 	}
-	for _, indiv := range pop.Indivs {
-		indiv.WagFit = indiv.Fit / mf
+	for i, indiv := range pop.Indivs {
+		pop.Indivs[i].WagFit = indiv.Fit / mf
+		//fmt.Println("Id:", indiv.Id, "Fitness:", indiv.Fit, "Wagner Fitness:", indiv.WagFit)
 	}
 }
 
@@ -297,6 +299,7 @@ func (pop *Population) DevPop(gen int) Population {
 		pop.Indivs[i] = <-ch //Update output results
 	}
 	//We might need a sorter here.
+	pop.SortPopIndivs()
 
 	return *pop
 }
@@ -356,6 +359,13 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			}
 		}
 
+		pop.SetWagnerFitness()
+		/*
+			for _, indiv := range pop.Indivs {
+				fmt.Println("Before reproduction: Id: ", indiv.Id, "Wagner Fitness: ", indiv.WagFit, "Fitness: ", indiv.Fit)
+			}
+		*/
+
 		Fitness = pop.GetMeanFitness()
 		CuePlas = pop.GetMeanCuePlasticity()
 		ObsPlas = pop.GetMeanObsPlasticity()
@@ -376,6 +386,13 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 		pop = pop.Reproduce(maxPop)
+
+		/*
+			for _, indiv := range pop.Indivs {
+				fmt.Println("After reproduction: Id: ", indiv.Id, "Wagner Fitness: ", indiv.WagFit, "Fitness: ", indiv.Fit) //Bugtest
+			}
+		*/
+
 	}
 	if test && gidfilename != "" {
 		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
