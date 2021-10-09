@@ -148,8 +148,8 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Println("Mean environment:", pop.Get_Mid_Env())
-		fmt.Println("Change in environment proportional to:", pop.Get_Environment_Axis())
+		//fmt.Println("Mean environment:", pop.Get_Mid_Env())
+		//fmt.Println("Change in environment proportional to:", pop.Get_Environment_Axis())
 		//dG = multicell.TestEqualPopGenomes(bugfixpop, pop)
 		//fmt.Println("Norm of imported genotype :", dG)
 
