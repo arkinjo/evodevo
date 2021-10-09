@@ -13,7 +13,7 @@ var ncells int = 1    //number of cell types/phenotypes to be trained simultaneo
 const maxDevStep int = 300  // Maximum steps for development.
 var epsDev float64 = 1.0e-9 // convergence criterion of development.
 
-var fullGeneLength = 5*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
+var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.
 
 var GenomeDensity float64 = 1.0 / float64(ngenes)
@@ -65,7 +65,7 @@ func SetLayers(c float64, epigm, HOC, HOI bool) { //Define whether each layer or
 	hoc = HOC    //Layer representing higher-order complexes
 	hoi = HOI    //Allow interaction between higher-order complexes
 
-	genelength = 2*ngenes + nenv + ncells
+	genelength = ngenes + nenv + ncells
 	if c != 0 {
 		withCue = true
 		genelength += nenv + ncells

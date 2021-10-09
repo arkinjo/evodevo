@@ -40,9 +40,11 @@ func TestEqualGenomes(G0, G1 Genome) float64 { //Elementwise difference between 
 		for j := 0; j < nenv+ncells; j++ {
 			d += math.Abs(G1.P.Mat[i][j] - G0.P.Mat[i][j])
 		}
-		for j := 0; j < ngenes; j++ {
-			d += math.Abs(G1.Z.Mat[i][j] - G0.Z.Mat[i][j])
-		}
+		/*
+			for j := 0; j < ngenes; j++ {
+				d += math.Abs(G1.Z.Mat[i][j] - G0.Z.Mat[i][j])
+			}
+		*/
 	}
 	return d
 
