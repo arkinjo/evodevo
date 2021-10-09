@@ -17,7 +17,7 @@ var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicel
 var genelength int                                //calculated from layers present or absent.
 
 var GenomeDensity float64 = 1.0 / float64(ngenes)
-var CueResponseDensity float64 = -math.Log(epsDev) / float64(ngenes)
+var CueResponseDensity float64 = -math.Log(0.000000001) / float64(ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
