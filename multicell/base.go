@@ -11,13 +11,13 @@ var nenv int = 20     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
 const maxDevStep int = 300  // Maximum steps for development.
-var epsDev float64 = 1.0e-8 // convergence criterion of development.
+var epsDev float64 = 1.0e-9 // convergence criterion of development.
 
 var fullGeneLength = 5*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.
 
 var GenomeDensity float64 = 1.0 / float64(ngenes)
-var CueResponseDensity float64 = -math.Log(0.00001) / float64(ngenes)
+var CueResponseDensity float64 = -math.Log(epsDev) / float64(ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
