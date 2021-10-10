@@ -190,6 +190,14 @@ func ChangeEnvs(cues Cues, n int) Cues { //Mutates precisely n bits in environme
 	return envs1
 }
 
+func ChangeEnvs2(cues Cues, n int) Cues { //Flips precisely n bits in each environment cue
+	cues1 := CopyCues(cues)
+	for i, cue := range cues {
+		cues1[i] = ChangeEnv(cue, n)
+	}
+	return cues1
+}
+
 func GetMeanCue(cues Cues) Cue { //elementwise arithmetic mean of environment cue
 	//ncells := len(cues)
 	//ncues := len(cues)

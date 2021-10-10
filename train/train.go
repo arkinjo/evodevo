@@ -134,7 +134,7 @@ func main() {
 
 		OldEnvs := multicell.CopyCues(popstart.Envs)
 		popstart.RefEnvs = OldEnvs
-		popstart.Envs = multicell.ChangeEnvs(OldEnvs, denv)
+		popstart.Envs = multicell.ChangeEnvs2(OldEnvs, denv)
 		//fmt.Println("Novel environment after :", popstart.Envs)
 		//fmt.Println("Ancestral environment after :", popstart.RefEnvs)
 	}
