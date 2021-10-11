@@ -17,11 +17,12 @@ type Genome struct { //Genome of an individual
 }
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	E Vec // Environment encountered by cell; id already in cue
-	F Vec // Epigenetic markers
-	G Vec // Gene expression
-	H Vec // Higher order complexes
-	P Vec // Phenotype; id already in cue
+	E     Vec  // Environment encountered by cell; id already in cue
+	F     Vec  // Epigenetic markers
+	G     Vec  // Gene expression
+	H     Vec  // Higher order complexes
+	P     Vec  // Phenotype; id already in cue
+	DevSS bool //Whether developmental steady state is reached before maximum allowed steps
 }
 
 type Cells struct { //Do we want to reimplement this?
@@ -278,7 +279,7 @@ func NewCell(id int) Cell { //Creates a new cell given id of cell.
 	h := NewVec(ngenes)
 	p := NewCue(nenv, id)
 
-	cell := Cell{e, f, g, h, p}
+	cell := Cell{e, f, g, h, p, false}
 
 	return cell
 }
@@ -529,6 +530,7 @@ func (indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of indiv
 
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	var diff float64
+	var convindex int
 
 	g0 := NewVec(ngenes) //force initial condition g0 = 0
 	//copy(g0, ginit) //no setting extra initial condition needed
@@ -578,7 +580,13 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		diff = dist2Vecs(h0, h1)
 		copy(g0, g1)
 		copy(h0, h1)
-		if diff < epsDev {
+		if diff < epsDev { //if criterion is reached
+			convindex++ //increment by one
+		} else {
+			convindex = 0
+		}
+		if convindex > 5 {
+			cell.DevSS = true //steady state reached
 			break
 		}
 
