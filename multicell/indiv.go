@@ -17,12 +17,12 @@ type Genome struct { //Genome of an individual
 }
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	E     Vec  // Environment encountered by cell; id already in cue
-	F     Vec  // Epigenetic markers
-	G     Vec  // Gene expression
-	H     Vec  // Higher order complexes
-	P     Vec  // Phenotype; id already in cue
-	DevSS bool //Whether developmental steady state is reached before maximum allowed steps
+	E          Vec // Environment encountered by cell; id already in cue
+	F          Vec // Epigenetic markers
+	G          Vec // Gene expression
+	H          Vec // Higher order complexes
+	P          Vec // Phenotype; id already in cue
+	PathLength int // Developmental path length
 }
 
 type Cells struct { //Do we want to reimplement this?
@@ -279,7 +279,7 @@ func NewCell(id int) Cell { //Creates a new cell given id of cell.
 	h := NewVec(ngenes)
 	p := NewCue(nenv, id)
 
-	cell := Cell{e, f, g, h, p, false}
+	cell := Cell{e, f, g, h, p, 0}
 
 	return cell
 }
@@ -585,8 +585,9 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		} else {
 			convindex = 0
 		}
-		if convindex > 5 {
-			cell.DevSS = true //steady state reached
+		if convindex > ccStep {
+			cell.PathLength = nstep - ccStep //steady state reached
+			//fmt.Println(nstep) //step of steady state; for unit testing
 			break
 		}
 
