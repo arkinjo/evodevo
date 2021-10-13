@@ -5,35 +5,42 @@ import (
 	"math/rand"
 )
 
-var MaxPop int = 1000 // population size
+var maxPop int = 1000 // population size
 var ngenes int = 500  // number of genes
 var nenv int = 20     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
-var MaxDevStep int = 200    // Maximum steps for development.
-var epsDev float64 = 1.0e-8 // convergence criterion of development.
+const maxDevStep int = 200  // Maximum steps for development.
+const ccStep int = 5        //number of steady steps for convergence
+var epsDev float64 = 1.0e-9 // convergence criterion of development.
 
-var fullGeneLength = 5*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
+var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.
 
 var GenomeDensity float64 = 1.0 / float64(ngenes)
+var CueResponseDensity float64 = -math.Log(epsDev) / float64(ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
 const baseMutationRate float64 = 0.01 // default probability of mutation of genome
 var mutRate float64                   //declaration
 const baseSelStrength float64 = 0.25  // default selection strength; to be normalized by number of cells
-var selStrength float64               //declaration
+var selStrength float64               //declaration; Remark: not used in L1 norm fitness.
 var Omega float64 = 1.0               // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
-var withCue bool = true // with or without environmental cues.
-var epig bool = true    // Epigenetic marker layer
-var hoc bool = true     // Higher order complexes layer
-var hoi bool = true     // Interaction between higher order complexes
+var withCue bool = false // with or without environmental cues.
+var cuestrength float64  //declaration
+var epig bool = true     // Epigenetic marker layer
+var hoc bool = true      // Higher order complexes layer
+var hoi bool = true      // Interaction between higher order complexes
+//var propcuestrength float64 = 1//proportion of variance of environment cue contribution
 
 //Remark: defaults to full model!
 
-type Spmat = [](map[int]float64) // Sparse matrix is an array of maps.
+type Spmat struct {
+	Ncol int                 // number of columns
+	Mat  [](map[int]float64) // Sparse matrix is an array of maps.
+}
 
 type Vec = []float64 //Vector is a slice
 
@@ -43,21 +50,30 @@ func SetSeed(seed int64) {
 	rand.Seed(seed)
 }
 
+func SetMaxPop(n int) {
+	maxPop = n
+}
+
 func SetNcells(n int) {
 	ncells = n
 	selStrength = baseSelStrength / float64(n)
 }
 
-func SetLayers(cue, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
-	withCue = cue //Whether environment cue has effect on development
-	epig = epigm  //Layer representing epigenetic markers
-	hoc = HOC     //Layer representing higher-order complexes
-	hoi = HOI     //Allow interaction between higher-order complexes
+func SetLayers(c float64, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
+	cuestrength = c //* math.Sqrt(float64(ngenes)/float64(nenv+1)) //c multiplied by number of dimensions; default to 1 (07/10/2021)
+	//withCue = cue //Whether environment cue has effect on development
+	epig = epigm //Layer representing epigenetic markers
+	hoc = HOC    //Layer representing higher-order complexes
+	hoi = HOI    //Allow interaction between higher-order complexes
 
-	genelength = 2*ngenes + nenv + ncells
-	if cue {
+	genelength = ngenes + nenv + ncells
+	if c != 0 {
+		withCue = true
 		genelength += nenv + ncells
+	} else {
+		withCue = false
 	}
+
 	if epig {
 		genelength += ngenes
 	}
@@ -71,6 +87,10 @@ func SetLayers(cue, epigm, HOC, HOI bool) { //Define whether each layer or inter
 	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
 }
 
+func GetMaxPop() int {
+	return maxPop
+}
+
 func GetNcells() int {
 	return ncells
 }
@@ -79,8 +99,24 @@ func GetNenv() int {
 	return nenv
 }
 
+func scale(x float64) float64 {
+	return cuestrength * x
+}
+
 func sigmoid(x, omega float64) float64 {
 	return 1 / (1 + math.Exp(-x/omega))
+}
+
+func tanh(x, omega float64) float64 {
+	return math.Tanh(omega * x)
+}
+
+func arctan(x, omega float64) float64 {
+	return math.Atan(omega * x)
+}
+
+func scaledatan(x, omega float64) float64 {
+	return 2.0 * math.Atan(omega*x) / math.Pi
 }
 
 func relu(x, omega float64) float64 {
@@ -92,11 +128,11 @@ func relu(x, omega float64) float64 {
 }
 
 func sigmaf(x float64) float64 { //Activation function for epigenetic markers
-	return sigmoid(x, Omega)
+	return relu(x, Omega)
 }
 
 func sigmag(x float64) float64 { //Activation function for gene expression levels
-	return relu(x, Omega)
+	return sigmoid(x, Omega)
 }
 
 func sigmah(x float64) float64 { //Activation function for higher order complexes
@@ -111,18 +147,45 @@ func rho(x float64) float64 { //Function for converting gene expression into phe
 	return sigmoid(x, Omega)
 }
 
-func NewSpmat(nrow, ncol int, density float64) Spmat { //Randomly generate a new sparse matrix given density
+func NewSpmat(nrow, ncol int) Spmat { //Initialize new sparse matrix
 	mat := make([](map[int]float64), nrow)
 	for i := range mat {
 		mat[i] = make(map[int]float64)
-		for j := 0; j < ncol; j++ {
+	}
+	return Spmat{ncol, mat}
+}
+
+func (sp *Spmat) Copy() Spmat {
+	nsp := NewSpmat(len(sp.Mat), sp.Ncol)
+	for i, m := range sp.Mat {
+		for j, d := range m {
+			nsp.Mat[i][j] = d
+		}
+	}
+	return nsp
+}
+
+func (sp *Spmat) Randomize(density float64) { //Randomize entries of sparse matrix
+	for i := range sp.Mat {
+		for j := 0; j < sp.Ncol; j++ {
 			r := rand.Float64()
 			if r < density {
-				mat[i][j] = rand.NormFloat64()
+				sp.Mat[i][j] = rand.NormFloat64()
 			}
 		}
 	}
-	return mat
+}
+
+func DiffSpmat(m1, m2 *Spmat) Spmat { //This function works fine
+	d := NewSpmat(len(m1.Mat), m1.Ncol) //initialization
+	ncol := m1.Ncol
+	for i := range m1.Mat {
+		for j := 0; j < ncol; j++ {
+			d.Mat[i][j] = m1.Mat[i][j] - m2.Mat[i][j]
+		}
+	}
+
+	return d
 }
 
 func NewVec(len int) Vec { //Generate a new (zero) vector of length len
@@ -141,7 +204,7 @@ func multMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
 		vout[i] = 0.0
 	}
 
-	for i, m := range mat {
+	for i, m := range mat.Mat {
 		for j, d := range m {
 			vout[i] += d * vin[j]
 		}
@@ -153,7 +216,7 @@ func multMatVec_T(vout Vec, mat Spmat, vin Vec) { //Matrix transposition and the
 	for i := range vout {
 		vout[i] = 0.0
 	}
-	for i, m := range mat {
+	for i, m := range mat.Mat {
 		vi := vin[i]
 		for j, d := range m {
 			vout[j] += d * vi
@@ -205,6 +268,16 @@ func distVecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors
 	return math.Sqrt(dist2Vecs(v0, v1))
 }
 
+func distVecs1(v0, v1 Vec) float64 { //1-norm between 2 vectors
+	var dev float64
+	dist := 0.0
+	for i, v := range v0 {
+		dev = v - v1[i]
+		dist += math.Abs(dev)
+	}
+	return dist
+}
+
 func Hammingdist(v0, v1 Vec) float64 { //Hamming distance between 2 vectors
 	dist := 0.0
 	for i, v := range v0 {
@@ -222,16 +295,16 @@ func applyFnVec(f func(float64) float64, vec Vec) { //Apply function f to a vect
 	return
 }
 
-func mutateSpmat(mat Spmat, ncol int) { //mutating a sparse matrix
-	nrow := len(mat)
-	nmut := int(mutRate * float64(nrow*ncol))
+func (mat *Spmat) mutateSpmat(density float64) { //mutating a sparse matrix
+	nrow := len(mat.Mat)
+	nmut := int(mutRate * float64(nrow*mat.Ncol))
 	for n := 0; n < nmut; n++ {
 		i := rand.Intn(nrow)
-		j := rand.Intn(ncol)
+		j := rand.Intn(mat.Ncol)
 		r := rand.Float64()
-		delete(mat[i], j)
-		if r < GenomeDensity {
-			mat[i][j] = rand.NormFloat64()
+		delete(mat.Mat[i], j)
+		if r < density {
+			mat.Mat[i][j] = rand.NormFloat64()
 		}
 	}
 	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.

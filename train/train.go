@@ -21,9 +21,10 @@ func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
 	epochPtr := flag.Int("nepoch", 20, "number of epochs")
+	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	cuePtr := flag.Bool("withCue", true, "develop with environmental cue")
+	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of variance contribution of environmental cue")
 	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
@@ -43,10 +44,11 @@ func main() {
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
 
+	multicell.SetMaxPop(*maxpopsizePtr)
 	multicell.SetNcells(*ncelltypesPtr)
-	multicell.SetLayers(*cuePtr, *epigPtr, *HOCPtr, *HOIPtr)
+	multicell.SetLayers(*cuestrengthPtr, *epigPtr, *HOCPtr, *HOIPtr)
 
-	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop)
+	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
 
 	if json_in != "" { //read input population as a json file, if given
 		jfilename = fmt.Sprintf("../pops/%s.json", json_in) //Make sure json file is in pops directory
@@ -67,6 +69,9 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Println("Successfully imported population")
+	} else {
+		fmt.Println("Randomizing initial population")
+		pop0.RandomizeGenome()
 	}
 
 	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
@@ -103,7 +108,9 @@ func main() {
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population; just before epoch change
-			pop1.RefEnvs = pop1.Envs                             //Update to environment just before epoch change
+			//Update to environment just before epoch change
+			pop1.RefEnvs = multicell.CopyCues(pop1.Envs)
+
 			jfilename = fmt.Sprintf("../pops/%s.json", json_out) //export output population to test file
 			jsonpop, err := json.Marshal(pop1)                   //JSON encoding of population as byte array
 			if err != nil {
@@ -127,7 +134,7 @@ func main() {
 
 		OldEnvs := multicell.CopyCues(popstart.Envs)
 		popstart.RefEnvs = OldEnvs
-		popstart.Envs = multicell.ChangeEnvs(OldEnvs, denv)
+		popstart.Envs = multicell.ChangeEnvs2(OldEnvs, denv)
 		//fmt.Println("Novel environment after :", popstart.Envs)
 		//fmt.Println("Ancestral environment after :", popstart.RefEnvs)
 	}
