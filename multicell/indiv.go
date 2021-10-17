@@ -63,21 +63,21 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 func (G *Genome) Randomize() {
 
 	if withCue {
-		G.E.Randomize(CueResponseDensity)
+		G.E.Randomize(CueResponseDensity, sde)
 	}
 
 	if epig {
-		G.F.Randomize(GenomeDensity)
+		G.F.Randomize(GenomeDensity, sdf)
 	}
-	G.G.Randomize(GenomeDensity)
+	G.G.Randomize(GenomeDensity, sdg)
 
 	if hoc {
-		G.Hg.Randomize(GenomeDensity)
+		G.Hg.Randomize(GenomeDensity, sdhg)
 		if hoi {
-			G.Hh.Randomize(GenomeDensity)
+			G.Hh.Randomize(GenomeDensity, sdhh)
 		}
 	}
-	G.P.Randomize(CueResponseDensity)
+	G.P.Randomize(CueResponseDensity, sdp)
 	//G.Z.Randomize(GenomeDensity)
 }
 
@@ -364,34 +364,34 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if withCue {
 		t += nenv + ncells
 		if r < t {
-			indiv.Genome.E.mutateSpmat(CueResponseDensity)
+			indiv.Genome.E.mutateSpmat(CueResponseDensity, sde)
 		}
 	}
 	if epig {
 		t += ngenes
 		if r < t {
-			indiv.Genome.F.mutateSpmat(GenomeDensity)
+			indiv.Genome.F.mutateSpmat(GenomeDensity, sdf)
 		}
 	}
 	t += ngenes
 	if r < t {
-		indiv.Genome.G.mutateSpmat(GenomeDensity)
+		indiv.Genome.G.mutateSpmat(GenomeDensity, sdg)
 	}
 	if hoc {
 		t += ngenes
 		if r < t {
-			indiv.Genome.Hg.mutateSpmat(GenomeDensity)
+			indiv.Genome.Hg.mutateSpmat(GenomeDensity, sdhg)
 		}
 		if hoi {
 			t += ngenes
 			if r < t {
-				indiv.Genome.Hh.mutateSpmat(GenomeDensity)
+				indiv.Genome.Hh.mutateSpmat(GenomeDensity, sdhh)
 			}
 		}
 	}
 	t += nenv + ncells
 	if r < t {
-		indiv.Genome.P.mutateSpmat(CueResponseDensity)
+		indiv.Genome.P.mutateSpmat(CueResponseDensity, sdp)
 	}
 	/*
 		t += ngenes
@@ -486,7 +486,7 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 	for i, cell := range cells.Ctypes {
 		d += distVecs1(cell.P, envs[i])
 	}
-	return 1 - d/float64(N)
+	return 1 - (math.Pi*d)/float64(12*N) //Using scaled arctan for p gives max difference of 12/pi.
 }
 
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual

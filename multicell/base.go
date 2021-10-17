@@ -17,7 +17,7 @@ var epsDev float64 = 1.0e-9 // convergence criterion of development.
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.
 
-var GenomeDensity float64 = 1.0 / float64(ngenes)
+var GenomeDensity float64 = 3.0 / float64(ngenes)
 var CueResponseDensity float64 = -math.Log(epsDev) / float64(ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
@@ -32,8 +32,15 @@ var withCue bool = false // with or without environmental cues.
 var cuestrength float64  //declaration
 var epig bool = true     // Epigenetic marker layer
 var hoc bool = true      // Higher order complexes layer
-var hoi bool = true      // Interaction between higher order complexes
-//var propcuestrength float64 = 1//proportion of variance of environment cue contribution
+var hoi bool = false
+var hoistrength float64 //declaration
+
+var sde float64  //declaration
+var sdf float64  //declaration
+var sdg float64  //declaration
+var sdhg float64 //declaration
+var sdhh float64 //declaration
+var sdp float64  //declaration
 
 //Remark: defaults to full model!
 
@@ -59,15 +66,17 @@ func SetNcells(n int) {
 	selStrength = baseSelStrength / float64(n)
 }
 
-func SetLayers(c float64, epigm, HOC, HOI bool) { //Define whether each layer or interaction is present in model
-	cuestrength = c //* math.Sqrt(float64(ngenes)/float64(nenv+1)) //c multiplied by number of dimensions; default to 1 (07/10/2021)
+func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or interaction is present in model
+	cuestrength = ce //strength of environment cue
+	hoistrength = ch //strength of interactions between higher order complexes
+
 	//withCue = cue //Whether environment cue has effect on development
 	epig = epigm //Layer representing epigenetic markers
 	hoc = HOC    //Layer representing higher-order complexes
-	hoi = HOI    //Allow interaction between higher-order complexes
+	//hoi = HOI    //Allow interaction between higher-order complexes
 
-	genelength = ngenes + nenv + ncells
-	if c != 0 {
+	genelength = ngenes + nenv + ncells //G and P layers present by default
+	if ce != 0 {
 		withCue = true
 		genelength += nenv + ncells
 	} else {
@@ -79,12 +88,23 @@ func SetLayers(c float64, epigm, HOC, HOI bool) { //Define whether each layer or
 	}
 	if hoc {
 		genelength += ngenes
-		if hoi {
+		if ch != 0 {
+			hoi = true
 			genelength += ngenes
+		} else {
+			hoi = false
 		}
 	}
 
 	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
+
+	//initializing theoretical standard deviations
+	sdg = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
+	sde = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv) * (1 + cuestrength)))
+	sdf = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
+	sdhg = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+hoistrength))
+	sdhh = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + cuestrength)))
+	sdp = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
 }
 
 func GetMaxPop() int {
@@ -111,13 +131,23 @@ func tanh(x, omega float64) float64 {
 	return math.Tanh(omega * x)
 }
 
+func lecuntanh(x float64) float64 { //Le'Cun's hyperbolic tangent
+	return 1.7159 * math.Tanh(2*x/3)
+}
+
 func arctan(x, omega float64) float64 {
 	return math.Atan(omega * x)
 }
 
+func lecunatan(x float64) float64 { //Rescaled arctan under same treatment of Le'Cun's hyperbolic tangent.
+	return 6.0 * math.Atan(x/1.73205080756887729352744634150587236694) / math.Pi
+}
+
+/*
 func scaledatan(x, omega float64) float64 {
 	return 2.0 * math.Atan(omega*x) / math.Pi
 }
+*/
 
 func relu(x, omega float64) float64 {
 	if x < 0 {
@@ -128,19 +158,15 @@ func relu(x, omega float64) float64 {
 }
 
 func sigmaf(x float64) float64 { //Activation function for epigenetic markers
-	return relu(x, Omega)
+	return relu(x, 1.0)
 }
 
 func sigmag(x float64) float64 { //Activation function for gene expression levels
-	return sigmoid(x, Omega)
+	return lecunatan(x)
 }
 
 func sigmah(x float64) float64 { //Activation function for higher order complexes
-	if hoi { // prevent explosion by bounding
-		return sigmoid(x, Omega)
-	} else {
-		return relu(x, Omega)
-	}
+	return lecunatan(x) //abstract level of amount of higher order complexes
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
@@ -165,12 +191,12 @@ func (sp *Spmat) Copy() Spmat {
 	return nsp
 }
 
-func (sp *Spmat) Randomize(density float64) { //Randomize entries of sparse matrix
+func (sp *Spmat) Randomize(density, sd float64) { //Randomize entries of sparse matrix
 	for i := range sp.Mat {
 		for j := 0; j < sp.Ncol; j++ {
 			r := rand.Float64()
 			if r < density {
-				sp.Mat[i][j] = rand.NormFloat64()
+				sp.Mat[i][j] = rand.NormFloat64() / sd //Normalize wrt sd of theoretical output
 			}
 		}
 	}
@@ -295,7 +321,7 @@ func applyFnVec(f func(float64) float64, vec Vec) { //Apply function f to a vect
 	return
 }
 
-func (mat *Spmat) mutateSpmat(density float64) { //mutating a sparse matrix
+func (mat *Spmat) mutateSpmat(density, sd float64) { //mutating a sparse matrix
 	nrow := len(mat.Mat)
 	nmut := int(mutRate * float64(nrow*mat.Ncol))
 	for n := 0; n < nmut; n++ {
@@ -304,7 +330,7 @@ func (mat *Spmat) mutateSpmat(density float64) { //mutating a sparse matrix
 		r := rand.Float64()
 		delete(mat.Mat[i], j)
 		if r < density {
-			mat.Mat[i][j] = rand.NormFloat64()
+			mat.Mat[i][j] = rand.NormFloat64() / sd //normalize wrt theoretical sd of output
 		}
 	}
 	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.
