@@ -281,7 +281,7 @@ func Veclength(v Vec) float64 { //Euclidean Length of vector
 	return math.Sqrt(Veclength2(v))
 }
 
-func dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
+func Dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
 	var dev float64
 	dist := 0.0
 	for i, v := range v0 {
@@ -291,15 +291,11 @@ func dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squa
 	return dist
 }
 
-func Dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
-	return dist2Vecs(v0, v1)
+func DistVecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors
+	return math.Sqrt(Dist2Vecs(v0, v1))
 }
 
-func distVecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors
-	return math.Sqrt(dist2Vecs(v0, v1))
-}
-
-func distVecs1(v0, v1 Vec) float64 { //1-norm between 2 vectors
+func DistVecs1(v0, v1 Vec) float64 { //1-norm between 2 vectors
 	var dev float64
 	dist := 0.0
 	for i, v := range v0 {

@@ -477,7 +477,7 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 	d := 0.0
 	N := nenv*ncells + ncells*ncells //Normalize by concatenated environment cue vector length
 	for i, cell := range cells.Ctypes {
-		d += distVecs1(cell.P, envs[i])
+		d += DistVecs1(cell.P, envs[i])
 	}
 	return 1 - d/float64(4*N) //Using scaled arctan for p gives max difference of 6.
 }
@@ -486,7 +486,7 @@ func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individua
 	d := 0.0
 	copies := indiv.Copies
 	for i, cell := range copies[2].Ctypes {
-		d += distVecs1(cell.P, copies[0].Ctypes[i].P)
+		d += DistVecs1(cell.P, copies[0].Ctypes[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d
@@ -496,7 +496,7 @@ func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individua
 	d := 0.0
 	copies := indiv.Copies
 	for i, cell := range copies[2].Ctypes {
-		d += distVecs1(cell.P, copies[1].Ctypes[i].P)
+		d += DistVecs1(cell.P, copies[1].Ctypes[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d
@@ -570,8 +570,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 
 		multMatVec_T(vp, G.P, h1)
 		applyFnVec(rho, vp)
-		//		diff = distVecs1(h0, h1) //+ distVecs1(g0, g1) + distVecs1(f0, f1) //Stricter convergence criterion requiring convergence in all layers
-		diff = distVecs1(p0, vp)
+		//		diff = DistVecs1(h0, h1) //+ DistVecs1(g0, g1) + DistVecs1(f0, f1) //Stricter convergence criterion requiring convergence in all layers
+		diff = DistVecs1(p0, vp)
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
@@ -636,8 +636,8 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	Clist[2].DevCells(indiv.Genome, devenv) //Develop in novel (present) environment
 
 	//Unit testing
-	//de := dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)
-	// dp := dist2Vecs(Clist[0].Ctypes[0].P, Clist[1].Ctypes[0].P)
+	//de := Dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)
+	// dp := Dist2Vecs(Clist[0].Ctypes[0].P, Clist[1].Ctypes[0].P)
 	// if dp > 1.0e-2 {
 	// 	//fmt.Println("ID:", indiv.Id, "Difference between zero and anc environment:", de)
 	// 	fmt.Println("ID:", indiv.Id, "Zero env phenotype:", Clist[0].Ctypes[0].P)
