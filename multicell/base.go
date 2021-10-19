@@ -100,7 +100,7 @@ func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or
 
 	//initializing theoretical standard deviations
 	sdg = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
-	sde = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv) * (1 + cuestrength)))
+	sde = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
 	sdf = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
 	sdhg = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+hoistrength))
 	sdhh = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + cuestrength)))
