@@ -16,13 +16,7 @@ type Cues = []Cue //Cue array object
 func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 	tv := NewVec(nenv)         //trait part of vector
 	idv := UnitVec(ncells, id) //id part of vector
-	for j, u := range idv {
-		if u != 1 {
-			idv[j] = -1 //pm 1 representation for id as well
-		}
-	}
-
-	v := append(tv, idv...) //format: cue|id
+	v := append(tv, idv...)    //format: cue|id
 	return v
 }
 
@@ -62,6 +56,11 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 		}
 	}
 	idv := UnitVec(ncells, id)
+	for j, u := range idv {
+		if u != 1 {
+			idv[j] = -1 //pm 1 representation for id as well
+		}
+	}
 	v := append(tv, idv...)
 
 	return v
