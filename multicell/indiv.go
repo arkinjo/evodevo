@@ -570,8 +570,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 
 		multMatVec_T(vp, G.P, h1)
 		applyFnVec(rho, vp)
-		//		diff = DistVecs1(h0, h1) //+ DistVecs1(g0, g1) + DistVecs1(f0, f1) //Stricter convergence criterion requiring convergence in all layers
-		diff = DistVecs1(p0, vp)
+		diff = DistVecs1(h0, h1) //+ DistVecs1(g0, g1) + DistVecs1(f0, f1) //Stricter convergence criterion requiring convergence in all layers
+		//		diff = DistVecs1(p0, vp)
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
