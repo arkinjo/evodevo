@@ -26,5 +26,5 @@ evodevo
 *.dat
 *.json
 *.dot
-playground/play.go
+
 analysis/.Rhistory

@@ -109,7 +109,7 @@ func main() {
 	fmt.Println("Time taken to simulate evolution :", dtevol)
 
 	popstart = pop1 //Update population after evolution.
-	//fmt.Println("Novel environment before :", popstart.Envs)
+	//fmt.Println("Novel environment before :", popstart.Envs).
 	//fmt.Println("Ancestral environment before :", popstart.RefEnvs)
 
 	OldEnvs := multicell.CopyCues(popstart.Envs)
