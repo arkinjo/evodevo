@@ -99,6 +99,7 @@ func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
 	for _, indiv := range pop.Indivs {
+		//fmt.Println("ID:", indiv.Id, "CuePlas:", indiv.CuePlas)
 		mp += indiv.CuePlas
 	}
 
@@ -298,6 +299,15 @@ func (pop *Population) DevPop(gen int) Population {
 	for i := range pop.Indivs {
 		pop.Indivs[i] = <-ch //Update output results
 	}
+
+	/* BUGFIXING
+	for i, indiv := range pop.Indivs {
+		novenv = pop.Envs
+		ancenv = pop.RefEnvs
+		pop.Indivs[i] = indiv.CompareDev(novenv, ancenv)
+	}
+	*/
+
 	//We might need a sorter here.
 	pop.SortPopIndivs()
 

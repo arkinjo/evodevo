@@ -6,13 +6,13 @@ import (
 )
 
 var maxPop int = 1000 // population size
-var ngenes int = 500  // number of genes
-var nenv int = 20     // number of environmental cues/phenotypic values per face
+var ngenes int = 200  // number of genes
+var nenv int = 5      // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
-const maxDevStep int = 200  // Maximum steps for development.
-const ccStep int = 5        //number of steady steps for convergence
-var epsDev float64 = 1.0e-9 // convergence criterion of development.
+const maxDevStep int = 1000   // Maximum steps for development.
+const ccStep int = 3          //number of steady steps for convergence
+const epsDev float64 = 1.0e-6 // convergence criterion of development.
 
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.
@@ -103,7 +103,7 @@ func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or
 	sde = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
 	sdf = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
 	sdhg = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+hoistrength))
-	sdhh = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + cuestrength)))
+	sdhh = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + hoistrength)))
 	sdp = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
 }
 
