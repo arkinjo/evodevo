@@ -11,7 +11,7 @@ var nenv int = 5      // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
 const maxDevStep int = 1000   // Maximum steps for development.
-const ccStep int = 3          //number of steady steps for convergence
+const ccStep int = 5          //number of steady steps for convergence
 const epsDev float64 = 1.0e-6 // convergence criterion of development.
 
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
@@ -291,6 +291,10 @@ func dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squa
 	return dist
 }
 
+func Dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
+	return dist2Vecs(v0, v1)
+}
+
 func distVecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors
 	return math.Sqrt(dist2Vecs(v0, v1))
 }
@@ -344,3 +348,4 @@ func CopyVec(v Vec) Vec { //makes a copy of a vector
 	copy(v1, v)
 	return v1
 }
+

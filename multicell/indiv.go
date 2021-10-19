@@ -1,7 +1,8 @@
 package multicell
 
 import (
-	"fmt"
+	//	"fmt"
+	"errors"
 	"math"
 	"math/rand"
 )
@@ -520,15 +521,14 @@ func (indiv *Indiv) get_pp(envs Cues) float64 { //Degree of polyphenism of indiv
 	}
 }
 
-func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
+func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell given cue
 	var diff float64
 	var convindex int
 
-	f0 := NewVec(ngenes)
 	g0 := NewVec(ngenes) //force initial condition g0 = 0
-	//copy(g0, ginit) //no setting extra initial condition needed
-
+	f0 := NewVec(ngenes)
 	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
+	p0 := NewVec(nenv + ncells)
 	ve := NewVec(ngenes)
 	vf := NewVec(ngenes)
 	vg := NewVec(ngenes)
@@ -538,11 +538,11 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
+	convindex = 0
 	for nstep := 0; nstep < maxDevStep; nstep++ {
-		multMatVec(ve, G.E, env)
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
-			//applyFnVec(scale, ve) //multiply by environmental cue strength; not needed in lecun activation.
+			multMatVec(ve, G.E, env)
 			addVecs(f1, vf, ve)
 		} else {
 			copy(f1, vf)
@@ -570,10 +570,12 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 
 		multMatVec_T(vp, G.P, h1)
 		applyFnVec(rho, vp)
-		diff = distVecs1(h0, h1) //+ distVecs1(g0, g1) + distVecs1(f0, f1) //Stricter convergence criterion requiring convergence in all layers
+		//		diff = distVecs1(h0, h1) //+ distVecs1(g0, g1) + distVecs1(f0, f1) //Stricter convergence criterion requiring convergence in all layers
+		diff = distVecs1(p0, vp)
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
+		copy(p0, vp)
 		if diff < epsDev { //if criterion is reached
 			convindex++ //increment by one
 		} else {
@@ -598,41 +600,50 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	copy(cell.H, h1)
 	copy(cell.P, vp)
 
-	return *cell
+	if (cell.PathLength == maxDevStep) {
+		return *cell, errors.New("DevCell: did not converge")
+	} else {
+		return *cell, nil
+	}
 }
 
-func (cells *Cells) DevCells(G Genome, envs Cues) Cells {
+func (cells *Cells) DevCells(G Genome, envs Cues) (Cells,error) {
+	var err error = nil
 	for i := range cells.Ctypes {
 		//fmt.Println("Input:", envs[i])
 		copy(cells.Ctypes[i].E, envs[i])
 		//fmt.Println("Copy :", cells.Ctypes[i].E)
-		cells.Ctypes[i].DevCell(G, cells.Ctypes[i].E)
+		_,e := cells.Ctypes[i].DevCell(G, cells.Ctypes[i].E)
+		if e != nil {
+			err = e
+		}
 		//fmt.Println("Output:", cells.Ctypes[i].P)
 	}
 
-	return *cells
+	return *cells,err
 }
 
 func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
 	devenv := AddNoisetoCues(env, devNoise)
-	//devenv0 := AddNoisetoCues(env0, devNoise)
+	devenv0 := AddNoisetoCues(env0, devNoise)
 	selenv := AddNoisetoCues(env, envNoise)
 	Clist := indiv.Copies
+
 	zero := NewCues(ncells, nenv)
 
 	Clist[0].DevCells(indiv.Genome, zero)
-	Clist[1].DevCells(indiv.Genome, zero)   //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
+	Clist[1].DevCells(indiv.Genome, devenv0)   //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
 	Clist[2].DevCells(indiv.Genome, devenv) //Develop in novel (present) environment
 
 	//Unit testing
 	//de := dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)
-	dp := dist2Vecs(Clist[0].Ctypes[0].P, Clist[1].Ctypes[0].P)
-	if dp > 1.0e-2 {
-		//fmt.Println("ID:", indiv.Id, "Difference between zero and anc environment:", de)
-		fmt.Println("ID:", indiv.Id, "Zero env phenotype:", Clist[0].Ctypes[0].P)
-		fmt.Println("ID:", indiv.Id, "Anc env phenotype:", Clist[1].Ctypes[0].P)
-		fmt.Println("ID:", indiv.Id, "Difference between zero and anc phenotype:", dp) //BUG: WHY DOES SAME CUE INPUT GIVE DIFFERENT OUTPUTS? BUG IN DEVELOPMENT?
-	}
+	// dp := dist2Vecs(Clist[0].Ctypes[0].P, Clist[1].Ctypes[0].P)
+	// if dp > 1.0e-2 {
+	// 	//fmt.Println("ID:", indiv.Id, "Difference between zero and anc environment:", de)
+	// 	fmt.Println("ID:", indiv.Id, "Zero env phenotype:", Clist[0].Ctypes[0].P)
+	// 	fmt.Println("ID:", indiv.Id, "Anc env phenotype:", Clist[1].Ctypes[0].P)
+	// 	fmt.Println("ID:", indiv.Id, "Difference between zero and anc phenotype:", dp) //BUG: WHY DOES SAME CUE INPUT GIVE DIFFERENT OUTPUTS? BUG IN DEVELOPMENT?
+	// }
 	//Unit testing
 
 	indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
