@@ -17,7 +17,8 @@ const epsDev float64 = 1.0e-6 // convergence criterion of development.
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.
 
-var GenomeDensity float64 = 3.0 / float64(ngenes)
+const funcspergene float64 = 3.0 //average number of functions per gene
+var GenomeDensity float64 = funcspergene / float64(ngenes)
 var CueResponseDensity float64 = -math.Log(epsDev) / float64(ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity

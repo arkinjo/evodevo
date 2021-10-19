@@ -291,8 +291,8 @@ func (pop *Population) DevPop(gen int) Population {
 	ch := make(chan Indiv) //channels for parallelization
 	for _, indiv := range pop.Indivs {
 		go func(indiv Indiv) {
-			novenv = pop.Envs    //Novel environment
-			ancenv = pop.RefEnvs //Ancestral environment
+			copy(novenv, pop.Envs)
+			copy(ancenv, pop.RefEnvs)
 			ch <- indiv.CompareDev(novenv, ancenv)
 		}(indiv)
 	}
@@ -300,12 +300,12 @@ func (pop *Population) DevPop(gen int) Population {
 		pop.Indivs[i] = <-ch //Update output results
 	}
 
-	/* BUGFIXING
-	for i, indiv := range pop.Indivs {
-		novenv = pop.Envs
-		ancenv = pop.RefEnvs
-		pop.Indivs[i] = indiv.CompareDev(novenv, ancenv)
-	}
+	/*
+		for i, indiv := range pop.Indivs {
+			copy(novenv, pop.Envs)
+			copy(ancenv, pop.RefEnvs)
+			pop.Indivs[i] = indiv.CompareDev(novenv, ancenv)
+		}
 	*/
 
 	//We might need a sorter here.

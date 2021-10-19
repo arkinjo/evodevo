@@ -100,7 +100,7 @@ func main() {
 
 	tevol := time.Now()
 	envtraj = append(envtraj, popstart.Envs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append? This bug resurfaced after implementing in concatenated vector format!
-	fmt.Println("Novel enviornment :", popstart.Envs)
+	fmt.Println("Novel environment :", popstart.Envs)
 	fmt.Println("Ancestral environment :", popstart.RefEnvs)
 
 	pop1 := multicell.Evolve(false, T_Filename, json_out, "", epochlength, 1, &popstart)

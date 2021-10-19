@@ -478,7 +478,7 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 	for i, cell := range cells.Ctypes {
 		d += distVecs1(cell.P, envs[i])
 	}
-	return 1 - d/float64(6*N) //Using scaled arctan for p gives max difference of 6.
+	return 1 - d/float64(4*N) //Using scaled arctan for p gives max difference of 6.
 }
 
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
@@ -603,8 +603,11 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 
 func (cells *Cells) DevCells(G Genome, envs Cues) Cells {
 	for i := range cells.Ctypes {
+		//fmt.Println("Input:", envs[i])
 		copy(cells.Ctypes[i].E, envs[i])
+		//fmt.Println("Copy :", cells.Ctypes[i].E)
 		cells.Ctypes[i].DevCell(G, cells.Ctypes[i].E)
+		//fmt.Println("Output:", cells.Ctypes[i].P)
 	}
 
 	return *cells
@@ -621,17 +624,17 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	Clist[1].DevCells(indiv.Genome, zero)   //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
 	Clist[2].DevCells(indiv.Genome, devenv) //Develop in novel (present) environment
 
-	fmt.Println("ID:", indiv.Id, "Zero env path length:", Clist[0].Ctypes[0].PathLength)
-	fmt.Println("ID:", indiv.Id, "Ancestral path length:", Clist[1].Ctypes[0].PathLength)
-
-	de := dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)
-	fmt.Println("ID:", indiv.Id, "Difference between zero and anc environment:", de)
-	//fmt.Println("ID:", indiv.Id, "Zero env phenotype:", Clist[0].Ctypes[0].P)
-	//fmt.Println("ID:", indiv.Id, "Anc env phenotype:", Clist[1].Ctypes[0].P)
+	//Unit testing
+	//de := dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)
 	dp := dist2Vecs(Clist[0].Ctypes[0].P, Clist[1].Ctypes[0].P)
-	fmt.Println("ID:", indiv.Id, "Difference between zero and anc phenotype:", dp) //BUG: WHY DOES SAME CUE INPUT GIVE DIFFERENT OUTPUTS? BUG IN DEVELOPMENT?
+	if dp > 1.0e-2 {
+		//fmt.Println("ID:", indiv.Id, "Difference between zero and anc environment:", de)
+		fmt.Println("ID:", indiv.Id, "Zero env phenotype:", Clist[0].Ctypes[0].P)
+		fmt.Println("ID:", indiv.Id, "Anc env phenotype:", Clist[1].Ctypes[0].P)
+		fmt.Println("ID:", indiv.Id, "Difference between zero and anc phenotype:", dp) //BUG: WHY DOES SAME CUE INPUT GIVE DIFFERENT OUTPUTS? BUG IN DEVELOPMENT?
+	}
+	//Unit testing
 
-	//multMatVec_T(indiv.Z, indiv.Genome.Z, Clist[2].Ctypes[0].G)
 	indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
 	indiv.Fit = Clist[2].get_fitness(selenv) //Fitness with cues
 	indiv.Util = indiv.Fit - indiv.F0
