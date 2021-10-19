@@ -170,7 +170,7 @@ func sigmah(x float64) float64 { //Activation function for higher order complexe
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
-	return sigmoid(x, Omega)
+	return lecunatan(x)
 }
 
 func NewSpmat(nrow, ncol int) Spmat { //Initialize new sparse matrix

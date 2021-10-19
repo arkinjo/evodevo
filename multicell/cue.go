@@ -16,7 +16,13 @@ type Cues = []Cue //Cue array object
 func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 	tv := NewVec(nenv)         //trait part of vector
 	idv := UnitVec(ncells, id) //id part of vector
-	v := append(tv, idv...)    //format: cue|id
+	for j, u := range idv {
+		if u != 1 {
+			idv[j] = -1 //pm 1 representation for id as well
+		}
+	}
+
+	v := append(tv, idv...) //format: cue|id
 	return v
 }
 
@@ -30,12 +36,13 @@ func GetIdVec(cue Cue) []float64 { //Extract ID part of cue
 	return idv
 }
 
-func GetId(cue Cue) int { //Extract id number
+func GetId(cue Cue) int { //Extract cue id number
 	var id int
 	idv := GetIdVec(cue)
 	for i, v := range idv {
-		if v != 0 {
+		if v == 1 {
 			id = i
+			break //exit loop prematurely after hitting id
 		}
 	}
 	return id
@@ -48,10 +55,10 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 	tv := make([]float64, nenv)
 	for i := range tv {
 		r = rand.Float64()
-		if r < density {
+		if r < density { //density is probability of 1
 			tv[i] = 1
 		} else {
-			tv[i] = 0
+			tv[i] = -1
 		}
 	}
 	idv := UnitVec(ncells, id)
@@ -80,11 +87,7 @@ func AddNoisetoCue(cue Cue, eta float64) Cue {
 	for i, t := range tv {
 		r = rand.Float64()
 		if r < eta {
-			if t == 0 {
-				tv[i] = 1
-			} else {
-				tv[i] = 0
-			}
+			tv[i] = -t
 		}
 	}
 	v := append(tv, idv...)
@@ -111,7 +114,7 @@ func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment c
 		if tv1[i] == 0 {
 			tv1[i] = 1
 		} else {
-			tv1[i] = 0
+			tv1[i] = -1
 		}
 	}
 
@@ -179,10 +182,10 @@ func ChangeEnvs(cues Cues, n int) Cues { //Mutates precisely n bits in environme
 	//fmt.Println("Cue index:",mutcues)
 	for j, cell := range mutcells {
 		cue = mutcues[j]
-		if envs1[cell][cue] == 0 {
+		if envs1[cell][cue] == -1 {
 			envs1[cell][cue] = 1
 		} else {
-			envs1[cell][cue] = 0
+			envs1[cell][cue] = -1
 		}
 	}
 	//envs1.Es = cs
