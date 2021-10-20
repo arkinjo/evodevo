@@ -20,17 +20,19 @@ func main() {
 	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
+	nsamplePtr := flag.Int("nsample", 100, "number of samples")
 	flag.Parse()
 
 	multicell.SetSeed(int64(*seedPtr))
 	multicell.Omega = *omegaPtr
-
 	multicell.SetNcells(*ncelltypesPtr)
 	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *epigPtr, *HOCPtr)
 
+	nsamples := *nsamplePtr
+	
 	env0 := multicell.RandomEnvs(1, multicell.GetNenv(), 0.5)
 	//	env1 := multicell.RandomEnvs(1, multicell.GetNenv(), 0.5)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < nsamples; i++ {
 		indiv0 := multicell.NewIndiv(i)
 		conv0 := false
 		conv1 := false
