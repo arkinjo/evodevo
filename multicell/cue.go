@@ -115,11 +115,7 @@ func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment c
 		mutindices[i] = indices[i]
 	}
 	for _, i := range mutindices {
-		if tv1[i] == 0 {
-			tv1[i] = 1
-		} else {
-			tv1[i] = -1
-		}
+		tv1[i] = -tv1[i] //Flip bit
 	}
 
 	v1 := append(tv1, idv...) //glue back id part
