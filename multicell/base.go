@@ -197,7 +197,7 @@ func (sp *Spmat) Randomize(density, sd float64) { //Randomize entries of sparse 
 		for j := 0; j < sp.Ncol; j++ {
 			r := rand.Float64()
 			if r < density {
-				sp.Mat[i][j] = rand.NormFloat64() / sd //Normalize wrt sd of theoretical output
+				sp.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry
 			}
 		}
 	}
@@ -331,7 +331,7 @@ func (mat *Spmat) mutateSpmat(density, sd float64) { //mutating a sparse matrix
 		r := rand.Float64()
 		delete(mat.Mat[i], j)
 		if r < density {
-			mat.Mat[i][j] = rand.NormFloat64() / sd //normalize wrt theoretical sd of output
+			mat.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry.
 		}
 	}
 	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.
@@ -344,4 +344,3 @@ func CopyVec(v Vec) Vec { //makes a copy of a vector
 	copy(v1, v)
 	return v1
 }
-
