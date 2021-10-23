@@ -30,12 +30,18 @@ type Cells struct { //Do we want to reimplement this?
 	Ctypes []Cell // Array of cells of different types
 }
 
+const (
+	INoEnv = iota // No env
+	IPrevEnv      // Previous env
+	ICurEnv       // Current env
+)
+
 type Indiv struct { //An individual as an unicellular organism
 	Id     int
 	DadId  int
 	MomId  int
 	Genome Genome
-	Copies []Cells //0: No env; 1: Previous env; 2: Current env
+	Copies []Cells //INoEnv, IPrevEnv, ICurENv (see above const.)
 	//Z       Vec     // Initial gene expression of offspring
 	F0      float64 //Fitness without cues
 	Fit     float64 //Fitness with cues
@@ -485,8 +491,8 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
 	d := 0.0
 	copies := indiv.Copies
-	for i, cell := range copies[2].Ctypes {
-		d += DistVecs1(cell.P, copies[0].Ctypes[i].P)
+	for i, cell := range copies[ICurEnv].Ctypes {
+		d += DistVecs1(cell.P, copies[INoEnv].Ctypes[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d
@@ -495,8 +501,8 @@ func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individua
 func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individual
 	d := 0.0
 	copies := indiv.Copies
-	for i, cell := range copies[2].Ctypes {
-		d += DistVecs1(cell.P, copies[1].Ctypes[i].P)
+	for i, cell := range copies[ICurEnv].Ctypes {
+		d += DistVecs1(cell.P, copies[IPrevEnv].Ctypes[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d
@@ -504,7 +510,7 @@ func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individua
 
 func (indiv *Indiv) get_vp() float64 { //Get sum of elementwise variance of phenotype
 	pvec := make([]Cue, 0)
-	for _, c := range indiv.Copies[2].Ctypes {
+	for _, c := range indiv.Copies[ICurEnv].Ctypes {
 		pvec = append(pvec, c.P) //Note: To be used AFTER development
 	}
 	sigma2p := GetCueVar(pvec)
@@ -631,9 +637,9 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 
 	zero := NewCues(ncells, nenv)
 
-	Clist[0].DevCells(indiv.Genome, zero)
-	Clist[1].DevCells(indiv.Genome, devenv0)   //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
-	Clist[2].DevCells(indiv.Genome, devenv) //Develop in novel (present) environment
+	Clist[INoEnv].DevCells(indiv.Genome, zero)
+	Clist[IPrevEnv].DevCells(indiv.Genome, devenv0)   //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
+	Clist[ICurEnv].DevCells(indiv.Genome, devenv) //Develop in novel (present) environment
 
 	//Unit testing
 	//de := Dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)

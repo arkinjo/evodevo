@@ -59,7 +59,7 @@ func (pop *Population) ClearGenome() {
 
 func (pop *Population) Copy() Population {
 	npop := len(pop.Indivs)
-	ncell := len(pop.Indivs[0].Copy().Copies[0].Ctypes) //number of cells
+	ncell := len(pop.Indivs[0].Copy().Copies[INoEnv].Ctypes) //number of cells
 	//fmt.Println("Copying ",ncell,"-cell individuals")
 	pop1 := NewPopulation(ncell, npop)
 	pop1.Gen = pop.Gen
@@ -129,7 +129,7 @@ func (pop *Population) GetMeanPp() float64 { //average degree of polyphenism of 
 func (pop *Population) GetDiversity() float64 { //To be used after development
 	cv := make([]Cue, 0)
 	for _, ind := range pop.Indivs {
-		for _, cell := range ind.Copies[2].Ctypes {
+		for _, cell := range ind.Copies[ICurEnv].Ctypes {
 			cv = append(cv, cell.P)
 		}
 	}
@@ -144,7 +144,7 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 	pop.DevPop(gen)
 
 	for _, indiv := range pop.Indivs {
-		for i, c := range indiv.Copies[2].Ctypes {
+		for i, c := range indiv.Copies[ICurEnv].Ctypes {
 			for j, p := range c.P {
 				MeanPhenotype[i][j] += p / float64(npop)
 			}
@@ -438,13 +438,11 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		ancpproj, novpproj, gproj = 0.0, 0.0, 0.0
 
 		for i, env := range mu { //For each environment cue
-			//copy(indiv.Copies[2].Ctypes[i].P, pop.Envs[i])       //Bugfixing test
-			diffVecs(novcphen, indiv.Copies[2].Ctypes[i].P, env) //centralize
+			diffVecs(novcphen, indiv.Copies[ICurEnv].Ctypes[i].P, env) //centralize
 			novpproj += innerproduct(novcphen, Paxis[i])
 		}
 		for i, env := range mu { //For each environment cue
-			//copy(indiv.Copies[1].Ctypes[i].P, pop.RefEnvs[i])    //Bugfixing test
-			diffVecs(anccphen, indiv.Copies[1].Ctypes[i].P, env) //centralize
+			diffVecs(anccphen, indiv.Copies[IPrevEnv].Ctypes[i].P, env) //centralize
 			ancpproj += innerproduct(anccphen, Paxis[i])         //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
