@@ -14,6 +14,7 @@ import (
 )
 
 var json_in string
+var dp float64
 
 func main() {
 	seedPtr := flag.Int("seed", 1, "random seed")
@@ -66,21 +67,21 @@ func main() {
 		conv0 := false
 		conv1 := false
 		//indiv0.Genome.Randomize()
-		_, err0 := indiv.Copies[0].DevCells(indiv.Genome, env0)
-		_, err1 := indiv.Copies[1].DevCells(indiv.Genome, env0)
+		_, err0 := indiv.Copies[multicell.INoEnv].DevCells(indiv.Genome, env0)
+		_, err1 := indiv.Copies[multicell.IPrevEnv].DevCells(indiv.Genome, env0)
 		if err0 == nil {
 			conv0 = true
 		}
 		if err1 == nil {
 			conv1 = true
 		}
-		dp := multicell.Dist2Vecs(indiv.Copies[0].Ctypes[0].P, indiv.Copies[1].Ctypes[0].P)
-		if dp > 1.0e-2 {
-			fmt.Println("ID:", indiv.Id, "Diff:", dp, conv0, conv1)
-			lambda2 += dp
+		for j, cell := range indiv.Copies[multicell.INoEnv].Ctypes { //Loop over all cells
+			dp = multicell.Dist2Vecs(cell.P, indiv.Copies[multicell.IPrevEnv].Ctypes[j].P)
+			if dp > 1.0e-2 {
+				fmt.Println("ID:", indiv.Id, "Diff:", dp, conv0, conv1)
+			}
 		}
+		lambda2 += dp
 	}
-
-	fmt.Println("Population Instability :", 0.5*math.Log(lambda2))
-
+	fmt.Println("Population Instability Measure:", 0.5*math.Log(lambda2))
 }
