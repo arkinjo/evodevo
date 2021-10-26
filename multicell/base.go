@@ -7,7 +7,7 @@ import (
 
 var maxPop int = 1000 // population size
 var ngenes int = 200  // number of genes
-var nenv int = 5      // number of environmental cues/phenotypic values per face
+var nenv int = 20      // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
 const maxDevStep int = 1000   // Maximum steps for development.

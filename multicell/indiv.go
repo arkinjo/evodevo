@@ -481,11 +481,11 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 
 func (cells *Cells) get_fitness(envs Cues) float64 {
 	d := 0.0
-	N := nenv*ncells + ncells*ncells //Normalize by concatenated environment cue vector length
+	N := (nenv + ncells)*ncells //Normalize by concatenated environment cue vector length
 	for i, cell := range cells.Ctypes {
 		d += DistVecs1(cell.P, envs[i])
 	}
-	return 1 - d/float64(4*N) //Using scaled arctan for p gives max difference of 6.
+	return math.Exp(-d/float64(N)) //Using scaled arctan for p gives max difference of 6.
 }
 
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual

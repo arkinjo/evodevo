@@ -40,7 +40,7 @@ func (pop *Population) SetWagnerFitness() { //compute normalized fitness value s
 		}
 	}
 	for i, indiv := range pop.Indivs {
-		pop.Indivs[i].WagFit = indiv.Fit / mf
+		pop.Indivs[i].WagFit = indiv.Fit // / mf
 		//fmt.Println("Id:", indiv.Id, "Fitness:", indiv.Fit, "Wagner Fitness:", indiv.WagFit)
 	}
 }
