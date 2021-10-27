@@ -480,12 +480,12 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 }
 
 func (cells *Cells) get_fitness(envs Cues) float64 {
-	d := 0.0
-	N := (nenv + ncells) //Normalize by concatenated environment cue vector length
+	d2 := 0.0
+	//N := (nenv + ncells) //Normalize by concatenated environment cue vector length
 	for i, cell := range cells.Ctypes {
-		d += Dist2Vecs(cell.P, envs[i])
+		d2 += Dist2Vecs(cell.P, envs[i])
 	}
-	return math.Exp(-selStrength * d / float64(N)) //number of cells already absorbed into selStrength.
+	return math.Exp(-selStrength * d2) //vector concatenation length already absorbed into selStrength.
 }
 
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual

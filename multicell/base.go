@@ -13,21 +13,22 @@ var ncells int = 1    //number of cell types/phenotypes to be trained simultaneo
 const maxDevStep int = 1000   // Maximum steps for development.
 const ccStep int = 5          //number of steady steps for convergence
 const epsDev float64 = 1.0e-6 // convergence criterion of development.
+const eps float64 = 1.0e-20
 
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.
 
 const funcspergene float64 = 1.0 //average number of functions per gene
 var GenomeDensity float64 = funcspergene / float64(ngenes)
-var CueResponseDensity float64 = -math.Log(epsDev) / float64(ngenes)
+var CueResponseDensity float64 = -math.Log(eps) / float64(ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
-const baseMutationRate float64 = 0.01                // default probability of mutation of genome
-var mutRate float64                                  //declaration
-var baseSelStrength float64 = 0.25 * math.Log(1.0e6) // default selection strength; to be normalized by number of cells
-var selStrength float64                              //declaration; Remark: not used in L1 norm fitness.
-var Omega float64 = 1.0                              // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
+const baseMutationRate float64 = 0.01               // default probability of mutation of genome
+var mutRate float64                                 //declaration
+var baseSelStrength float64 = -0.25 * math.Log(eps) // default selection strength; to be normalized by number of cells
+var selStrength float64                             //declaration; Remark: not used in L1 norm fitness.
+var Omega float64 = 1.0                             // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var withCue bool = false // with or without environmental cues.
 var cuestrength float64  //declaration
@@ -64,7 +65,7 @@ func SetMaxPop(n int) {
 
 func SetNcells(n int) {
 	ncells = n
-	selStrength = baseSelStrength / float64(n)
+	selStrength = baseSelStrength / float64(n*(n+nenv))
 }
 
 func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or interaction is present in model
