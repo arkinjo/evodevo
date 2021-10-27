@@ -31,9 +31,9 @@ type Cells struct { //Do we want to reimplement this?
 }
 
 const (
-	INoEnv = iota // No env
-	IPrevEnv      // Previous env
-	ICurEnv       // Current env
+	INoEnv   = iota // No env
+	IPrevEnv        // Previous env
+	ICurEnv         // Current env
 )
 
 type Indiv struct { //An individual as an unicellular organism
@@ -481,11 +481,11 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 
 func (cells *Cells) get_fitness(envs Cues) float64 {
 	d := 0.0
-	N := (nenv + ncells)*ncells //Normalize by concatenated environment cue vector length
+	N := (nenv + ncells) //Normalize by concatenated environment cue vector length
 	for i, cell := range cells.Ctypes {
-		d += DistVecs1(cell.P, envs[i])
+		d += Dist2Vecs(cell.P, envs[i])
 	}
-	return math.Exp(-d/float64(N)) //Using scaled arctan for p gives max difference of 6.
+	return math.Exp(-selStrength * d / float64(N)) //number of cells already absorbed into selStrength.
 }
 
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
@@ -606,27 +606,27 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	copy(cell.H, h1)
 	copy(cell.P, vp)
 
-	if (cell.PathLength == maxDevStep) {
+	if cell.PathLength == maxDevStep {
 		return *cell, errors.New("DevCell: did not converge")
 	} else {
 		return *cell, nil
 	}
 }
 
-func (cells *Cells) DevCells(G Genome, envs Cues) (Cells,error) {
+func (cells *Cells) DevCells(G Genome, envs Cues) (Cells, error) {
 	var err error = nil
 	for i := range cells.Ctypes {
 		//fmt.Println("Input:", envs[i])
 		copy(cells.Ctypes[i].E, envs[i])
 		//fmt.Println("Copy :", cells.Ctypes[i].E)
-		_,e := cells.Ctypes[i].DevCell(G, cells.Ctypes[i].E)
+		_, e := cells.Ctypes[i].DevCell(G, cells.Ctypes[i].E)
 		if e != nil {
 			err = e
 		}
 		//fmt.Println("Output:", cells.Ctypes[i].P)
 	}
 
-	return *cells,err
+	return *cells, err
 }
 
 func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
@@ -638,8 +638,8 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	zero := NewCues(ncells, nenv)
 
 	Clist[INoEnv].DevCells(indiv.Genome, zero)
-	Clist[IPrevEnv].DevCells(indiv.Genome, devenv0)   //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
-	Clist[ICurEnv].DevCells(indiv.Genome, devenv) //Develop in novel (present) environment
+	Clist[IPrevEnv].DevCells(indiv.Genome, devenv0) //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
+	Clist[ICurEnv].DevCells(indiv.Genome, devenv)   //Develop in novel (present) environment
 
 	//Unit testing
 	//de := Dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)

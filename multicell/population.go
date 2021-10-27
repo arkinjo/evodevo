@@ -40,7 +40,7 @@ func (pop *Population) SetWagnerFitness() { //compute normalized fitness value s
 		}
 	}
 	for i, indiv := range pop.Indivs {
-		pop.Indivs[i].WagFit = indiv.Fit // / mf
+		pop.Indivs[i].WagFit = indiv.Fit / mf
 		//fmt.Println("Id:", indiv.Id, "Fitness:", indiv.Fit, "Wagner Fitness:", indiv.WagFit)
 	}
 }
@@ -443,7 +443,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		}
 		for i, env := range mu { //For each environment cue
 			diffVecs(anccphen, indiv.Copies[IPrevEnv].Ctypes[i].P, env) //centralize
-			ancpproj += innerproduct(anccphen, Paxis[i])         //Plot phenotype when pulled back into ancestral environment at this stage on same axis
+			ancpproj += innerproduct(anccphen, Paxis[i])                //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
 		if withCue {
