@@ -3,15 +3,15 @@ aphat <- c()
 nphat <- c()
 ghat <- c()
 
-pdf("upop20211030pg.pdf")
-for (i in c(1:1000)){
-  filename <- paste("upop20211030testpg_",i,".dat",sep="")
+pdf("upop20211103pg.pdf")
+for (i in c(1:200)){
+  filename <- paste("upop20211103testpg_",i,".dat",sep="")
   pg <- read.table(filename,header=TRUE)
   ap <- pg$AncPhen
   np <- pg$NovPhen
   g <- pg$Genotype
   title <- paste("Generation",i,sep=" ")
-  plot(g,ap,xlim=c(-10,10),ylim=c(-3,3),xlab="genotype",ylab="phenotype",main=title,col="red")
+  plot(g,ap,xlim=c(-10,10),ylim=c(-5,5),xlab="genotype",ylab="phenotype",main=title,col="red")
   points(g,np,col="blue")
   abline(h=0)
   abline(v=0)
@@ -24,5 +24,7 @@ for (i in c(1:1000)){
 }
 dev.off()
 
-plot(nphat,type="l",xlab="Generation",ylab="Projected Phenotype",main="Mean phenotype")
-abline(h=0,col="red")
+plot(nphat,ylim=c(-3,3),type="l",xlab="Generation",ylab="Projected Phenotype",main="Mean phenotype",col="blue")
+abline(h=0)
+points(aphat,type="l",col="red")
+
