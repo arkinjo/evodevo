@@ -12,10 +12,11 @@ import (
 )
 
 type Population struct { //Population of individuals
-	Gen     int
-	Envs    Cues //Environment of population in this epoch
-	RefEnvs Cues //Environment of population in previous epoch
-	Indivs  []Indiv
+	Gen      int
+	Envs     Cues //Environment of population in this epoch
+	RefEnvs  Cues //Environment of population in previous epoch
+	Indivs   []Indiv
+	GeneFunc float64 //Convergence criterion for genome of population
 }
 
 func NewPopulation(ncell, npop int) Population { //Initialize new population
@@ -27,7 +28,7 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 	envs0 := NewCues(ncell, nenv)
 	envs1 := NewCues(ncell, nenv)
 
-	p := Population{0, envs0, envs1, indivs}
+	p := Population{0, envs0, envs1, indivs, 0.0}
 	return p
 }
 
@@ -138,6 +139,16 @@ func (pop *Population) GetDiversity() float64 { //To be used after development
 	div := GetCueVar(cv)
 
 	return div
+}
+
+func (pop *Population) GetGeneFunc() float64 {
+	gf := 0.0
+	for _, indiv := range pop.Indivs {
+		gf += indiv.MSEVec[IAncEnv]
+		gf += indiv.MSEVec[INovEnv]
+		gf += indiv.ObsPlas
+	}
+	return gf
 }
 
 func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
@@ -279,7 +290,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
+	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs, 0.0} //resets embryonic values to zero!
 
 	return new_population
 }

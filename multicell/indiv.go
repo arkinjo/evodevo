@@ -40,7 +40,8 @@ type Indiv struct { //An individual as an unicellular organism
 	DadId  int
 	MomId  int
 	Genome Genome
-	Copies []Cells //INoEnv, IPrevEnv, ICurENv (see above const.)
+	Copies []Cells //IAncEnv, INovEnv (see above const.)
+	MSEVec []float64
 	//Z       Vec     // Initial gene expression of offspring
 	//F0      float64 //Fitness without cues
 	Fit    float64 //Fitness with cues
@@ -324,15 +325,16 @@ func (cells *Cells) Copy() Cells {
 
 func NewIndiv(id int) Indiv { //Creates a new individual
 	genome := NewGenome()
-	cellcopies := make([]Cells, 3)
+	cellcopies := make([]Cells, 2)
 	for i := range cellcopies {
 		cellcopies[i] = NewCells(ncells)
 	}
+	msevec := make([]float64, 2)
 
 	//z := NewVec(ngenes)
 
 	//indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	indiv := Indiv{id, 0, 0, genome, cellcopies, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, cellcopies, msevec, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -454,22 +456,24 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	genome0, genome1 :=
 		Crossover(&dad.Genome, &mom.Genome)
 
-	cells0 := make([]Cells, 3)
+	cells0 := make([]Cells, 2)
 	for i := range cells0 {
 		cells0[i] = NewCells(ncells)
 	}
-	cells1 := make([]Cells, 3)
+	msev0 := make([]float64, 2)
+	cells1 := make([]Cells, 2)
 	for i := range cells1 {
 		cells1[i] = NewCells(ncells)
 	}
+	msev1 := make([]float64, 2)
 
 	/*
 		kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, g0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 		kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, g1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	*/
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, msev0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, msev1, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -478,6 +482,17 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
+func (indiv *Indiv) get_msevec() { //use after development
+	mse := make([]float64, 2)
+	for i, copy := range indiv.Copies {
+		for _, cell := range copy.Ctypes { //range over all cells
+			mse[i] += Dist2Vecs(cell.P, cell.E)
+		}
+	}
+	copy(indiv.MSEVec, mse)
+}
+
+/*
 func (cells *Cells) get_fitness(envs Cues) float64 {
 	d2 := 0.0
 	//N := (nenv + ncells) //Normalize by concatenated environment cue vector length
@@ -485,6 +500,11 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 		d2 += Dist2Vecs(cell.P, envs[i])
 	}
 	return math.Exp(-selStrength * d2) //vector concatenation length already absorbed into selStrength.
+}
+*/
+
+func (indiv *Indiv) get_fitness() float64 {
+	return math.Exp(-selStrength * indiv.MSEVec[INovEnv])
 }
 
 /*
@@ -499,14 +519,14 @@ func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individua
 }
 */
 
-func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individual
-	d := 0.0
+func (indiv *Indiv) get_obs_plasticity() float64 { //observed plasticity between two environments
+	d2 := 0.0
 	copies := indiv.Copies
 	for i, cell := range copies[INovEnv].Ctypes {
-		d += DistVecs1(cell.P, copies[IAncEnv].Ctypes[i].P)
+		d2 += Dist2Vecs(cell.P, copies[IAncEnv].Ctypes[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
-	return d
+	return d2
 }
 
 func (indiv *Indiv) get_vp() float64 { //Get sum of elementwise variance of phenotype
@@ -633,7 +653,7 @@ func (cells *Cells) DevCells(G Genome, envs Cues) (Cells, error) {
 func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
 	devenv := AddNoisetoCues(env, devNoise)
 	devenv0 := AddNoisetoCues(env0, devNoise)
-	selenv := AddNoisetoCues(env, envNoise)
+	//selenv := AddNoisetoCues(env, envNoise)
 	Clist := indiv.Copies
 
 	//zero := NewCues(ncells, nenv)
@@ -654,7 +674,8 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	//Unit testing
 
 	//indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
-	indiv.Fit = Clist[INovEnv].get_fitness(selenv) //Fitness with cues
+	indiv.get_msevec()
+	indiv.Fit = indiv.get_fitness() //Fitness with cues
 	indiv.Util = indiv.Fit - f0
 
 	//indiv.CuePlas = indiv.get_cue_plasticity()
