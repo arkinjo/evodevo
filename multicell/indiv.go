@@ -31,9 +31,8 @@ type Cells struct { //Do we want to reimplement this?
 }
 
 const (
-	INoEnv   = iota // No env
-	IPrevEnv        // Previous env
-	ICurEnv         // Current env
+	IAncEnv = iota // Previous env
+	INovEnv        // Current env
 )
 
 type Indiv struct { //An individual as an unicellular organism
@@ -43,11 +42,11 @@ type Indiv struct { //An individual as an unicellular organism
 	Genome Genome
 	Copies []Cells //INoEnv, IPrevEnv, ICurENv (see above const.)
 	//Z       Vec     // Initial gene expression of offspring
-	F0      float64 //Fitness without cues
-	Fit     float64 //Fitness with cues
-	WagFit  float64 //Wagner relative fitness
-	Util    float64 //Fitness Utility of cues
-	CuePlas float64 //Cue Plasticity
+	//F0      float64 //Fitness without cues
+	Fit    float64 //Fitness with cues
+	WagFit float64 //Wagner relative fitness
+	Util   float64 //Fitness Utility of cues
+	//CuePlas float64 //Cue Plasticity
 	ObsPlas float64 //Observed Plasticity
 	Pp      float64 //Degree of polyphenism
 }
@@ -333,7 +332,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	//z := NewVec(ngenes)
 
 	//indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	indiv := Indiv{id, 0, 0, genome, cellcopies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, cellcopies, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -347,10 +346,10 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 		indiv1.Copies[i] = ccopy.Copy()
 	}
 	//indiv1.Z = CopyVec(indiv.Z)
-	indiv1.F0 = indiv.F0
+	//indiv1.F0 = indiv.F0
 	indiv1.Fit = indiv.Fit
 	indiv1.Util = indiv.Util
-	indiv1.CuePlas = indiv.CuePlas
+	//indiv1.CuePlas = indiv.CuePlas
 	indiv1.ObsPlas = indiv.ObsPlas
 	indiv1.Pp = indiv.Pp
 
@@ -469,8 +468,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, g1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	*/
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -488,21 +487,23 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 	return math.Exp(-selStrength * d2) //vector concatenation length already absorbed into selStrength.
 }
 
+/*
 func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
 	d := 0.0
 	copies := indiv.Copies
-	for i, cell := range copies[ICurEnv].Ctypes {
+	for i, cell := range copies[INovEnv].Ctypes {
 		d += DistVecs1(cell.P, copies[INoEnv].Ctypes[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d
 }
+*/
 
 func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individual
 	d := 0.0
 	copies := indiv.Copies
-	for i, cell := range copies[ICurEnv].Ctypes {
-		d += DistVecs1(cell.P, copies[IPrevEnv].Ctypes[i].P)
+	for i, cell := range copies[INovEnv].Ctypes {
+		d += DistVecs1(cell.P, copies[IAncEnv].Ctypes[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d
@@ -510,7 +511,7 @@ func (indiv *Indiv) get_obs_plasticity() float64 { //cue plasticity of individua
 
 func (indiv *Indiv) get_vp() float64 { //Get sum of elementwise variance of phenotype
 	pvec := make([]Cue, 0)
-	for _, c := range indiv.Copies[ICurEnv].Ctypes {
+	for _, c := range indiv.Copies[INovEnv].Ctypes {
 		pvec = append(pvec, c.P) //Note: To be used AFTER development
 	}
 	sigma2p := GetCueVar(pvec)
@@ -635,11 +636,11 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	selenv := AddNoisetoCues(env, envNoise)
 	Clist := indiv.Copies
 
-	zero := NewCues(ncells, nenv)
+	//zero := NewCues(ncells, nenv)
 
-	Clist[INoEnv].DevCells(indiv.Genome, zero)
-	Clist[IPrevEnv].DevCells(indiv.Genome, devenv0) //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
-	Clist[ICurEnv].DevCells(indiv.Genome, devenv)   //Develop in novel (present) environment
+	//Clist[INoEnv].DevCells(indiv.Genome, zero)
+	Clist[IAncEnv].DevCells(indiv.Genome, devenv0) //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
+	Clist[INovEnv].DevCells(indiv.Genome, devenv)  //Develop in novel (present) environment
 
 	//Unit testing
 	//de := Dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)
@@ -652,11 +653,11 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	// }
 	//Unit testing
 
-	indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
-	indiv.Fit = Clist[2].get_fitness(selenv) //Fitness with cues
-	indiv.Util = indiv.Fit - indiv.F0
+	//indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
+	indiv.Fit = Clist[INovEnv].get_fitness(selenv) //Fitness with cues
+	indiv.Util = indiv.Fit - f0
 
-	indiv.CuePlas = indiv.get_cue_plasticity()
+	//indiv.CuePlas = indiv.get_cue_plasticity()
 	indiv.ObsPlas = indiv.get_obs_plasticity()
 
 	indiv.Pp = indiv.get_pp(devenv)
