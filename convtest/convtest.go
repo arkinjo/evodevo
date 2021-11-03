@@ -67,16 +67,16 @@ func main() {
 		conv0 := false
 		conv1 := false
 		//indiv0.Genome.Randomize()
-		_, err0 := indiv.Copies[multicell.INoEnv].DevCells(indiv.Genome, env0)
-		_, err1 := indiv.Copies[multicell.IPrevEnv].DevCells(indiv.Genome, env0)
+		_, err0 := indiv.Copies[multicell.IAncEnv].DevCells(indiv.Genome, env0)
+		_, err1 := indiv.Copies[multicell.INovEnv].DevCells(indiv.Genome, env0)
 		if err0 == nil {
 			conv0 = true
 		}
 		if err1 == nil {
 			conv1 = true
 		}
-		for j, cell := range indiv.Copies[multicell.INoEnv].Ctypes { //Loop over all cells
-			dp = multicell.Dist2Vecs(cell.P, indiv.Copies[multicell.IPrevEnv].Ctypes[j].P)
+		for j, cell := range indiv.Copies[multicell.IAncEnv].Ctypes { //Loop over all cells
+			dp = multicell.Dist2Vecs(cell.P, indiv.Copies[multicell.INovEnv].Ctypes[j].P)
 			if dp > 1.0e-2 {
 				fmt.Println("ID:", indiv.Id, "Diff:", dp, conv0, conv1)
 			}

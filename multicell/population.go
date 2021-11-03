@@ -59,7 +59,7 @@ func (pop *Population) ClearGenome() {
 
 func (pop *Population) Copy() Population {
 	npop := len(pop.Indivs)
-	ncell := len(pop.Indivs[0].Copy().Copies[INoEnv].Ctypes) //number of cells
+	ncell := len(pop.Indivs[0].Copy().Copies[INovEnv].Ctypes) //number of cells
 	//fmt.Println("Copying ",ncell,"-cell individuals")
 	pop1 := NewPopulation(ncell, npop)
 	pop1.Gen = pop.Gen
@@ -95,6 +95,7 @@ func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plast
 	return mp / fn
 }
 
+/*
 func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity of population
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
@@ -105,6 +106,7 @@ func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity
 
 	return mp / fn
 }
+*/
 
 func (pop *Population) GetMeanUtility() float64 { //average utility of population
 	mu := 0.0
@@ -129,7 +131,7 @@ func (pop *Population) GetMeanPp() float64 { //average degree of polyphenism of 
 func (pop *Population) GetDiversity() float64 { //To be used after development
 	cv := make([]Cue, 0)
 	for _, ind := range pop.Indivs {
-		for _, cell := range ind.Copies[ICurEnv].Ctypes {
+		for _, cell := range ind.Copies[INovEnv].Ctypes {
 			cv = append(cv, cell.P)
 		}
 	}
@@ -144,7 +146,7 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 	pop.DevPop(gen)
 
 	for _, indiv := range pop.Indivs {
-		for i, c := range indiv.Copies[ICurEnv].Ctypes {
+		for i, c := range indiv.Copies[INovEnv].Ctypes {
 			for j, p := range c.P {
 				MeanPhenotype[i][j] += p / float64(npop)
 			}
@@ -316,7 +318,8 @@ func (pop *Population) DevPop(gen int) Population {
 
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
-	var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
+	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
+	var Fitness, ObsPlas, Polyp, Div, Util float64
 	pop := *init_pop
 	//bugfixpop := NewPopulation(len(pop.Envs.Es),len(pop.Indivs))
 
@@ -377,7 +380,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		*/
 
 		Fitness = pop.GetMeanFitness()
-		CuePlas = pop.GetMeanCuePlasticity()
+		//CuePlas = pop.GetMeanCuePlasticity()
 		ObsPlas = pop.GetMeanObsPlasticity()
 		Polyp = pop.GetMeanPp()
 		Div = pop.GetDiversity()
@@ -388,13 +391,16 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 
-		fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
+		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
+
+		fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, ObsPlas, Polyp, Div, Util)
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
+		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
+		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, ObsPlas, Polyp, Div, Util)
 		pop = pop.Reproduce(maxPop)
 
 		/*
@@ -438,12 +444,12 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		ancpproj, novpproj, gproj = 0.0, 0.0, 0.0
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(novcphen, indiv.Copies[ICurEnv].Ctypes[i].P, env) //centralize
+			diffVecs(novcphen, indiv.Copies[INovEnv].Ctypes[i].P, env) //centralize
 			novpproj += innerproduct(novcphen, Paxis[i])
 		}
 		for i, env := range mu { //For each environment cue
-			diffVecs(anccphen, indiv.Copies[IPrevEnv].Ctypes[i].P, env) //centralize
-			ancpproj += innerproduct(anccphen, Paxis[i])                //Plot phenotype when pulled back into ancestral environment at this stage on same axis
+			diffVecs(anccphen, indiv.Copies[IAncEnv].Ctypes[i].P, env) //centralize
+			ancpproj += innerproduct(anccphen, Paxis[i])               //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
 		if withCue {
