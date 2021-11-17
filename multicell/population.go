@@ -12,11 +12,10 @@ import (
 )
 
 type Population struct { //Population of individuals
-	Gen      int
-	Envs     Cues //Environment of population in this epoch
-	RefEnvs  Cues //Environment of population in previous epoch
-	Indivs   []Indiv
-	GeneFunc float64 //Convergence criterion for genome of population
+	Gen     int
+	Envs    Cues //Environment of population in this epoch
+	RefEnvs Cues //Environment of population in previous epoch
+	Indivs  []Indiv
 }
 
 func NewPopulation(ncell, npop int) Population { //Initialize new population
@@ -28,7 +27,7 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 	envs0 := NewCues(ncell, nenv)
 	envs1 := NewCues(ncell, nenv)
 
-	p := Population{0, envs0, envs1, indivs, 0.0}
+	p := Population{0, envs0, envs1, indivs}
 	return p
 }
 
@@ -86,6 +85,16 @@ func (pop *Population) GetMeanFitness() float64 { //average fitness of populatio
 	return mf / fn
 }
 
+func (pop *Population) GetMSE() float64 { //average observed plasticity of population
+	mse := 0.0
+	fn := float64(len(pop.Indivs))
+	for _, indiv := range pop.Indivs {
+		mse += indiv.MSE
+	}
+
+	return mse / fn
+}
+
 func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plasticity of population
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
@@ -141,15 +150,16 @@ func (pop *Population) GetDiversity() float64 { //To be used after development
 	return div
 }
 
+/*
 func (pop *Population) GetGeneFunc() float64 {
 	gf := 0.0
 	for _, indiv := range pop.Indivs {
-		gf += indiv.MSEVec[IAncEnv]
-		gf += indiv.MSEVec[INovEnv]
+		gf += indiv.MSE
 		gf += indiv.ObsPlas
 	}
 	return gf
 }
+*/
 
 func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
 	npop := len(pop.Indivs)
@@ -290,7 +300,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs, 0.0} //resets embryonic values to zero!
+	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
 
 	return new_population
 }
@@ -330,7 +340,7 @@ func (pop *Population) DevPop(gen int) Population {
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
 	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
-	var Fitness, ObsPlas, Polyp, Div, Util float64
+	var MSE, Fitness, Pl, Polyp, Div, Util float64
 	pop := *init_pop
 	//bugfixpop := NewPopulation(len(pop.Envs.Es),len(pop.Indivs))
 
@@ -346,6 +356,14 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 	}
+
+	//track := true
+	//MSE0 := 0.0
+	EMA_MSE := 0.0
+
+	//Pl0 := 0.0
+	//dPl := 0.0
+	EMA_Pl := 0.0
 
 	for istep := 1; istep <= nstep; istep++ {
 		pop.DevPop(istep)
@@ -391,11 +409,15 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		*/
 
 		Fitness = pop.GetMeanFitness()
+		MSE = pop.GetMSE()
 		//CuePlas = pop.GetMeanCuePlasticity()
-		ObsPlas = pop.GetMeanObsPlasticity()
+		Pl = pop.GetMeanObsPlasticity()
 		Polyp = pop.GetMeanPp()
 		Div = pop.GetDiversity()
 		Util = pop.GetMeanUtility()
+
+		EMA_MSE = 2.0/(l_EMA+1.0)*MSE + (1-2/(l_EMA+1.0))*EMA_MSE
+		EMA_Pl = 2.0/(l_EMA+1.0)*Pl + (1-2/(l_EMA+1.0))*EMA_Pl
 
 		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
@@ -404,14 +426,17 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 
-		fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, ObsPlas, Polyp, Div, Util)
+		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, ObsPlas, Polyp, Div, Util)
+		fmt.Fprintf(fout, "%d\t%d\t%e\t%f\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util, EMA_MSE, EMA_Pl)
+
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Fit>: %f\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, ObsPlas, Polyp, Div, Util)
+		fmt.Printf("Evol_step: %d\t <MSE>: %e\t <Fit>: %f\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \t <EMAMSE>: %e \t <EMAPl>: %e \n ", istep, MSE, Fitness, Pl, Polyp, Div, Util, EMA_MSE, EMA_Pl)
+		//fmt.Println("CC :", gf)
 		pop = pop.Reproduce(maxPop)
 
 		/*

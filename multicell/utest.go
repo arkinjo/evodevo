@@ -1,6 +1,8 @@
 package multicell
 
 import (
+	"errors"
+	"fmt"
 	"math"
 	//	"sort"
 )
@@ -60,3 +62,41 @@ func TestEqualPopGenomes(pop0, pop1 Population) float64 { //Test for equal genom
 	}
 	return u //Warning! Ordering of population individuals is important.
 }
+
+func DeepVec2Test(v1, v2 [][]float64) float64 {
+	u := 0.0
+	for i, v := range v1 {
+		u += DistVecs1(v, v2[i])
+	}
+	return u
+}
+
+func DeepVec3NovTest(v [][]float64, vv [][][]float64) error { //Check if v is already in vv
+	var errtext string
+	nov := true
+	d := 0.0
+	ancindices := make([]int, 0)
+	for i, u := range vv {
+		d = DeepVec2Test(v, u)
+		if d == 0 {
+			ancindices = append(ancindices, i)
+			nov = false
+		}
+	}
+	if nov {
+		return nil
+	} else {
+		errtext = fmt.Sprint("Input vector same as memory indices: ", ancindices)
+		return errors.New(errtext)
+	}
+}
+
+/*
+func DeepVec3Test(v1, v2 [][][]float64) float64 {
+	u := 0.0
+	for i, v := range v1 {
+		u += DeepVec2Test(v, v2[i])
+	}
+	return u
+}
+*/

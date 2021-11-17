@@ -38,7 +38,7 @@ func main() {
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	//HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 10, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
 	pgfilenamePtr := flag.String("pgfilename", "", "name of file of projected phenotypes and genotypes") //default to empty string
 	gidfilenamePtr := flag.String("gidfilename", "", "name of file of geneology of ids")                 //default to empty string
@@ -99,7 +99,7 @@ func main() {
 	}
 
 	//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
-	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
+	fmt.Fprintln(fout, "Epoch \t Generation \t MSE \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
 
 	err = fout.Close()
 	if err != nil {
@@ -124,98 +124,101 @@ func main() {
 
 	dtevol := time.Since(tevol)
 	fmt.Println("Time taken to simulate evolution :", dtevol)
-
-	fmt.Println("Dumping projections")
-	tdump := time.Now()
-	pop := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
-	g0 := pop0.GetMeanGenome()
-	g1 := pop1.GetMeanGenome()
-	//dG := multicell.TestEqualGenomes(g0, g1)
-	//fmt.Println("Difference in genome:", dG)
-
-	Gaxis := multicell.NewGenome()
-	//ZeroGenome := multicell.NewGenome()
-	multicell.DiffGenomes(&Gaxis, &g1, &g0) //Pointers for bugfix; don't ask why; it just works!
-	//dG = multicell.TestEqualGenomes(ZeroGenome, Gaxis)
-	//fmt.Println("Axis length:", dG) //Should be equal to difference in genome; currently this is stuck at zero value of genome.
-
-	Gaxis = Gaxis.NormalizeGenome()
-	//dG = multicell.TestEqualGenomes(ZeroGenome, Gaxis)
-	//fmt.Println("Normalized Axis length:", dG)
-
-	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
-	//fmt.Println("Mean environment:", pop1.Get_Mid_Env())
-	//fmt.Println("Change in environment proportional to:", Paxis)
-
-	//bugfixpop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop) //Bugfixing
-
-	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
-		jfilename := fmt.Sprintf("../pops/%s_%d.json", json_out, gen)
-		popin, err := os.Open(jfilename)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		pop.ClearGenome()
-		byteValue, _ := ioutil.ReadAll(popin)
-		err = json.Unmarshal(byteValue, &pop)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		//fmt.Println("Mean environment:", pop.Get_Mid_Env())
-		//fmt.Println("Change in environment proportional to:", pop.Get_Environment_Axis())
-		//dG = multicell.TestEqualPopGenomes(bugfixpop, pop)
-		//fmt.Println("Norm of imported genotype :", dG)
-
-		err = popin.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
-	}
-	dtdump := time.Since(tdump)
-	fmt.Println("Time taken to dump projections :", dtdump)
-	fmt.Println("Making DOT genealogy file")
-	tdot := time.Now()
-	nanctraj := multicell.DOT_Genealogy(Gid_Filename, json_out, epochlength, multicell.GetMaxPop())
-	//fmt.Println(nanctraj)
-	dtdot := time.Since(tdot)
-	fmt.Println("Time taken to make dot file :", dtdot)
-	fmt.Println("Dumping number of ancestors")
-	nancfilename = fmt.Sprintf("../analysis/%s_nanc.dat", Gid_Filename)
-	fout, err = os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Fprintln(fout, "Generation \t Ancestors")
-	for i, n := range nanctraj {
-		fmt.Fprintf(fout, "%d\t%d\n", i+1, n)
-	}
-	err = fout.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Trajectory of population written to", T_Filename)
-	fmt.Printf("Projections written to %s_*.dat \n", PG_Filename)
-	fmt.Printf("Genealogy of final generation written to %s.dot\n", Gid_Filename)
-	fmt.Printf("Number of ancestors of final generation written to %s\n", nancfilename)
-	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_out)
+	fmt.Println(pop1.Envs)
 
 	/*
-		//fmt.Println("Trajectory of environment :", envtraj)
 
-		//if !CopyequalGs {
-		fmt.Println("Error in copying genomes :", CopyequalGs)
-		//}
-		//if !DevequalGs {
-		fmt.Println("Genome error in development:", DevequalGs) //This is due to misordering after development; individuals are not developed in same order.
-		//}
-		//if !JSONequalGs {
-		fmt.Println("Genome error in json:", JSONequalGs)
-		//}
+		fmt.Println("Dumping projections")
+		tdump := time.Now()
+		pop := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
+		g0 := pop0.GetMeanGenome()
+		g1 := pop1.GetMeanGenome()
+		//dG := multicell.TestEqualGenomes(g0, g1)
+		//fmt.Println("Difference in genome:", dG)
+
+		Gaxis := multicell.NewGenome()
+		//ZeroGenome := multicell.NewGenome()
+		multicell.DiffGenomes(&Gaxis, &g1, &g0) //Pointers for bugfix; don't ask why; it just works!
+		//dG = multicell.TestEqualGenomes(ZeroGenome, Gaxis)
+		//fmt.Println("Axis length:", dG) //Should be equal to difference in genome; currently this is stuck at zero value of genome.
+
+		Gaxis = Gaxis.NormalizeGenome()
+		//dG = multicell.TestEqualGenomes(ZeroGenome, Gaxis)
+		//fmt.Println("Normalized Axis length:", dG)
+
+		Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
+		//fmt.Println("Mean environment:", pop1.Get_Mid_Env())
+		//fmt.Println("Change in environment proportional to:", Paxis)
+
+		//bugfixpop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop) //Bugfixing
+
+		for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
+			jfilename := fmt.Sprintf("../pops/%s_%d.json", json_out, gen)
+			popin, err := os.Open(jfilename)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			pop.ClearGenome()
+			byteValue, _ := ioutil.ReadAll(popin)
+			err = json.Unmarshal(byteValue, &pop)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			//fmt.Println("Mean environment:", pop.Get_Mid_Env())
+			//fmt.Println("Change in environment proportional to:", pop.Get_Environment_Axis())
+			//dG = multicell.TestEqualPopGenomes(bugfixpop, pop)
+			//fmt.Println("Norm of imported genotype :", dG)
+
+			err = popin.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
+		}
+		dtdump := time.Since(tdump)
+		fmt.Println("Time taken to dump projections :", dtdump)
+		fmt.Println("Making DOT genealogy file")
+		tdot := time.Now()
+		nanctraj := multicell.DOT_Genealogy(Gid_Filename, json_out, epochlength, multicell.GetMaxPop())
+		//fmt.Println(nanctraj)
+		dtdot := time.Since(tdot)
+		fmt.Println("Time taken to make dot file :", dtdot)
+		fmt.Println("Dumping number of ancestors")
+		nancfilename = fmt.Sprintf("../analysis/%s_nanc.dat", Gid_Filename)
+		fout, err = os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprintln(fout, "Generation \t Ancestors")
+		for i, n := range nanctraj {
+			fmt.Fprintf(fout, "%d\t%d\n", i+1, n)
+		}
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("Trajectory of population written to", T_Filename)
+		fmt.Printf("Projections written to %s_*.dat \n", PG_Filename)
+		fmt.Printf("Genealogy of final generation written to %s.dot\n", Gid_Filename)
+		fmt.Printf("Number of ancestors of final generation written to %s\n", nancfilename)
+		fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_out)
+
+		/*
+			//fmt.Println("Trajectory of environment :", envtraj)
+
+			//if !CopyequalGs {
+			fmt.Println("Error in copying genomes :", CopyequalGs)
+			//}
+			//if !DevequalGs {
+			fmt.Println("Genome error in development:", DevequalGs) //This is due to misordering after development; individuals are not developed in same order.
+			//}
+			//if !JSONequalGs {
+			fmt.Println("Genome error in json:", JSONequalGs)
+			//}
 	*/
 
 	dt := time.Since(t0)

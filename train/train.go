@@ -30,7 +30,7 @@ func main() {
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	//HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	denvPtr := flag.Int("denv", 2, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 10, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
@@ -81,7 +81,9 @@ func main() {
 	}
 
 	//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
-	fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
+	//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
+	fmt.Fprintln(fout, "Epoch \t Generation \t MSE \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility \t EMA_MSE \t EMA_Pl") //header
+
 	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)
@@ -95,6 +97,8 @@ func main() {
 
 	envtraj := make([]multicell.Cues, 1) //Trajectory of environment cue
 	envtraj[0] = popstart.RefEnvs
+	novvec := make([]bool, 0)
+	//novvec[0] = false
 
 	//OldEnvs := multicell.NewCues(multicell.GetNcells(), multicell.GetNenv())
 
@@ -137,14 +141,20 @@ func main() {
 		OldEnvs := multicell.CopyCues(popstart.Envs)
 		popstart.RefEnvs = OldEnvs
 		popstart.Envs = multicell.ChangeEnvs2(OldEnvs, denv)
+		err = multicell.DeepVec3NovTest(popstart.Envs, envtraj)
+		if err != nil {
+			fmt.Println(err)
+		}
+		novvec = append(novvec, err == nil)
 		//fmt.Println("Novel environment after :", popstart.Envs)
 		//fmt.Println("Ancestral environment after :", popstart.RefEnvs)
 	}
 
-	fmt.Println("Trajectory of population written to", T_Filename)
+	fmt.Printf("Trajectory of population written to %s \n", T_Filename)
 	fmt.Printf("JSON encoding of evolved population written to %s \n", jfilename)
-	fmt.Println("Trajectory of environment :", envtraj)
+	//fmt.Println("Trajectory of environment :", envtraj)
 
+	fmt.Println("Novelty of environment cue :", novvec)
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ", dt)
 }

@@ -41,7 +41,7 @@ type Indiv struct { //An individual as an unicellular organism
 	MomId  int
 	Genome Genome
 	Copies []Cells //IAncEnv, INovEnv (see above const.)
-	MSEVec []float64
+	MSE    float64 //Squared error per cue
 	//Z       Vec     // Initial gene expression of offspring
 	//F0      float64 //Fitness without cues
 	Fit    float64 //Fitness with cues
@@ -329,12 +329,12 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	for i := range cellcopies {
 		cellcopies[i] = NewCells(ncells)
 	}
-	msevec := make([]float64, 2)
+	mse := 0.0
 
 	//z := NewVec(ngenes)
 
 	//indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	indiv := Indiv{id, 0, 0, genome, cellcopies, msevec, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, cellcopies, mse, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -460,20 +460,18 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	for i := range cells0 {
 		cells0[i] = NewCells(ncells)
 	}
-	msev0 := make([]float64, 2)
 	cells1 := make([]Cells, 2)
 	for i := range cells1 {
 		cells1[i] = NewCells(ncells)
 	}
-	msev1 := make([]float64, 2)
 
 	/*
 		kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, g0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 		kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, g1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	*/
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, msev0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, msev1, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -482,14 +480,14 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
-func (indiv *Indiv) get_msevec() { //use after development
-	mse := make([]float64, 2)
-	for i, copy := range indiv.Copies {
-		for _, cell := range copy.Ctypes { //range over all cells
-			mse[i] += Dist2Vecs(cell.P, cell.E)
-		}
+func (indiv *Indiv) get_sse() float64 { //use after development; returns sum of squared errors
+	sse := 0.0
+
+	for _, cell := range indiv.Copies[INovEnv].Ctypes { //range over all cells
+		sse += Dist2Vecs(cell.P, cell.E)
 	}
-	copy(indiv.MSEVec, mse)
+
+	return sse
 }
 
 /*
@@ -503,8 +501,8 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 }
 */
 
-func (indiv *Indiv) get_fitness() float64 {
-	return math.Exp(-selStrength * indiv.MSEVec[INovEnv])
+func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
+	return math.Exp(-baseSelStrength * indiv.MSE)
 }
 
 /*
@@ -526,7 +524,7 @@ func (indiv *Indiv) get_obs_plasticity() float64 { //observed plasticity between
 		d2 += Dist2Vecs(cell.P, copies[IAncEnv].Ctypes[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
-	return d2
+	return d2 / float64(ncells*(ncells+nenv))
 }
 
 func (indiv *Indiv) get_vp() float64 { //Get sum of elementwise variance of phenotype
@@ -674,7 +672,8 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	//Unit testing
 
 	//indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
-	indiv.get_msevec()
+	sse := indiv.get_sse()
+	indiv.MSE = sse / float64(ncells*(nenv+ncells))
 	indiv.Fit = indiv.get_fitness() //Fitness with cues
 	indiv.Util = indiv.Fit - f0
 
