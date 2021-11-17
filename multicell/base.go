@@ -14,7 +14,8 @@ const maxDevStep int = 1000   // Maximum steps for development.
 const ccStep int = 5          //number of steady steps for convergence
 const epsDev float64 = 1.0e-6 // convergence criterion of development.
 const eps float64 = 1.0e-50
-const l_EMA float64 = 5 //initialize as float for computation
+
+//const l_EMA float64 = 5 //initialize as float for computation
 
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.

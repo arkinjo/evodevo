@@ -359,11 +359,11 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 	//track := true
 	//MSE0 := 0.0
-	EMA_MSE := 0.0
+	//EMA_MSE := 0.0
 
 	//Pl0 := 0.0
 	//dPl := 0.0
-	EMA_Pl := 0.0
+	//EMA_Pl := 0.0
 
 	for istep := 1; istep <= nstep; istep++ {
 		pop.DevPop(istep)
@@ -415,10 +415,10 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		Polyp = pop.GetMeanPp()
 		Div = pop.GetDiversity()
 		Util = pop.GetMeanUtility()
-
-		EMA_MSE = 2.0/(l_EMA+1.0)*MSE + (1-2/(l_EMA+1.0))*EMA_MSE
-		EMA_Pl = 2.0/(l_EMA+1.0)*Pl + (1-2/(l_EMA+1.0))*EMA_Pl
-
+		/*
+			EMA_MSE = 2.0/(l_EMA+1.0)*MSE + (1-2/(l_EMA+1.0))*EMA_MSE
+			EMA_Pl = 2.0/(l_EMA+1.0)*Pl + (1-2/(l_EMA+1.0))*EMA_Pl
+		*/
 		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatal(err)
@@ -426,16 +426,16 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 
-		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, ObsPlas, Polyp, Div, Util)
-		fmt.Fprintf(fout, "%d\t%d\t%e\t%f\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util, EMA_MSE, EMA_Pl)
+		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
+		fmt.Fprintf(fout, "%d\t%d\t%e\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
 
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <MSE>: %e\t <Fit>: %f\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \t <EMAMSE>: %e \t <EMAPl>: %e \n ", istep, MSE, Fitness, Pl, Polyp, Div, Util, EMA_MSE, EMA_Pl)
+		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
+		fmt.Printf("Evol_step: %d\t <MSE>: %e\t <Fit>: %f\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, MSE, Fitness, Pl, Polyp, Div, Util)
 		//fmt.Println("CC :", gf)
 		pop = pop.Reproduce(maxPop)
 
