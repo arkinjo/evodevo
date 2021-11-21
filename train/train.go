@@ -82,7 +82,7 @@ func main() {
 
 	//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
 	//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
-	fmt.Fprintln(fout, "Epoch \t Generation \t MSE \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
+	fmt.Fprintln(fout, "Epoch \t Generation \t Npop \t MSE \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
 
 	err = fout.Close()
 	if err != nil {

@@ -341,6 +341,8 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 	var jfilename, id_filename, id, dadid, momid string
 	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
 	var MSE, Fitness, Pl, Polyp, Div, Util float64
+	var popsize int
+
 	pop := *init_pop
 	//bugfixpop := NewPopulation(len(pop.Envs.Es),len(pop.Indivs))
 
@@ -415,6 +417,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		Polyp = pop.GetMeanPp()
 		Div = pop.GetDiversity()
 		Util = pop.GetMeanUtility()
+		popsize = len(pop.Indivs)
 		/*
 			EMA_MSE = 2.0/(l_EMA+1.0)*MSE + (1-2/(l_EMA+1.0))*EMA_MSE
 			EMA_Pl = 2.0/(l_EMA+1.0)*Pl + (1-2/(l_EMA+1.0))*EMA_Pl
@@ -427,7 +430,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
-		fmt.Fprintf(fout, "%d\t%d\t%e\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, Pl, Polyp, Div, Util)
 
 		err = fout.Close()
 		if err != nil {
@@ -435,7 +438,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <MSE>: %e\t <Fit>: %f\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, MSE, Fitness, Pl, Polyp, Div, Util)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d <MSE>: %e\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, popsize, MSE, Fitness, Pl, Polyp, Div, Util)
 		//fmt.Println("CC :", gf)
 		pop = pop.Reproduce(maxPop)
 
