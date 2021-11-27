@@ -1,55 +1,62 @@
 package main
 
 import (
-	"flag"
+	"bufio"
+	"strconv"
+
+	//"encoding/binary"
 	"fmt"
+	"log"
+	"os"
 
 	//	"fmt"
 	"github.com/arkinjo/evodevo/multicell"
 )
 
 var T_Filename string = "traj"
-var json_in string //JSON encoding of initial population; default to empty string
-var json_out string = "popout"
-var jfilename string
+
+//var jfilename string = "jsonpcatest.json"
+var vfilename string = "m2pcavectest.dat"
+
+//var pcafilename string = "pcatestphen5.dat"
 
 func main() {
-	seedPtr := flag.Int("seed", 1, "random seed")
-	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
-	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of var contribution of environmental cue")
-	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
-	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
-	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
-	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	nsamplePtr := flag.Int("nsample", 100, "number of samples")
-	flag.Parse()
+	var counter, prdir, r, cell, trait int
+	var float float64
+	var str string
 
-	multicell.SetSeed(int64(*seedPtr))
-	multicell.Omega = *omegaPtr
-	multicell.SetNcells(*ncelltypesPtr)
-	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *epigPtr, *HOCPtr)
+	multicell.SetNcells(2)
 
-	nsamples := *nsamplePtr
+	fmt.Println("Hello, world!")
+	floats := make([]float64, 0)
 
-	env0 := multicell.RandomEnvs(1, multicell.GetNenv(), 0.5)
-	//	env1 := multicell.RandomEnvs(1, multicell.GetNenv(), 0.5)
-	for i := 0; i < nsamples; i++ {
-		indiv0 := multicell.NewIndiv(i)
-		conv0 := false
-		conv1 := false
-		indiv0.Genome.Randomize()
-		_, err0 := indiv0.Copies[0].DevCells(indiv0.Genome, env0)
-		_, err1 := indiv0.Copies[1].DevCells(indiv0.Genome, env0)
-		if err0 == nil {
-			conv0 = true
+	file, err := os.Open(vfilename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		counter++
+		str = scanner.Text()
+		if float, err = strconv.ParseFloat(str, 64); err == nil {
+			//fmt.Printf("Entry:%d\tValue:%f\n", counter, float)
+			//fmt.Printf("Entry:%T\tValue:%T\n", counter, float)
+			floats = append(floats, float)
 		}
-		if err1 == nil {
-			conv1 = true
-		}
-		dp := multicell.Dist2Vecs(indiv0.Copies[0].Ctypes[0].P, indiv0.Copies[1].Ctypes[0].P)
-		if (!conv0 && conv1) || (conv0 && !conv1) {
-			fmt.Println("ID:", i, "Diff:", dp, conv0, conv1)
-		}
+	}
+	pcacues := multicell.PCAtoCue(vfilename)
+	for i, t := range floats {
+		prdir = i / (multicell.GetNenv() * multicell.GetNcells()) //take advantage of integer division
+		r = i % (multicell.GetNcells() * multicell.GetNenv())     //remainder
+		cell = r / multicell.GetNenv()
+		trait = r % multicell.GetNenv()
+		fmt.Printf("Entry:(%d,%d,%d) , Input:%f , Output:%f\n", prdir, cell, trait, t, pcacues[prdir][cell][trait])
+	}
+
+	err = file.Close()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 }

@@ -2,8 +2,13 @@ package multicell
 
 import (
 	//"fmt"
-	//"math"
+	"bufio"
+	"fmt"
+	"log"
+	"math"
 	"math/rand"
+	"os"
+	"strconv"
 )
 
 var devNoise float64 = 0.00 // Development environment cue noise
@@ -223,4 +228,52 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 		sigma2 += Veclength2(v) / float64(len(cues))
 	}
 	return sigma2
+}
+
+func PCAtoCue(pcafilename string) []Cues { //Converts PCA vectors containing only trait part into environment cue vectors
+	var prdir, cell, trait, r int
+	var x, y float64
+	var str string
+	PCAenvs := make([]Cues, nenv*ncells) //Number of PCAs = Length of trait concatenation
+	for i := range PCAenvs {
+		PCAenvs[i] = NewCues(ncells, nenv)
+	}
+	fmt.Printf("Number of PC's:%d\n", len(PCAenvs))
+	fmt.Printf("Number of cells:%d\n", len(PCAenvs[0]))
+	fmt.Printf("Number of traits:%d\n", len(PCAenvs[0][0]))
+	traits := make([]float64, 0) //nenv and ncells are fixed and given; this is the concatenation of trait parts of cue
+	file, err := os.Open(pcafilename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() { //error in scanner?!
+		str = scanner.Text()
+		if x, err = strconv.ParseFloat(str, 64); err == nil {
+			if math.Signbit(x) { //if negative
+				y = -1.0
+			} else {
+				y = 1.0
+			}
+			traits = append(traits, y)
+		}
+	}
+	fmt.Println(len(traits))
+	/*
+		if len(traits) != nenv*ncells { //Is this even needed?
+			err := errors.New("input incompatable with size")
+			return PCAenvs, err
+		}
+	*/
+	for i, t := range traits {
+		prdir = i / (nenv * ncells) //take advantage of integer division
+		r = i % (nenv * ncells)     //remainder
+		cell = r / nenv
+		trait = r % nenv
+		//fmt.Printf("index:%d\tprdir:%d\tr:%d\tcindex:%d\ttindex:%d\ttrait:%f\n", i, prdir, r, cell, trait, t)
+		PCAenvs[prdir][cell][trait] = t
+	}
+
+	return PCAenvs //, nil
 }

@@ -463,6 +463,30 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 	return pop
 }
 
+func (pop *Population) Dump_Phenotypes(Filename string, gen int) {
+	pop.DevPop(gen)
+
+	trait := make([]float64, nenv)
+
+	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, indiv := range pop.Indivs {
+		for _, cell := range indiv.Copies[INovEnv].Ctypes {
+			copy(trait, cell.P)
+			for _, v := range trait {
+				fmt.Fprintf(fout, "%f\t", v)
+			}
+		}
+		fmt.Fprint(fout, "\n") //Each line is phenotype vector concatenation of one individual
+	}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, Paxis Cues) {
 	var ancpproj, novpproj, gproj float64
 	pop.DevPop(gen) //Not needed for bugfixing
@@ -537,7 +561,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 			}
 		*/
 		//fmt.Printf("Nov: %e\t Anc: %e\t G: %e\n", novpproj, ancpproj, gproj)
-		fmt.Fprintf(fout, "%e\t %e\t %e\n", novpproj, ancpproj, gproj)
+		fmt.Fprintf(fout, "%f\t %f\t %f\n", novpproj, ancpproj, gproj)
 	}
 	err = fout.Close()
 	if err != nil {

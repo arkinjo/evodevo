@@ -13,6 +13,7 @@ import (
 )
 
 var T_Filename string = "traj"
+var P_Filename string = "pvec"
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
 var jfilename string
@@ -32,6 +33,7 @@ func main() {
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 10, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
+	pfilenamePtr := flag.String("pfilename", "pvec", "name of file of phenotypes")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
@@ -41,6 +43,7 @@ func main() {
 	epochlength := *genPtr
 	denv := *denvPtr
 	T_Filename = fmt.Sprintf("../analysis/%s.dat", *tfilenamePtr) //all trajectories go to analysis directory
+	P_Filename = fmt.Sprintf("../analysis/%s.dat", *pfilenamePtr) //all phenotypes go to analysis directory
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
@@ -130,6 +133,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			pop1.Dump_Phenotypes(P_Filename, epochlength)
 		}
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :", dtevol)
