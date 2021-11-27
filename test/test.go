@@ -119,8 +119,8 @@ func main() {
 	if PCA_Filename == "" {                                                  //If no directions given
 		NovEnvs = multicell.ChangeEnvs(OldEnvs, denv) //Randomize
 	} else { //If directions are given
-		pcafilename := fmt.Sprintf("%s.dat", PCA_Filename)
-		pcacues := multicell.PCAtoCue(pcafilename)
+		//pcafilename := fmt.Sprintf("%s.dat", PCA_Filename)
+		pcacues := multicell.PCAtoCue(PCA_Filename)
 		NovEnvs = multicell.CopyCues(pcacues[pcindex]) //copy
 	}
 

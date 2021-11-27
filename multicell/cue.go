@@ -244,7 +244,8 @@ func PCAtoCue(pcafilename string) []Cues { //Converts PCA vectors containing onl
 	fmt.Printf("Number of traits:%d\n", len(PCAenvs[0][0]))
 	*/
 	traits := make([]float64, 0) //nenv and ncells are fixed and given; this is the concatenation of trait parts of cue
-	file, err := os.Open(pcafilename)
+	filename := fmt.Sprintf("../analysis/%s.dat", pcafilename)
+	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
