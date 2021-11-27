@@ -15,6 +15,7 @@ import (
 var T_Filename string = "traj"
 var PG_Filename string  //Dump for phenotypes and genotypes
 var Gid_Filename string //Genealogy of ID's
+var PCA_Filename string
 var nancfilename string
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
@@ -31,6 +32,7 @@ func main() {
 	//epochPtr := flag.Int("nepoch", 1, "number of epochs")
 	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
+	pcindexPtr := flag.Int("pcindex", 0, "index of principal component of environment")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of var contribution of environmental cue")
 	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
@@ -40,6 +42,7 @@ func main() {
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 10, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
+	pcafilenamePtr := flag.String("pcafilename", "", "name of file of principal trait vector concatanation")
 	pgfilenamePtr := flag.String("pgfilename", "", "name of file of projected phenotypes and genotypes") //default to empty string
 	gidfilenamePtr := flag.String("gidfilename", "", "name of file of geneology of ids")                 //default to empty string
 	jsoninPtr := flag.String("jsonin", "", "json file of input population")                              //default to empty string
@@ -54,12 +57,14 @@ func main() {
 	T_Filename = fmt.Sprintf("../analysis/%s.dat", *tfilenamePtr)
 	PG_Filename = *pgfilenamePtr
 	Gid_Filename = *gidfilenamePtr
+	PCA_Filename = *pcafilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
 
 	multicell.SetMaxPop(*maxpopsizePtr)
 	multicell.SetNcells(*ncelltypesPtr)
+	pcindex := multicell.MinInt(*pcindexPtr, multicell.GetNcells()*multicell.GetNenv()-1)
 	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *epigPtr, *HOCPtr)
 
 	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop()) //with randomized genome to start
@@ -110,7 +115,15 @@ func main() {
 	AncEnvs := multicell.CopyCues(pop0.Envs)
 	OldEnvs := multicell.CopyCues(pop0.Envs)
 	popstart.RefEnvs = AncEnvs
-	NovEnvs := multicell.ChangeEnvs(OldEnvs, denv)
+	NovEnvs := multicell.NewCues(multicell.GetNcells(), multicell.GetNenv()) //Declaration
+	if PCA_Filename == "" {                                                  //If no directions given
+		NovEnvs = multicell.ChangeEnvs(OldEnvs, denv) //Randomize
+	} else { //If directions are given
+		pcafilename := fmt.Sprintf("%s.dat", PCA_Filename)
+		pcacues := multicell.PCAtoCue(pcafilename)
+		NovEnvs = multicell.CopyCues(pcacues[pcindex]) //copy
+	}
+
 	popstart.Envs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
 
 	tevol := time.Now()

@@ -238,9 +238,11 @@ func PCAtoCue(pcafilename string) []Cues { //Converts PCA vectors containing onl
 	for i := range PCAenvs {
 		PCAenvs[i] = NewCues(ncells, nenv)
 	}
+	/* //This was used for bugfixing
 	fmt.Printf("Number of PC's:%d\n", len(PCAenvs))
 	fmt.Printf("Number of cells:%d\n", len(PCAenvs[0]))
 	fmt.Printf("Number of traits:%d\n", len(PCAenvs[0][0]))
+	*/
 	traits := make([]float64, 0) //nenv and ncells are fixed and given; this is the concatenation of trait parts of cue
 	file, err := os.Open(pcafilename)
 	if err != nil {

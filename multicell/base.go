@@ -349,3 +349,11 @@ func CopyVec(v Vec) Vec { //makes a copy of a vector
 	copy(v1, v)
 	return v1
 }
+
+func MinInt(x, y int) int { //Returns minimum of two integers
+	if x < y {
+		return x
+	} else {
+		return y
+	}
+}
