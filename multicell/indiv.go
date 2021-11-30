@@ -502,7 +502,8 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 */
 
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
-	return math.Exp(-baseSelStrength * indiv.MSE)
+	rawfit := math.Exp(-baseSelStrength * indiv.MSE)
+	return math.Max(rawfit, f0)
 }
 
 /*
