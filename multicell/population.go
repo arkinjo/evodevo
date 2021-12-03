@@ -75,15 +75,33 @@ func (pop *Population) SortPopIndivs() {
 	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id }) //Hopefully this works
 }
 
-func (pop *Population) GetMeanFitness() float64 { //average fitness of population
+func (pop *Population) GetMeanFitness() (float64, float64) { //average fitness of population
 	mf := 0.0
+	maxfit := 0.0
 	fn := float64(len(pop.Indivs))
 	for _, indiv := range pop.Indivs {
 		mf += indiv.Fit
+		if indiv.Fit > maxfit {
+			maxfit = indiv.Fit
+		}
+	}
+	meanfit := mf / fn
+	wagfit := meanfit / maxfit
+
+	return meanfit, wagfit
+}
+
+/*
+func (pop *Population) GetMeanWagFit() float64 { //average Wagner fitness of population
+	mf := 0.0
+	fn := float64(len(pop.Indivs))
+	for _, indiv := range pop.Indivs {
+		mf += indiv.WagFit
 	}
 
 	return mf / fn
 }
+*/
 
 func (pop *Population) GetMSE() float64 { //average observed plasticity of population
 	mse := 0.0
@@ -340,7 +358,7 @@ func (pop *Population) DevPop(gen int) Population {
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
 	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
-	var MSE, Fitness, Pl, Polyp, Div, Util float64
+	var MSE, WagFit, Fitness, Pl, Polyp, Div, Util float64
 	var popsize int
 
 	pop := *init_pop
@@ -410,7 +428,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			}
 		*/
 
-		Fitness = pop.GetMeanFitness()
+		Fitness, WagFit = pop.GetMeanFitness()
 		MSE = pop.GetMSE()
 		//CuePlas = pop.GetMeanCuePlasticity()
 		Pl = pop.GetMeanObsPlasticity()
@@ -430,7 +448,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, Pl, Polyp, Div, Util)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div, Util)
 
 		err = fout.Close()
 		if err != nil {
@@ -438,7 +456,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d <MSE>: %e\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, popsize, MSE, Fitness, Pl, Polyp, Div, Util)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d <MSE>: %f\t <Fit>: %f\t <WFit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div, Util)
 		//fmt.Println("CC :", gf)
 		pop = pop.Reproduce(maxPop)
 
