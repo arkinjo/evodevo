@@ -156,6 +156,7 @@ func main() {
 
 	fmt.Printf("Trajectory of population written to %s \n", T_Filename)
 	fmt.Printf("JSON encoding of evolved population written to %s \n", jfilename)
+	fmt.Printf("Phenotypes of population written to %s \n ",P_Filename)
 	//fmt.Println("Trajectory of environment :", envtraj)
 
 	fmt.Println("Novelty of environment cue :", novvec)
