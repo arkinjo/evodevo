@@ -456,7 +456,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d <MSE>: %f\t <Fit>: %f\t <WFit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div, Util)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div, Util)
 		//fmt.Println("CC :", gf)
 		pop = pop.Reproduce(maxPop)
 
