@@ -360,7 +360,7 @@ func (pop *Population) DevPop(gen int) Population {
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
 	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
-	var MSE, WagFit, Fitness, Pl, Polyp, Div, Util float64
+	var MSE, WagFit, Fitness, Pl, Polyp, Div float64
 	var popsize int
 
 	pop := *init_pop
@@ -458,7 +458,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div, Util)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div)
 		//fmt.Println("CC :", gf)
 		pop = pop.Reproduce(maxPop)
 
