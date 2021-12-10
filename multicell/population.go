@@ -136,6 +136,7 @@ func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity
 }
 */
 
+/*
 func (pop *Population) GetMeanUtility() float64 { //average utility of population
 	mu := 0.0
 	fn := float64(len(pop.Indivs))
@@ -145,6 +146,7 @@ func (pop *Population) GetMeanUtility() float64 { //average utility of populatio
 
 	return mu / fn
 }
+*/
 
 func (pop *Population) GetMeanPp() float64 { //average degree of polyphenism of population
 	mu := 0.0
@@ -434,7 +436,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		Pl = pop.GetMeanObsPlasticity()
 		Polyp = pop.GetMeanPp()
 		Div = pop.GetDiversity()
-		Util = pop.GetMeanUtility()
+		//Util = pop.GetMeanUtility()
 		popsize = len(pop.Indivs)
 		/*
 			EMA_MSE = 2.0/(l_EMA+1.0)*MSE + (1-2/(l_EMA+1.0))*EMA_MSE
@@ -448,7 +450,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div, Util)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div)
 
 		err = fout.Close()
 		if err != nil {
@@ -456,7 +458,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div, Util)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div, Util)
 		//fmt.Println("CC :", gf)
 		pop = pop.Reproduce(maxPop)
 

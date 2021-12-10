@@ -30,7 +30,7 @@ const baseMutationRate float64 = 0.01 // default probability of mutation of geno
 var mutRate float64                   //declaration
 const baseSelStrength float64 = 20    // default selection strength; to be normalized by number of cells
 //var selStrength float64             //declaration; Selection strength per unit cue
-var f0 float64
+var minFitness float64
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var withCue bool = false // with or without environmental cues.
@@ -69,7 +69,7 @@ func SetMaxPop(n int) {
 func SetNcells(n int) {
 	ncells = n
 	//selStrength = baseSelStrength / float64(n*(n+nenv))
-	f0 = math.Exp(-baseSelStrength) //Fitness of expression p=0
+	minFitness = math.Exp(-baseSelStrength) //Minimal allowed raw fitness
 }
 
 func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or interaction is present in model
@@ -164,7 +164,7 @@ func relu(x, omega float64) float64 {
 }
 
 func sigmaf(x float64) float64 { //Activation function for epigenetic markers
-	return relu(x, 1.0)
+	return lecunatan(x)
 }
 
 func sigmag(x float64) float64 { //Activation function for gene expression levels

@@ -46,7 +46,7 @@ type Indiv struct { //An individual as an unicellular organism
 	//F0      float64 //Fitness without cues
 	Fit    float64 //Fitness with cues
 	WagFit float64 //Wagner relative fitness
-	Util   float64 //Fitness Utility of cues
+	//Util   float64 //Fitness Utility of cues
 	//CuePlas float64 //Cue Plasticity
 	ObsPlas float64 //Observed Plasticity
 	Pp      float64 //Degree of polyphenism
@@ -334,7 +334,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	//z := NewVec(ngenes)
 
 	//indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	indiv := Indiv{id, 0, 0, genome, cellcopies, mse, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, cellcopies, mse, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -350,7 +350,7 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 	//indiv1.Z = CopyVec(indiv.Z)
 	//indiv1.F0 = indiv.F0
 	indiv1.Fit = indiv.Fit
-	indiv1.Util = indiv.Util
+	//indiv1.Util = indiv.Util
 	//indiv1.CuePlas = indiv.CuePlas
 	indiv1.ObsPlas = indiv.ObsPlas
 	indiv1.Pp = indiv.Pp
@@ -470,8 +470,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, g1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	*/
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -503,7 +503,7 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
 	rawfit := math.Exp(-baseSelStrength * indiv.MSE)
-	return math.Max(rawfit, f0)
+	return math.Max(rawfit, minFitness)
 }
 
 /*
@@ -658,29 +658,22 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	//zero := NewCues(ncells, nenv)
 
 	//Clist[INoEnv].DevCells(indiv.Genome, zero)
-	Clist[IAncEnv].DevCells(indiv.Genome, devenv0) //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
-	Clist[INovEnv].DevCells(indiv.Genome, devenv)  //Develop in novel (present) environment
+	//_, erranc := Clist[IAncEnv].DevCells(indiv.Genome, devenv0) //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
 
-	//Unit testing
-	//de := Dist2Vecs(Clist[0].Ctypes[0].E, Clist[1].Ctypes[0].E)
-	// dp := Dist2Vecs(Clist[0].Ctypes[0].P, Clist[1].Ctypes[0].P)
-	// if dp > 1.0e-2 {
-	// 	//fmt.Println("ID:", indiv.Id, "Difference between zero and anc environment:", de)
-	// 	fmt.Println("ID:", indiv.Id, "Zero env phenotype:", Clist[0].Ctypes[0].P)
-	// 	fmt.Println("ID:", indiv.Id, "Anc env phenotype:", Clist[1].Ctypes[0].P)
-	// 	fmt.Println("ID:", indiv.Id, "Difference between zero and anc phenotype:", dp) //BUG: WHY DOES SAME CUE INPUT GIVE DIFFERENT OUTPUTS? BUG IN DEVELOPMENT?
-	// }
-	//Unit testing
+	Clist[IAncEnv].DevCells(indiv.Genome, devenv0)
+	_, errnov := Clist[INovEnv].DevCells(indiv.Genome, devenv)
 
 	//indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
 	sse := indiv.get_sse()
-	indiv.MSE = sse / float64(ncells*(nenv+ncells))
-	indiv.Fit = indiv.get_fitness() //Fitness with cues
-	indiv.Util = indiv.Fit - f0
+	if errnov != nil {
+		indiv.Fit = minFitness //minimum fitness if cells don't converge
+	} else {
+		indiv.MSE = sse / float64(ncells*(nenv+ncells))
+		indiv.Fit = indiv.get_fitness() //Fitness with cues
+	}
 
-	//indiv.CuePlas = indiv.get_cue_plasticity()
+	// Ignoring convergence/divergence for now
 	indiv.ObsPlas = indiv.get_obs_plasticity()
-
 	indiv.Pp = indiv.get_pp(devenv)
 
 	return *indiv
