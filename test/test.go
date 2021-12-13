@@ -234,6 +234,12 @@ func main() {
 			//}
 	*/
 
+	fmt.Println("Trajectory of population written to", T_Filename)
+	fmt.Printf("Projections written to %s_*.dat \n", PG_Filename)
+	fmt.Printf("Genealogy of final generation written to %s.dot\n", Gid_Filename)
+	fmt.Printf("Number of ancestors of final generation written to %s\n", nancfilename)
+	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_out)
+
 	dt := time.Since(t0)
 	fmt.Println("Total time taken : ", dt)
 }
