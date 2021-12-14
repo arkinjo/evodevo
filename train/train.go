@@ -31,7 +31,7 @@ func main() {
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	//HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	denvPtr := flag.Int("denv", 10, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
 	pfilenamePtr := flag.String("pfilename", "pvec", "name of file of phenotypes")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
@@ -156,7 +156,7 @@ func main() {
 
 	fmt.Printf("Trajectory of population written to %s \n", T_Filename)
 	fmt.Printf("JSON encoding of evolved population written to %s \n", jfilename)
-	fmt.Printf("Phenotypes of population written to %s \n ",P_Filename)
+	fmt.Printf("Phenotypes of population written to %s \n ", P_Filename)
 	//fmt.Println("Trajectory of environment :", envtraj)
 
 	fmt.Println("Novelty of environment cue :", novvec)
