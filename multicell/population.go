@@ -296,6 +296,53 @@ func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previo
 	return me
 }
 
+func (pop *Population) Selection(nNewPop int) []Indiv { //Selects parents for new population
+	npop := len(pop.Indivs)
+	//var parents []Indiv //Does this even work?
+	parents := make([]Indiv, 0)
+	ipop := 0
+	cnt := 0
+	for ipop < nNewPop && cnt < 1000*nNewPop {
+		cnt += 1
+		k := rand.Intn(npop)
+		ind := pop.Indivs[k]
+		r := rand.Float64()
+		if r < ind.WagFit {
+			parents = append(parents, ind)
+			ipop += 1
+		}
+	}
+	return parents
+}
+
+func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
+	parents := pop.Selection(nNewPop)
+	nindivs := make([]Indiv, 0)
+	npop := len(parents)
+	//ipop := 0
+	//cnt := 0
+	for len(nindivs) < nNewPop { //Randomly reproduce among survivors
+		k := rand.Intn(npop)
+		l := rand.Intn(npop)
+		dad := pop.Indivs[k]
+		mom := pop.Indivs[l]
+		kid0, kid1 := Mate(&dad, &mom)
+		nindivs = append(nindivs, kid0)
+		nindivs = append(nindivs, kid1)
+		//ipop += 2
+	}
+
+	for i := range nindivs {
+		nindivs[i].Id = i //Relabels individuals according to position in array
+	}
+
+	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
+
+	return new_population
+
+}
+
+/*
 func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
 	npop := len(pop.Indivs)
 	var nindivs []Indiv
@@ -324,6 +371,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generatio
 
 	return new_population
 }
+*/
 
 func (pop *Population) DevPop(gen int) Population {
 	novenv := NewCues(ncells, nenv)
