@@ -345,6 +345,30 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 
 }
 
+func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in ordered pairs; as in Wagner's
+	var index int
+	parents := pop.Selection(nNewPop)
+	//nparents := len(parents)
+	nindivs := make([]Indiv, 0)
+
+	for index < nNewPop && len(nindivs) < nNewPop { //Forced reproduction in ordered pairs; may cause bugs when population has an odd number of survivors
+		dad := parents[index]
+		mom := parents[index+1]
+		kid0, kid1 := Mate(&dad, &mom)
+		nindivs = append(nindivs, kid0)
+		nindivs = append(nindivs, kid1)
+		index = len(nindivs) //update
+	}
+
+	for i := range nindivs {
+		nindivs[i].Id = i //Relabels individuals according to position in array
+	}
+
+	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
+
+	return new_population
+}
+
 /*
 func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
 	npop := len(pop.Indivs)
@@ -511,7 +535,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
 		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div)
 
-		pop = pop.Reproduce(maxPop)
+		pop = pop.PairReproduce(maxPop)
 
 		/*
 			for _, indiv := range pop.Indivs {
