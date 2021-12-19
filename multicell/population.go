@@ -319,13 +319,16 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 	parents := pop.Selection(nNewPop)
 	nindivs := make([]Indiv, 0)
 	npop := len(parents)
+
+	//fmt.Println("Number of individuals that survived selection :", npop)
+
 	//ipop := 0
 	//cnt := 0
 	for len(nindivs) < nNewPop { //Randomly reproduce among survivors
 		k := rand.Intn(npop)
 		l := rand.Intn(npop)
-		dad := pop.Indivs[k]
-		mom := pop.Indivs[l]
+		dad := parents[k]
+		mom := parents[l]
 		kid0, kid1 := Mate(&dad, &mom)
 		nindivs = append(nindivs, kid0)
 		nindivs = append(nindivs, kid1)
@@ -507,7 +510,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
 		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div)
-		//fmt.Println("CC :", gf)
+
 		pop = pop.Reproduce(maxPop)
 
 		/*
