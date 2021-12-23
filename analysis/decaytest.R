@@ -1,44 +1,34 @@
 
-test <- read.table("gccss6test.dat",header=TRUE)
+test <- read.table("pairtraj2.dat",header=TRUE)
 
-gen <- test$Generation
-
-plot(gen,test$MSE,type="l",ylim=c(0,0.1))
-abline(h=0.04,col="red")
-
-cuts = 200*c(0:20)
-abline(v=cuts,col="red")
-
-dp <- abs(diff(test$Obs_Plas))
-de <- abs(diff(test$MSE))
-
-#plot(abs(dp)[0:200],ylim=c(0,0.02),type="l")
-plot(dp[0:200],type="l")
-
-abline(h=0.01,col="red")
-plot(de[0:200],type="l")
-
-
-plot(de,ylim=c(0,0.1),type="l")
-lines(dp,ylim=c(0,0.1),type="l",col="blue")
-abline(h=0.01,col="red")
-
-plot(abs(diff(test$EMA_Pl[1801:1999])),type="l")
-axis(side=1,at=10*c(0:20))
-abline(v=10*c(0:20),h=0.05*c(0:200),lty=3,col="grey")
-axis(side=2,at=0.05*c(0:200))
-abline(h=0.01,col="red")
+gen <- seq(1:200)
+MSE <- test$MSE[1801:2000]
 
 f <- function(x,a,b,c){
   c + a*exp(-x/b)
 }
 
+a0 = MSE[1]-MSE[length(MSE)]
+b0 = 1.0
+c0 = MSE[length(MSE)]
 
-gen <- seq(1:200)
-MSE <- test$MSE[3401:3600]
-a0 = 0.05
-c0 = MSE[1]-0.05
+expfit <- nls(MSE~f(gen,a,b,c),start=list(a=a0,b=b0,c=c0))
+print(summary(expfit))
 
-fit <- nls(MSE~f(gen,a,b,c),start=list(a=1.5,b=6,c=0.05))
+plot(gen,MSE,ylim=c(0,2),main="Exponential fit")
+lines(fitted(expfit),type="l",col="blue")
 
+g <- function(x,a,b,c,d) {
+  d + a/(1+exp((x-c)/b))
+}
 
+a0 = MSE[1] - MSE[length(MSE)]
+b0 = 2.0
+c0 = 5.0
+d0 = MSE[length(MSE)]
+
+sigfit <- nls(MSE~g(gen,a,b,c,d),start=list(a=a0,b=b0,c=c0,d=d0))
+
+print(summary(sigfit))
+plot(gen,MSE,ylim=c(0,2),main="Sigmoidal fit")
+lines(fitted(sigfit),type="l",col="blue")
