@@ -503,7 +503,7 @@ func (cells *Cells) get_fitness(envs Cues) float64 {
 
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
 	rawfit := math.Exp(-baseSelStrength * indiv.MSE)
-	return math.Max(rawfit, minFitness)
+	return rawfit
 }
 
 /*
@@ -666,7 +666,7 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	//indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
 	sse := indiv.get_sse()
 	if errnov != nil {
-		indiv.Fit = minFitness //minimum fitness if cells don't converge
+		indiv.Fit = 0 //minimum fitness if cells don't converge
 	} else {
 		indiv.MSE = sse / float64(ncells*(nenv+ncells))
 		indiv.Fit = indiv.get_fitness() //Fitness with cues
