@@ -88,6 +88,7 @@ func main() {
 	}
 
 	jfilename = fmt.Sprintf("../pops/%s_%d.json", json_in, refgen)
+	fmt.Println("Reference population :",jfilename)
 
 	popin, err = os.Open(jfilename)
 	if err != nil {
@@ -165,7 +166,7 @@ func main() {
 	fmt.Println("Time taken to dump projections :", dtdump)
 	fmt.Println("Making DOT genealogy file")
 	tdot := time.Now()
-	nanctraj := multicell.DOT_Genealogy(Gid_Filename, json_out, epochlength, multicell.GetMaxPop())
+	nanctraj := multicell.DOT_Genealogy(Gid_Filename, json_in, epochlength, multicell.GetMaxPop())
 	//fmt.Println(nanctraj)
 	dtdot := time.Since(tdot)
 	fmt.Println("Time taken to make dot file :", dtdot)

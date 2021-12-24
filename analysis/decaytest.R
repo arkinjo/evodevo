@@ -1,7 +1,7 @@
 
 test <- read.table("upop20211223-0testtraj.dat",header=TRUE)
 
-gen <- seq(1:200)
+gen <- test$Generation
 MSE <- test$MSE
 
 f <- function(x,a,b,c){
