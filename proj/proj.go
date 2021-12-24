@@ -136,7 +136,7 @@ func main() {
 	//bugfixpop := multicell.NewPopulation(multicell.GetNcells(), multicell.MaxPop) //Bugfixing
 
 	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
-		jfilename := fmt.Sprintf("../pops/%s_%d.json", json_out, gen)
+		jfilename := fmt.Sprintf("../pops/%s_%d.json", json_in, gen)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)
@@ -188,7 +188,7 @@ func main() {
 	fmt.Printf("Projections written to %s_*.dat \n", PG_Filename)
 	fmt.Printf("Genealogy of final generation written to %s.dot\n", Gid_Filename)
 	fmt.Printf("Number of ancestors of final generation written to %s\n", nancfilename)
-	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_out)
+	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_in)
 
 	/*
 		//fmt.Println("Trajectory of environment :", envtraj)
