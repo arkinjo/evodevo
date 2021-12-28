@@ -116,11 +116,15 @@ func (pop *Population) GetMSE() float64 { //average observed plasticity of popul
 func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plasticity of population
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
+	denv := 0.0
+	for i, env := range pop.Envs { //To normalize wrt change in environment cue
+		denv += Hammingdist(env, pop.RefEnvs[i])
+	}
 	for _, indiv := range pop.Indivs {
 		mp += indiv.ObsPlas
 	}
 
-	return mp / fn
+	return mp / (fn * denv)
 }
 
 func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity of population
@@ -523,7 +527,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, CuePlas, ObsPlas, Polyp, Div)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, CuePlas, ObsPlas, Polyp, Div)
 
 		err = fout.Close()
 		if err != nil {
