@@ -326,7 +326,7 @@ func (cells *Cells) Copy() Cells {
 
 func NewIndiv(id int) Indiv { //Creates a new individual
 	genome := NewGenome()
-	cellcopies := make([]Cells, 2)
+	cellcopies := make([]Cells, 3)
 	for i := range cellcopies {
 		cellcopies[i] = NewCells(ncells)
 	}
@@ -457,11 +457,11 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	genome0, genome1 :=
 		Crossover(&dad.Genome, &mom.Genome)
 
-	cells0 := make([]Cells, 2)
+	cells0 := make([]Cells, 3)
 	for i := range cells0 {
 		cells0[i] = NewCells(ncells)
 	}
-	cells1 := make([]Cells, 2)
+	cells1 := make([]Cells, 3)
 	for i := range cells1 {
 		cells1[i] = NewCells(ncells)
 	}
