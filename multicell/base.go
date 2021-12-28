@@ -233,6 +233,14 @@ func UnitVec(len, dir int) Vec { //Generate a unit vector of length len with dir
 	return v
 }
 
+func Ones(len int) Vec { //Generate a vector of ones of length len
+	v := NewVec(len)
+	for i := range v {
+		v[i] = 1.0
+	}
+	return v
+}
+
 func multMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
 	for i := range vout {
 		vout[i] = 0.0

@@ -123,7 +123,6 @@ func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plast
 	return mp / fn
 }
 
-/*
 func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity of population
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
@@ -134,7 +133,6 @@ func (pop *Population) GetMeanCuePlasticity() float64 { //average cue plasticity
 
 	return mp / fn
 }
-*/
 
 /*
 func (pop *Population) GetMeanUtility() float64 { //average utility of population
@@ -435,7 +433,7 @@ func (pop *Population) DevPop(gen int) Population {
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
 	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
-	var MSE, WagFit, Fitness, Pl, Polyp, Div float64
+	var MSE, WagFit, Fitness, CuePlas, ObsPlas, Polyp, Div float64
 	var popsize int
 
 	pop := *init_pop
@@ -507,8 +505,8 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 		Fitness, WagFit = pop.GetMeanFitness()
 		MSE = pop.GetMSE()
-		//CuePlas = pop.GetMeanCuePlasticity()
-		Pl = pop.GetMeanObsPlasticity()
+		CuePlas = pop.GetMeanCuePlasticity()
+		ObsPlas = pop.GetMeanObsPlasticity()
 		Polyp = pop.GetMeanPp()
 		Div = pop.GetDiversity()
 		//Util = pop.GetMeanUtility()
@@ -525,7 +523,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, CuePlas, ObsPlas, Polyp, Div)
 
 		err = fout.Close()
 		if err != nil {
@@ -533,7 +531,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \n ", istep, popsize, MSE, Fitness, WagFit, Pl, Polyp, Div)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <CPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \n ", istep, popsize, MSE, Fitness, WagFit, CuePlas, ObsPlas, Polyp, Div)
 
 		pop = pop.PairReproduce(maxPop)
 
@@ -583,11 +581,13 @@ func (pop *Population) Dump_Phenotypes(Filename string, gen int) {
 }
 
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, Paxis Cues) {
-	var ancpproj, novpproj, gproj float64
+	var defpproj, ancpproj, novpproj, gproj float64
 	pop.DevPop(gen) //Not needed for bugfixing
 
 	anccphen := make(Vec, nenv+ncells)
 	novcphen := make(Vec, nenv+ncells)
+	defcphen := make(Vec, nenv+ncells)
+
 	mu := pop.Get_Mid_Env()
 	//fmt.Println("Middle environment : ", mu)
 	Projfilename := fmt.Sprintf("../analysis/%s_%d.dat", Filename, gen)
@@ -596,11 +596,15 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintln(fout, "NovPhen \t AncPhen \t Genotype")
+	fmt.Fprintln(fout, "DefPhen \t AncPhen \t NovPhen \t Genotype")
 
 	for _, indiv := range pop.Indivs {
 		ancpproj, novpproj, gproj = 0.0, 0.0, 0.0
 
+		for i, env := range mu { //For each environment cue
+			diffVecs(defcphen, indiv.Copies[INoEnv].Ctypes[i].P, env) //centralize
+			novpproj += Innerproduct(defcphen, Paxis[i])
+		}
 		for i, env := range mu { //For each environment cue
 			diffVecs(novcphen, indiv.Copies[INovEnv].Ctypes[i].P, env) //centralize
 			novpproj += Innerproduct(novcphen, Paxis[i])
@@ -656,7 +660,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 			}
 		*/
 		//fmt.Printf("Nov: %e\t Anc: %e\t G: %e\n", novpproj, ancpproj, gproj)
-		fmt.Fprintf(fout, "%f\t %f\t %f\n", novpproj, ancpproj, gproj)
+		fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", defpproj, novpproj, ancpproj, gproj)
 	}
 	err = fout.Close()
 	if err != nil {
