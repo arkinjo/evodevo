@@ -561,7 +561,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 func (pop *Population) Dump_Phenotypes(Filename string, gen int) {
 	pop.DevPop(gen)
 
-	trait := make([]float64, nenv)
+	trait := make([]float64, nenv) //trait part only
 
 	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -603,11 +603,11 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 
 		for i, env := range mu { //For each environment cue
 			diffVecs(novcphen, indiv.Copies[INovEnv].Ctypes[i].P, env) //centralize
-			novpproj += innerproduct(novcphen, Paxis[i])
+			novpproj += Innerproduct(novcphen, Paxis[i])
 		}
 		for i, env := range mu { //For each environment cue
 			diffVecs(anccphen, indiv.Copies[IAncEnv].Ctypes[i].P, env) //centralize
-			ancpproj += innerproduct(anccphen, Paxis[i])               //Plot phenotype when pulled back into ancestral environment at this stage on same axis
+			ancpproj += Innerproduct(anccphen, Paxis[i])               //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
 		if withCue {

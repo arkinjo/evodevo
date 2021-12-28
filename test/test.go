@@ -120,8 +120,9 @@ func main() {
 		NovEnvs = multicell.ChangeEnvs(OldEnvs, denv) //Randomize
 	} else { //If directions are given
 		//pcafilename := fmt.Sprintf("%s.dat", PCA_Filename)
-		pcacues := multicell.PCAtoCue(PCA_Filename)
+		pcacues, pcavecs := multicell.PCAtoCue(PCA_Filename)
 		NovEnvs = multicell.CopyCues(pcacues[pcindex]) //copy
+		fmt.Println(pcavecs)
 	}
 
 	popstart.Envs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.

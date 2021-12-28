@@ -230,20 +230,27 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	return sigma2
 }
 
-func PCAtoCue(pcafilename string) []Cues { //Converts PCA vectors containing only trait part into environment cue vectors
+func PCAtoCue(pcafilename string) ([]Cues, [][][]float64) { //Converts PCA vectors containing only trait part into environment cue vectors
 	var prdir, cell, trait, r int
 	var x, y float64
 	var str string
+
 	PCAenvs := make([]Cues, nenv*ncells) //Number of PCAs = Length of trait concatenation
 	for i := range PCAenvs {
 		PCAenvs[i] = NewCues(ncells, nenv)
 	}
-	/* //This was used for bugfixing
-	fmt.Printf("Number of PC's:%d\n", len(PCAenvs))
-	fmt.Printf("Number of cells:%d\n", len(PCAenvs[0]))
-	fmt.Printf("Number of traits:%d\n", len(PCAenvs[0][0]))
-	*/
+
+	PCAvecs := make([][][]float64, nenv*ncells*ncells)
+	for i := range PCAvecs {
+		PCAvecs[i] = make([][]float64, nenv*ncells)
+		for j := range PCAvecs[i] {
+			PCAvecs[i][j] = make([]float64, nenv)
+		}
+	}
+
 	traits := make([]float64, 0) //nenv and ncells are fixed and given; this is the concatenation of trait parts of cue
+	values := make([]float64, 0)
+
 	filename := fmt.Sprintf("../analysis/%s.dat", pcafilename)
 	file, err := os.Open(filename)
 	if err != nil {
@@ -254,6 +261,7 @@ func PCAtoCue(pcafilename string) []Cues { //Converts PCA vectors containing onl
 	for scanner.Scan() { //error in scanner?!
 		str = scanner.Text()
 		if x, err = strconv.ParseFloat(str, 64); err == nil {
+			values = append(values, x)
 			if math.Signbit(x) { //if negative
 				y = -1.0
 			} else {
@@ -262,7 +270,7 @@ func PCAtoCue(pcafilename string) []Cues { //Converts PCA vectors containing onl
 			traits = append(traits, y)
 		}
 	}
-	fmt.Println(len(traits))
+	fmt.Println(len(traits) == len(values))
 	/*
 		if len(traits) != nenv*ncells { //Is this even needed?
 			err := errors.New("input incompatable with size")
@@ -276,7 +284,8 @@ func PCAtoCue(pcafilename string) []Cues { //Converts PCA vectors containing onl
 		trait = r % nenv
 		//fmt.Printf("index:%d\tprdir:%d\tr:%d\tcindex:%d\ttindex:%d\ttrait:%f\n", i, prdir, r, cell, trait, t)
 		PCAenvs[prdir][cell][trait] = t
+		PCAvecs[prdir][cell][trait] = values[i]
 	}
 
-	return PCAenvs //, nil
+	return PCAenvs, PCAvecs //, nil
 }

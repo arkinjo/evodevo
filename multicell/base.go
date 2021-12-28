@@ -272,7 +272,7 @@ func diffVecs(vout, v0, v1 Vec) { //Difference of vectors
 	}
 }
 
-func innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v1, use for axis projection
+func Innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v1, use for axis projection
 	dot := 0.0
 	for i, v := range v0 {
 		dot += v * v1[i]
@@ -281,7 +281,7 @@ func innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v
 }
 
 func Veclength2(v Vec) float64 {
-	return innerproduct(v, v)
+	return Innerproduct(v, v)
 }
 
 func Veclength(v Vec) float64 { //Euclidean Length of vector
