@@ -48,9 +48,10 @@ type Indiv struct { //An individual as an unicellular organism
 	Fit    float64 //Fitness with cues
 	WagFit float64 //Wagner relative fitness
 	//Util   float64 //Fitness Utility of cues
-	CuePlas float64 //Cue Plasticity
-	ObsPlas float64 //Observed Plasticity
-	Pp      float64 //Degree of polyphenism
+	AncCuePlas float64 //Cue Plasticity in ancestral environment
+	NovCuePlas float64 //Cue Plasticity in novel environment
+	ObsPlas    float64 //Observed Plasticity
+	Pp         float64 //Degree of polyphenism
 }
 
 func NewGenome() Genome { //Generate new genome matrix ensemble
@@ -335,7 +336,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	//z := NewVec(ngenes)
 
 	//indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	indiv := Indiv{id, 0, 0, genome, cellcopies, mse, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, cellcopies, mse, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -471,8 +472,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, g1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	*/
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -507,7 +508,17 @@ func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environme
 	return rawfit
 }
 
-func (indiv *Indiv) get_cue_plasticity() float64 { //cue plasticity of individual
+func (indiv *Indiv) get_anc_cue_plasticity() float64 { //cue plasticity of individual
+	d2 := 0.0
+	copies := indiv.Copies
+	for i, cell := range copies[IAncEnv].Ctypes {
+		d2 += Dist2Vecs(cell.P, copies[INoEnv].Ctypes[i].P)
+	}
+	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
+	return d2 / float64(ncells*(ncells+nenv))
+}
+
+func (indiv *Indiv) get_nov_cue_plasticity() float64 { //cue plasticity of individual
 	d2 := 0.0
 	copies := indiv.Copies
 	for i, cell := range copies[INovEnv].Ctypes {
@@ -678,7 +689,8 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	}
 
 	// Ignoring convergence/divergence for now
-	indiv.CuePlas = indiv.get_cue_plasticity()
+	indiv.AncCuePlas = indiv.get_anc_cue_plasticity()
+	indiv.NovCuePlas = indiv.get_nov_cue_plasticity()
 	indiv.ObsPlas = indiv.get_obs_plasticity()
 	indiv.Pp = indiv.get_pp(devenv)
 

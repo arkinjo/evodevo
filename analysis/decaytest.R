@@ -26,8 +26,8 @@ g <- function(x,a,b,c,d) {
 }
 
 a0 = MSE[1] - MSE[length(MSE)]
-b0 = 2.0
-c0 = 10.0
+b0 = 10.0
+c0 = 0.1
 d0 = MSE[length(MSE)]
 
 sigfit <- nls(MSE~g(gen,a,b,c,d),start=list(a=a0,b=b0,c=c0,d=d0))
