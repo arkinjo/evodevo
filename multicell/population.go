@@ -678,7 +678,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 			}
 		*/
 		//fmt.Printf("Nov: %e\t Anc: %e\t G: %e\n", novpproj, ancpproj, gproj)
-		fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", defpproj, novpproj, ancpproj, gproj)
+		fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", defpproj, ancpproj, novpproj, gproj)
 	}
 	err = fout.Close()
 	if err != nil {
