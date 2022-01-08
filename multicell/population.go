@@ -615,19 +615,21 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	fmt.Fprintln(fout, "DefPhen \t AncPhen \t NovPhen \t Genotype")
 
 	for _, indiv := range pop.Indivs {
-		ancpproj, novpproj, gproj = 0.0, 0.0, 0.0
+		defpproj, ancpproj, novpproj, gproj = 0.0, 0.0, 0.0, 0.0
 
 		for i, env := range mu { //For each environment cue
 			diffVecs(defcphen, indiv.Copies[INoEnv].Ctypes[i].P, env) //centralize
-			novpproj += Innerproduct(defcphen, Paxis[i])
+			defpproj += Innerproduct(defcphen, Paxis[i])
 		}
-		for i, env := range mu { //For each environment cue
-			diffVecs(novcphen, indiv.Copies[INovEnv].Ctypes[i].P, env) //centralize
-			novpproj += Innerproduct(novcphen, Paxis[i])
-		}
+
 		for i, env := range mu { //For each environment cue
 			diffVecs(anccphen, indiv.Copies[IAncEnv].Ctypes[i].P, env) //centralize
 			ancpproj += Innerproduct(anccphen, Paxis[i])               //Plot phenotype when pulled back into ancestral environment at this stage on same axis
+		}
+
+		for i, env := range mu { //For each environment cue
+			diffVecs(novcphen, indiv.Copies[INovEnv].Ctypes[i].P, env) //centralize
+			novpproj += Innerproduct(novcphen, Paxis[i])
 		}
 
 		if withCue {
