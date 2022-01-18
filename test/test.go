@@ -40,7 +40,7 @@ func main() {
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	//HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
-	denvPtr := flag.Int("denv", 10, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
 	pcafilenamePtr := flag.String("pcafilename", "", "name of file of principal trait vector concatanation")
 	pgfilenamePtr := flag.String("pgfilename", "", "name of file of projected phenotypes and genotypes") //default to empty string

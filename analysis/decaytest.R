@@ -1,5 +1,5 @@
 
-test <- read.table("upop20220101traintraj.dat",header=TRUE)
+test <- read.table("upop20220115testtraj.dat",header=TRUE)
 
 gen <- test$Generation
 MSE <- test$MSE
@@ -14,7 +14,6 @@ c0 = MSE[length(MSE)]
 
 expfit <- nls(MSE~f(gen,a,b,c),start=list(a=a0,b=b0,c=c0))
 print(summary(expfit))
-
 plot(gen,MSE,ylim=c(0,2),main="Exponential fit")
 lines(gen,fitted(expfit),type="l",col="blue")
 
