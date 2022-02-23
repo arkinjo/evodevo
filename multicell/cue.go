@@ -11,8 +11,8 @@ import (
 	"strconv"
 )
 
-var devNoise float64 = 0.00 // Development environment cue noise
-var envNoise float64 = 0.00 // Selection environment noise
+var devNoise float64 = 0.05 // Development environment cue noise
+//var envNoise float64 = 0.00 // Selection environment noise
 
 type Cue = Vec //Environment cue is a special kind of vector
 
@@ -87,17 +87,24 @@ func CopyCue(cue Cue) Cue { //Returns a copy of an environment cue
 }
 */
 
+func SetNoise(eta float64) {
+	devNoise = eta
+}
+
 func AddNoisetoCue(cue Cue, eta float64) Cue {
-	var r float64
+	//var r float64
 
 	tv := GetTrait(cue)
 	idv := GetIdVec(cue)
 
 	for i, t := range tv {
-		r = rand.Float64()
-		if r < eta {
-			tv[i] = -t
-		}
+		/*
+			r = rand.Float64()
+			if r < eta {
+				tv[i] = -t
+			}
+		*/
+		tv[i] = t + eta*rand.NormFloat64()
 	}
 	v := append(tv, idv...)
 
