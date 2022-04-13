@@ -11,12 +11,18 @@ import (
 	"strconv"
 )
 
+var rand_env = rand.New(rand.NewSource(99))
+
 var devNoise float64 = 0.05 // Development environment cue noise
 //var envNoise float64 = 0.00 // Selection environment noise
 
 type Cue = Vec //Environment cue is a special kind of vector
 
 type Cues = []Cue //Cue array object
+
+func SetSeedEnv(seed int64) {
+	rand_env.Seed(seed);
+}
 
 func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 	tv := NewVec(nenv)         //trait part of vector
@@ -58,7 +64,7 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 
 	tv := make([]float64, nenv)
 	for i := range tv {
-		r = rand.Float64()
+		r = rand_env.Float64()
 		if r < density { //density is probability of 1
 			tv[i] = 1
 		} else {
@@ -92,18 +98,10 @@ func SetNoise(eta float64) {
 }
 
 func AddNoisetoCue(cue Cue, eta float64) Cue {
-	//var r float64
-
 	tv := GetTrait(cue)
 	idv := GetIdVec(cue)
 
 	for i, t := range tv {
-		/*
-			r = rand.Float64()
-			if r < eta {
-				tv[i] = -t
-			}
-		*/
 		tv[i] = t + eta*rand.NormFloat64()
 	}
 	v := append(tv, idv...)

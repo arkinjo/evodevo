@@ -238,15 +238,15 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 			}
 		}
 		if hoc {
-			for i, m := range Gtilde.Hg.Mat {
+			for i, m := range Gtilde.H.Mat {
 				for j, v := range m {
-					MeanGenome.Hg.Mat[i][j] += v * fnpop
+					MeanGenome.H.Mat[i][j] += v * fnpop
 				}
 			}
 			if hoi {
-				for i, m := range Gtilde.Hh.Mat {
+				for i, m := range Gtilde.J.Mat {
 					for j, v := range m {
-						MeanGenome.Hh.Mat[i][j] += v * fnpop
+						MeanGenome.J.Mat[i][j] += v * fnpop
 					}
 				}
 			}
@@ -652,15 +652,15 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 			}
 		}
 		if hoc {
-			for i, m := range indiv.Genome.Hg.Mat {
+			for i, m := range indiv.Genome.H.Mat {
 				for j, d := range m { //range over keys
-					gproj += d * Gaxis.Hg.Mat[i][j]
+					gproj += d * Gaxis.H.Mat[i][j]
 				}
 			}
 			if hoi {
-				for i, m := range indiv.Genome.Hh.Mat {
+				for i, m := range indiv.Genome.J.Mat {
 					for j, d := range m { //range over keys
-						gproj += d * Gaxis.Hg.Mat[i][j]
+						gproj += d * Gaxis.H.Mat[i][j]
 					}
 				}
 			}
