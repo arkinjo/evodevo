@@ -98,8 +98,6 @@ func SetNoise(eta float64) {
 }
 
 func AddNoisetoCue(cue Cue, eta float64) Cue {
-	//var r float64
-
 	tv := GetTrait(cue)
 	idv := GetIdVec(cue)
 
