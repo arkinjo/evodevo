@@ -11,8 +11,8 @@ type Genome struct { //Genome of an individual
 	E  Spmat //Environment cue effect on epigenome
 	F  Spmat //Regulatory effect of epigenetic markers on gene expression
 	G  Spmat //Regulatory effect of gene expression on epigenetic markers
-	Hg Spmat //Contribution of gene expression on higher order complexes
-	Hh Spmat //Interaction between higher order complexes
+	H Spmat //Contribution of gene expression on higher order complexes
+	J Spmat //Interaction between higher order complexes
 	P  Spmat //Resulting expressed phenotype
 	//Z  Spmat //Gene expression of offspring
 }
@@ -58,13 +58,12 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 	E := NewSpmat(ngenes, nenv+ncells)
 	F := NewSpmat(ngenes, ngenes)
 	G := NewSpmat(ngenes, ngenes)
-	Hg := NewSpmat(ngenes, ngenes)
-	Hh := NewSpmat(ngenes, ngenes)
+	H := NewSpmat(ngenes, ngenes)
+	J := NewSpmat(ngenes, ngenes)
 	P := NewSpmat(ngenes, nenv+ncells)
 	//Z := NewSpmat(ngenes, ngenes)
 
-	//genome := Genome{E, F, G, Hg, Hh, P, Z}
-	genome := Genome{E, F, G, Hg, Hh, P}
+	genome := Genome{E, F, G, H, J, P}
 
 	return genome
 }
@@ -81,9 +80,9 @@ func (G *Genome) Randomize() {
 	G.G.Randomize(GenomeDensity, sdg)
 
 	if hoc {
-		G.Hg.Randomize(GenomeDensity, sdhg)
+		G.H.Randomize(GenomeDensity, sdhg)
 		if hoi {
-			G.Hh.Randomize(GenomeDensity, sdhh)
+			G.J.Randomize(GenomeDensity, sdhh)
 		}
 	}
 	G.P.Randomize(CueResponseDensity, sdp)
@@ -106,12 +105,12 @@ func (G *Genome) Clear() { //Sets all entries of genome to zero
 			delete(r, j)
 		}
 	}
-	for _, r := range G.Hg.Mat {
+	for _, r := range G.H.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
 	}
-	for _, r := range G.Hh.Mat {
+	for _, r := range G.J.Mat {
 		for j := range r { //range over keys
 			delete(r, j)
 		}
@@ -134,8 +133,8 @@ func (parent *Genome) Copy() Genome { //creates copy of genome
 	e := parent.E.Copy()
 	f := parent.F.Copy()
 	g := parent.G.Copy()
-	hg := parent.Hg.Copy()
-	hh := parent.Hh.Copy()
+	hg := parent.H.Copy()
+	hh := parent.J.Copy()
 	p := parent.P.Copy()
 	//z := parent.Z.Copy()
 
@@ -157,9 +156,9 @@ func DiffGenomes(Gout, G1, G0 *Genome) { //Elementwise difference between two ge
 	Gout.G = DiffSpmat(&G1.G, &G0.G)
 
 	if hoc {
-		Gout.Hg = DiffSpmat(&G1.Hg, &G0.Hg)
+		Gout.H = DiffSpmat(&G1.H, &G0.H)
 		if hoi {
-			Gout.Hh = DiffSpmat(&G1.Hh, &G0.Hh)
+			Gout.J = DiffSpmat(&G1.J, &G0.J)
 		}
 	}
 
@@ -195,14 +194,14 @@ func (G *Genome) NormalizeGenome() Genome {
 	}
 
 	if hoc {
-		for _, m := range G.Hg.Mat {
+		for _, m := range G.H.Mat {
 			for _, v := range m {
 				lambda2 += v * v
 			}
 		}
 
 		if hoi {
-			for _, m := range G.Hh.Mat {
+			for _, m := range G.J.Mat {
 				for _, v := range m {
 					lambda2 += v * v
 				}
@@ -252,15 +251,15 @@ func (G *Genome) NormalizeGenome() Genome {
 	}
 
 	if hoc {
-		for i, m := range eG.Hg.Mat {
+		for i, m := range eG.H.Mat {
 			for j := range m {
-				eG.Hg.Mat[i][j] = eG.Hg.Mat[i][j] / lambda
+				eG.H.Mat[i][j] = eG.H.Mat[i][j] / lambda
 			}
 		}
 		if hoi {
-			for i, m := range eG.Hh.Mat {
+			for i, m := range eG.J.Mat {
 				for j := range m {
-					eG.Hh.Mat[i][j] = eG.Hh.Mat[i][j] / lambda
+					eG.J.Mat[i][j] = eG.J.Mat[i][j] / lambda
 				}
 			}
 		}
@@ -390,12 +389,12 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if hoc {
 		t += ngenes
 		if r < t {
-			indiv.Genome.Hg.mutateSpmat(GenomeDensity, sdhg)
+			indiv.Genome.H.mutateSpmat(GenomeDensity, sdhg)
 		}
 		if hoi {
 			t += ngenes
 			if r < t {
-				indiv.Genome.Hh.mutateSpmat(GenomeDensity, sdhh)
+				indiv.Genome.J.mutateSpmat(GenomeDensity, sdhh)
 			}
 		}
 	}
@@ -425,8 +424,8 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 			e := ng0.E.Mat[i]
 			f := ng0.F.Mat[i]
 			g := ng0.G.Mat[i]
-			hg := ng0.Hg.Mat[i]
-			hh := ng0.Hh.Mat[i]
+			hg := ng0.H.Mat[i]
+			hh := ng0.J.Mat[i]
 			p := ng0.P.Mat[i]
 			//z := ng0.Z.Mat[i]
 			//z0 := nz0[i]
@@ -434,8 +433,8 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 			ng0.E.Mat[i] = ng1.E.Mat[i]
 			ng0.F.Mat[i] = ng1.F.Mat[i]
 			ng0.G.Mat[i] = ng1.G.Mat[i]
-			ng0.Hg.Mat[i] = ng1.Hg.Mat[i]
-			ng0.Hh.Mat[i] = ng1.Hh.Mat[i]
+			ng0.H.Mat[i] = ng1.H.Mat[i]
+			ng0.J.Mat[i] = ng1.J.Mat[i]
 			ng0.P.Mat[i] = ng1.P.Mat[i]
 			//ng0.Z.Mat[i] = ng1.Z.Mat[i]
 			//nz0[i] = nz1[i]
@@ -443,8 +442,8 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 			ng1.E.Mat[i] = e
 			ng1.F.Mat[i] = f
 			ng1.G.Mat[i] = g
-			ng1.Hg.Mat[i] = hg
-			ng1.Hh.Mat[i] = hh
+			ng1.H.Mat[i] = hg
+			ng1.J.Mat[i] = hh
 			ng1.P.Mat[i] = p
 			//ng1.Z.Mat[i] = z
 			//nz1[i] = z0
@@ -562,8 +561,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	var convindex int
 
 	//g0 := NewVec(ngenes) //force initial condition g0 = 0
+	emp := NewVec(nenv + ncells) // = env - p0
 	g0 := Ones(ngenes)
-
 	f0 := NewVec(ngenes)
 	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
 	p0 := NewVec(nenv + ncells)
@@ -580,7 +579,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	for nstep := 0; nstep < maxDevStep; nstep++ {
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
-			multMatVec(ve, G.E, env)
+			diffVecs(emp, env, p0)
+			multMatVec(ve, G.E, emp)
 			addVecs(f1, vf, ve)
 		} else {
 			copy(f1, vf)
@@ -593,10 +593,10 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 			copy(g1, f1)
 		}
 		if hoc { //If layer for higher order complexes is present
-			multMatVec(vg, G.Hg, g1)
+			multMatVec(vg, G.H, g1)
 
 			if hoi { //If interactions between higher order complexes is present
-				multMatVec(vh, G.Hh, h0)
+				multMatVec(vh, G.J, h0)
 				addVecs(h1, vg, vh)
 			} else {
 				copy(h1, vg)
@@ -664,7 +664,7 @@ func (cells *Cells) DevCells(G Genome, envs Cues) (Cells, error) {
 func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
 	devenv := AddNoisetoCues(env, devNoise)
 	devenv0 := AddNoisetoCues(env0, devNoise)
-	//selenv := AddNoisetoCues(env, envNoise)
+
 	Clist := indiv.Copies
 
 	zeroenv := make([][]float64, ncells)

@@ -30,11 +30,11 @@ func TestEqualGenomes(G0, G1 Genome) float64 { //Elementwise difference between 
 
 		if hoc {
 			for j := 0; j < ngenes; j++ {
-				d += math.Abs(G1.Hg.Mat[i][j] - G0.Hg.Mat[i][j])
+				d += math.Abs(G1.H.Mat[i][j] - G0.H.Mat[i][j])
 			}
 			if hoi {
 				for j := 0; j < ngenes; j++ {
-					d += math.Abs(G1.Hh.Mat[i][j] - G0.Hh.Mat[i][j])
+					d += math.Abs(G1.J.Mat[i][j] - G0.J.Mat[i][j])
 				}
 			}
 		}
