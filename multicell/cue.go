@@ -20,6 +20,10 @@ type Cue = Vec //Environment cue is a special kind of vector
 
 type Cues = []Cue //Cue array object
 
+func SetSeedEnv(seed int64) {
+	rand_env.Seed(seed);
+}
+
 func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 	tv := NewVec(nenv)         //trait part of vector
 	idv := UnitVec(ncells, id) //id part of vector
