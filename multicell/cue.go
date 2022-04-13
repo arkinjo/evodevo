@@ -104,12 +104,6 @@ func AddNoisetoCue(cue Cue, eta float64) Cue {
 	idv := GetIdVec(cue)
 
 	for i, t := range tv {
-		/*
-			r = rand.Float64()
-			if r < eta {
-				tv[i] = -t
-			}
-		*/
 		tv[i] = t + eta*rand.NormFloat64()
 	}
 	v := append(tv, idv...)
