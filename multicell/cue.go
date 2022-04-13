@@ -11,6 +11,8 @@ import (
 	"strconv"
 )
 
+var rand_env = rand.New(rand.NewSource(99))
+
 var devNoise float64 = 0.05 // Development environment cue noise
 //var envNoise float64 = 0.00 // Selection environment noise
 
@@ -58,7 +60,7 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 
 	tv := make([]float64, nenv)
 	for i := range tv {
-		r = rand.Float64()
+		r = rand_env.Float64()
 		if r < density { //density is probability of 1
 			tv[i] = 1
 		} else {
