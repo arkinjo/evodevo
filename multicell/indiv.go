@@ -42,6 +42,7 @@ type Indiv struct { //An individual as an unicellular organism
 	MomId  int
 	Genome Genome
 	Copies []Cells //IAncEnv, INovEnv (see above const.)
+	EnvReplicas []Cues // INoEnv, IAncEnv, INovEnv + Noise
 	MSE    float64 //Squared error per cue
 	//Z       Vec     // Initial gene expression of offspring
 	//F0      float64 //Fitness without cues
@@ -324,7 +325,12 @@ func (cells *Cells) Copy() Cells {
 	return Cells1
 }
 
-func NewIndiv(id int) Indiv { //Creates a new individual
+func NewIndiv(id int, ancenv, novenv Cues) Indiv { //Creates a new individual
+	zeroenv := AddNoisetoCues(ZeroEnv, devNoise) // INoEnv
+	devenv0 := AddNoisetoCues(ancenv, devNoise) // IAncEnv
+	devenv1 := AddNoisetoCues(novenv, devNoise)   // INovEnv
+
+	env_reps := []Cues{zeroenv, devenv0, devenv1}
 	genome := NewGenome()
 	cellcopies := make([]Cells, 3)
 	for i := range cellcopies {
@@ -335,13 +341,13 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 	//z := NewVec(ngenes)
 
 	//indiv := Indiv{id, 0, 0, genome, cellcopies, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	indiv := Indiv{id, 0, 0, genome, cellcopies, mse, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, cellcopies, env_reps, mse, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
 
 func (indiv *Indiv) Copy() Indiv { //Deep copier
-	indiv1 := NewIndiv(indiv.Id)
+	indiv1 := NewIndiv(indiv.Id, indiv.EnvReplicas[IAncEnv],indiv.EnvReplicas[INovEnv])
 	indiv1.DadId = indiv.DadId
 	indiv1.MomId = indiv.MomId
 	indiv1.Genome = indiv.Genome.Copy()
@@ -453,7 +459,7 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 	return ng0, ng1
 }
 
-func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
+func Mate(dad, mom *Indiv, ancenv, novenv Cues) (Indiv, Indiv) { //Generates offspring
 	genome0, genome1 :=
 		Crossover(&dad.Genome, &mom.Genome)
 
@@ -466,13 +472,17 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		cells1[i] = NewCells(ncells)
 	}
 
-	/*
-		kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, g0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-		kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, g1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	*/
+	zeroenv0 := AddNoisetoCues(ZeroEnv, devNoise)
+	ancenv0 := AddNoisetoCues(ancenv, devNoise)
+	novenv0 := AddNoisetoCues(novenv, devNoise)
+	zeroenv1 := AddNoisetoCues(ZeroEnv, devNoise)
+	ancenv1 := AddNoisetoCues(ancenv, devNoise)
+	novenv1 := AddNoisetoCues(novenv, devNoise)
+	envs0 := []Cues{zeroenv0, ancenv0, novenv0}
+	envs1 := []Cues{zeroenv1, ancenv1, novenv1}
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, cells0, envs0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, cells1, envs1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -662,24 +672,13 @@ func (cells *Cells) DevCells(G Genome, envs Cues) (Cells, error) {
 }
 
 func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
-	devenv := AddNoisetoCues(env, devNoise)
-	devenv0 := AddNoisetoCues(env0, devNoise)
 
 	Clist := indiv.Copies
 
-	zeroenv := make([][]float64, ncells)
-	for i := range zeroenv {
-		zeroenv[i] = make([]float64, nenv)
-	}
+	Clist[INoEnv].DevCells(indiv.Genome, indiv.EnvReplicas[INoEnv])
+	Clist[IAncEnv].DevCells(indiv.Genome, indiv.EnvReplicas[IAncEnv])
+	_, errnov := Clist[INovEnv].DevCells(indiv.Genome, indiv.EnvReplicas[INovEnv])
 
-	//Clist[INoEnv].DevCells(indiv.Genome, zero)
-	//_, erranc := Clist[IAncEnv].DevCells(indiv.Genome, devenv0) //Inputs are same now, but why different outputs? //BUGFIXING; CHANGE BACK TO DEVENV0 FOR ACTUAL IMPLEMENTATION
-
-	Clist[INoEnv].DevCells(indiv.Genome, zeroenv)
-	Clist[IAncEnv].DevCells(indiv.Genome, devenv0)
-	_, errnov := Clist[INovEnv].DevCells(indiv.Genome, devenv)
-
-	//indiv.F0 = Clist[0].get_fitness(selenv)  //Fitness without cues
 	sse := indiv.get_sse()
 	if errnov != nil {
 		indiv.Fit = 0 //minimum fitness if cells don't converge
@@ -692,7 +691,7 @@ func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental p
 	indiv.AncCuePlas = indiv.get_anc_cue_plasticity()
 	indiv.NovCuePlas = indiv.get_nov_cue_plasticity()
 	indiv.ObsPlas = indiv.get_obs_plasticity()
-	indiv.Pp = indiv.get_pp(devenv)
+	indiv.Pp = indiv.get_pp(indiv.EnvReplicas[INovEnv])
 
 	return *indiv
 }

@@ -13,19 +13,20 @@ import (
 
 type Population struct { //Population of individuals
 	Gen     int
-	Envs    Cues //Environment of population in this epoch
-	RefEnvs Cues //Environment of population in previous epoch
+	NovEnvs    Cues //Novel Environment
+	AncEnvs Cues // Ancestral Environment
 	Indivs  []Indiv
 }
 
 func NewPopulation(ncell, npop int) Population { //Initialize new population
-	indivs := make([]Indiv, npop)
-	for i := range indivs {
-		indivs[i] = NewIndiv(i)
-	}
-
 	envs0 := NewCues(ncell, nenv)
 	envs1 := NewCues(ncell, nenv)
+
+	indivs := make([]Indiv, npop)
+	for i := range indivs {
+		indivs[i] = NewIndiv(i,envs0, envs1)
+	}
+
 
 	p := Population{0, envs0, envs1, indivs}
 	return p
@@ -63,8 +64,8 @@ func (pop *Population) Copy() Population {
 	//fmt.Println("Copying ",ncell,"-cell individuals")
 	pop1 := NewPopulation(ncell, npop)
 	pop1.Gen = pop.Gen
-	pop1.Envs = CopyCues(pop.Envs)
-	pop1.RefEnvs = CopyCues(pop.RefEnvs)
+	pop1.NovEnvs = CopyCues(pop.NovEnvs)
+	pop1.AncEnvs = CopyCues(pop.AncEnvs)
 	for i, indiv := range pop.Indivs {
 		pop1.Indivs[i] = indiv.Copy()
 	}
@@ -117,8 +118,8 @@ func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plast
 	mp := 0.0
 	fn := float64(len(pop.Indivs))
 	denv := 0.0
-	for i, env := range pop.Envs { //To normalize wrt change in environment cue
-		denv += Hammingdist(env, pop.RefEnvs[i])
+	for i, env := range pop.NovEnvs { //To normalize wrt change in environment cue
+		denv += Hammingdist(env, pop.AncEnvs[i])
 	}
 	for _, indiv := range pop.Indivs {
 		mp += indiv.ObsPlas
@@ -271,8 +272,8 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined using difference of environment cues
 	axlength2 := 0.0
 
-	e := pop.Envs     //Cue in novel (present) environment
-	e0 := pop.RefEnvs //Cue in ancestral (previous) environment
+	e := pop.NovEnvs     //Cue in novel (present) environment
+	e0 := pop.AncEnvs //Cue in ancestral (previous) environment
 	v := NewVec(nenv + ncells)
 	de := NewCues(ncells, nenv)
 
@@ -296,8 +297,8 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 }
 
 func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
-	e := pop.Envs     // novel environment
-	e0 := pop.RefEnvs // ancestral environment
+	e := pop.NovEnvs     // novel environment
+	e0 := pop.AncEnvs // ancestral environment
 
 	me := NewCues(ncells, nenv) // midpoint
 
@@ -342,7 +343,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 		l := rand.Intn(npop)
 		dad := parents[k]
 		mom := parents[l]
-		kid0, kid1 := Mate(&dad, &mom)
+		kid0, kid1 := Mate(&dad, &mom, pop.AncEnvs, pop.NovEnvs)
 		nindivs = append(nindivs, kid0)
 		nindivs = append(nindivs, kid1)
 		//ipop += 2
@@ -352,7 +353,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
+	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, nindivs} //resets embryonic values to zero!
 
 	return new_population
 
@@ -367,7 +368,7 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 	for index < nNewPop && len(nindivs) < nNewPop { //Forced reproduction in ordered pairs; may cause bugs when population has an odd number of survivors
 		dad := parents[index]
 		mom := parents[index+1]
-		kid0, kid1 := Mate(&dad, &mom)
+		kid0, kid1 := Mate(&dad, &mom, pop.AncEnvs, pop.NovEnvs)
 		nindivs = append(nindivs, kid0)
 		nindivs = append(nindivs, kid1)
 		index = len(nindivs) //update
@@ -377,41 +378,10 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
+	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, nindivs} //resets embryonic values to zero!
 
 	return new_population
 }
-
-/*
-func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
-	npop := len(pop.Indivs)
-	var nindivs []Indiv
-	ipop := 0
-	cnt := 0
-	for ipop < nNewPop && cnt < 1000*nNewPop {
-		cnt += 1
-		k := rand.Intn(npop)
-		l := rand.Intn(npop)
-		dad := pop.Indivs[k]
-		mom := pop.Indivs[l]
-		r0 := rand.Float64()
-		r1 := rand.Float64()
-		if r0 < dad.WagFit && r1 < mom.WagFit {
-			kid0, kid1 := Mate(&dad, &mom)
-			nindivs = append(nindivs, kid0)
-			nindivs = append(nindivs, kid1)
-			ipop += 2
-		}
-	}
-	for i := range nindivs {
-		nindivs[i].Id = i //Relabels individuals according to position in array
-	}
-
-	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
-
-	return new_population
-}
-*/
 
 func (pop *Population) DevPop(gen int) Population {
 	novenv := NewCues(ncells, nenv)
@@ -422,8 +392,8 @@ func (pop *Population) DevPop(gen int) Population {
 	ch := make(chan Indiv) //channels for parallelization
 	for _, indiv := range pop.Indivs {
 		go func(indiv Indiv) {
-			copy(novenv, pop.Envs)
-			copy(ancenv, pop.RefEnvs)
+			copy(novenv, pop.NovEnvs)
+			copy(ancenv, pop.AncEnvs)
 			ch <- indiv.CompareDev(novenv, ancenv)
 		}(indiv)
 	}

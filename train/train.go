@@ -98,13 +98,13 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.Envs = multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5)
+	popstart.NovEnvs = multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5)
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
 
 	envtraj := make([]multicell.Cues, 1) //Trajectory of environment cue
-	envtraj[0] = popstart.RefEnvs
+	envtraj[0] = popstart.AncEnvs
 	novvec := make([]bool, 0)
 	//novvec[0] = false
 
@@ -112,10 +112,10 @@ func main() {
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
-		envtraj = append(envtraj, popstart.Envs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append? This bug resurfaced after implementing in concatenated vector format!
+		envtraj = append(envtraj, popstart.NovEnvs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append? This bug resurfaced after implementing in concatenated vector format!
 
 		if epoch != 0 {
-			fmt.Println("Epoch ", epoch, "has environments", popstart.Envs)
+			fmt.Println("Epoch ", epoch, "has environments", popstart.NovEnvs)
 		}
 
 		pop1 := multicell.Evolve(false, T_Filename, json_out, "", epochlength, epoch, &popstart)
@@ -123,7 +123,7 @@ func main() {
 
 		if epoch == maxepochs { //Export output population; just before epoch change
 			//Update to environment just before epoch change
-			pop1.RefEnvs = multicell.CopyCues(pop1.Envs)
+			pop1.AncEnvs = multicell.CopyCues(pop1.NovEnvs)
 
 			jfilename = fmt.Sprintf("../pops/%s.json", json_out) //export output population to test file
 			jsonpop, err := json.Marshal(pop1)                   //JSON encoding of population as byte array
@@ -144,19 +144,19 @@ func main() {
 		fmt.Println("Time taken to simulate evolution :", dtevol)
 
 		popstart = pop1 //Update population after evolution.
-		//fmt.Println("Novel environment before :", popstart.Envs)
+		//fmt.Println("Novel environment before :", popstart.NovEnvs)
 		//fmt.Println("Ancestral environment before :", popstart.RefEnvs)
 
-		OldEnvs := multicell.CopyCues(popstart.Envs)
-		popstart.RefEnvs = OldEnvs
-		popstart.Envs = multicell.ChangeEnvs2(OldEnvs, denv)
-		err = multicell.DeepVec3NovTest(popstart.Envs, envtraj)
+		OldEnvs := multicell.CopyCues(popstart.NovEnvs)
+		popstart.AncEnvs = OldEnvs
+		popstart.NovEnvs = multicell.ChangeEnvs2(OldEnvs, denv)
+		err = multicell.DeepVec3NovTest(popstart.NovEnvs, envtraj)
 		if err != nil {
 			fmt.Println(err)
 		}
 		novvec = append(novvec, err == nil)
-		//fmt.Println("Novel environment after :", popstart.Envs)
-		//fmt.Println("Ancestral environment after :", popstart.RefEnvs)
+		//fmt.Println("Novel environment after :", popstart.NovEnvs)
+		//fmt.Println("Ancestral environment after :", popstart.AncEnvs)
 	}
 
 	fmt.Printf("Trajectory of population written to %s \n", T_Filename)

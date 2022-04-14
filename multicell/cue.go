@@ -20,6 +20,15 @@ type Cue = Vec //Environment cue is a special kind of vector
 
 type Cues = []Cue //Cue array object
 
+var ZeroEnv Cues
+
+func init() {
+	ZeroEnv = make([]Cue, ncells)
+	for i := range ZeroEnv {
+		ZeroEnv[i] = make([]float64, nenv)
+	}
+}
+
 func SetSeedCue(seed int64) {
 	rand_cue.Seed(seed);
 }

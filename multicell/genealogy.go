@@ -11,7 +11,7 @@ import (
 func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Dumps genealogy of population for an epoch into a dot file, going backwards in time. Returns number of reproducing population
 	var npars int
 	var id, dadid, momid string
-	indiv := NewIndiv(0)
+	indiv := NewIndiv(0,ZeroEnv, ZeroEnv)
 
 	nanctraj := []int{}
 	rnanctraj := []int{}
