@@ -394,7 +394,7 @@ func (pop *Population) DevPop(gen int) Population {
 		go func(indiv Indiv) {
 			copy(novenv, pop.NovEnvs)
 			copy(ancenv, pop.AncEnvs)
-			ch <- indiv.CompareDev(novenv, ancenv)
+			ch <- indiv.CompareDev()
 		}(indiv)
 	}
 	for i := range pop.Indivs {

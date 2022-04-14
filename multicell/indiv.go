@@ -671,7 +671,7 @@ func (cells *Cells) DevCells(G Genome, envs Cues) (Cells, error) {
 	return *cells, err
 }
 
-func (indiv *Indiv) CompareDev(env, env0 Cues) Indiv { //Compare developmental process under different conditions
+func (indiv *Indiv) CompareDev() Indiv { //Compare developmental process under different conditions
 
 	Clist := indiv.Copies
 
