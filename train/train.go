@@ -21,7 +21,7 @@ var jfilename string
 func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
-	seed_envPtr := flag.Int("seed_env", 1, "random seed for environment")
+	seed_cuePtr := flag.Int("seed_cue", 1, "random seed for environmental cue")
 	epochPtr := flag.Int("nepoch", 20, "number of epochs")
 	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
@@ -41,7 +41,7 @@ func main() {
 	flag.Parse()
 
 	multicell.SetSeed(int64(*seedPtr))
-	multicell.SetSeedEnv(int64(*seed_envPtr))
+	multicell.SetSeedCue(int64(*seed_cuePtr))
 	
 	maxepochs := *epochPtr
 	epochlength := *genPtr
