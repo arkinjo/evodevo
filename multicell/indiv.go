@@ -491,26 +491,16 @@ func Mate(dad, mom *Indiv, ancenv, novenv Cues) (Indiv, Indiv) { //Generates off
 	return kid0, kid1
 }
 
-func (indiv *Indiv) get_sse() float64 { //use after development; returns sum of squared errors
+func (indiv *Indiv) get_sse(envs Cues) float64 { //use after development; returns sum of squared errors
 	sse := 0.0
 
-	for _, cell := range indiv.Copies[INovEnv].Ctypes { //range over all cells
-		sse += Dist2Vecs(cell.P, cell.E)
+	for i, cell := range indiv.Copies[INovEnv].Ctypes { //range over all cells
+		sse += Dist2Vecs(cell.P, envs[i])
 	}
 
 	return sse
 }
 
-/*
-func (cells *Cells) get_fitness(envs Cues) float64 {
-	d2 := 0.0
-	//N := (nenv + ncells) //Normalize by concatenated environment cue vector length
-	for i, cell := range cells.Ctypes {
-		d2 += Dist2Vecs(cell.P, envs[i])
-	}
-	return math.Exp(-selStrength * d2) //vector concatenation length already absorbed into selStrength.
-}
-*/
 
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
 	rawfit := math.Exp(-baseSelStrength * indiv.MSE)
@@ -671,7 +661,7 @@ func (cells *Cells) DevCells(G Genome, envs Cues) (Cells, error) {
 	return *cells, err
 }
 
-func (indiv *Indiv) CompareDev() Indiv { //Compare developmental process under different conditions
+func (indiv *Indiv) CompareDev(envs Cues) Indiv { //Compare developmental process under different conditions
 
 	Clist := indiv.Copies
 
@@ -679,7 +669,7 @@ func (indiv *Indiv) CompareDev() Indiv { //Compare developmental process under d
 	Clist[IAncEnv].DevCells(indiv.Genome, indiv.EnvReplicas[IAncEnv])
 	_, errnov := Clist[INovEnv].DevCells(indiv.Genome, indiv.EnvReplicas[INovEnv])
 
-	sse := indiv.get_sse()
+	sse := indiv.get_sse(envs)
 	if errnov != nil {
 		indiv.Fit = 0 //minimum fitness if cells don't converge
 	} else {

@@ -384,30 +384,17 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 }
 
 func (pop *Population) DevPop(gen int) Population {
-	novenv := NewCues(ncells, nenv)
-	ancenv := NewCues(ncells, nenv)
-
 	pop.Gen = gen
 
 	ch := make(chan Indiv) //channels for parallelization
 	for _, indiv := range pop.Indivs {
 		go func(indiv Indiv) {
-			copy(novenv, pop.NovEnvs)
-			copy(ancenv, pop.AncEnvs)
-			ch <- indiv.CompareDev()
+			ch <- indiv.CompareDev(pop.NovEnvs)
 		}(indiv)
 	}
 	for i := range pop.Indivs {
 		pop.Indivs[i] = <-ch //Update output results
 	}
-
-	/*
-		for i, indiv := range pop.Indivs {
-			copy(novenv, pop.Envs)
-			copy(ancenv, pop.RefEnvs)
-			pop.Indivs[i] = indiv.CompareDev(novenv, ancenv)
-		}
-	*/
 
 	//We might need a sorter here.
 	pop.SortPopIndivs()
