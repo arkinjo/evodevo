@@ -519,7 +519,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
-	cell.E = AddNoise2Cue(env, devNoise) //cell.E doesn't change after here.
+	cell.E = CopyVec(env) // env includes noise.
 
 	convindex = 0
 	for nstep := 0; nstep < maxDevStep; nstep++ {
@@ -590,10 +590,11 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	}
 }
 
-func (body *Body) DevCells(G Genome, envs Cues) (Body, error) {
+func (body *Body) DevBody(G Genome, envs Cues) (Body, error) {
 	var err error = nil
+	nenvs := AddNoise2Cues(envs, devNoise)
 	for i, cell := range body.Cells {
-		_, e := cell.DevCell(G, envs[i])
+		_, e := cell.DevCell(G, nenvs[i])
 		if e != nil {
 			err = e
 		}
@@ -606,9 +607,9 @@ func (indiv *Indiv) CompareDev(ancenvs, novenvs Cues) Indiv { //Compare developm
 
 	bodies := indiv.Bodies
 
-	bodies[INoEnv].DevCells(indiv.Genome, ZeroEnvs)
-	bodies[IAncEnv].DevCells(indiv.Genome, ancenvs)
-	_, errnov := bodies[INovEnv].DevCells(indiv.Genome, novenvs)
+	bodies[INoEnv].DevBody(indiv.Genome, ZeroEnvs)
+	bodies[IAncEnv].DevBody(indiv.Genome, ancenvs)
+	_, errnov := bodies[INovEnv].DevBody(indiv.Genome, novenvs)
 
 	sse := indiv.get_sse(novenvs)
 	if errnov != nil {
