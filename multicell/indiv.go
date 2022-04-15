@@ -18,12 +18,12 @@ type Genome struct { //Genome of an individual
 }
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	E          Vec // Epigenetic markers
-	F          Vec // Epigenetic markers
-	G          Vec // Gene expression
-	H          Vec // Higher order complexes
-	P          Vec // Phenotype; id already in cue
-	PathLength int // Developmental path length
+	E        Vec // Epigenetic markers
+	F        Vec // Epigenetic markers
+	G        Vec // Gene expression
+	H        Vec // Higher order complexes
+	P        Vec // Phenotype; id already in cue
+	NDevStep int // Developmental path length
 }
 
 type Body struct { //Do we want to reimplement this?
@@ -297,7 +297,7 @@ func (cell *Cell) Copy() Cell {
 	cell1.G = CopyVec(cell.G)
 	cell1.H = CopyVec(cell.H)
 	cell1.P = CopyVec(cell.P)
-	cell1.PathLength = cell.PathLength
+	cell1.NDevStep = cell.NDevStep
 
 	return cell1
 }
@@ -564,16 +564,16 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 			convindex = 0
 		}
 		if convindex > ccStep {
-			cell.PathLength = nstep - ccStep //steady state reached
+			cell.NDevStep = nstep - ccStep //steady state reached
 			//fmt.Println(nstep) //step of steady state; for unit testing
 			break
 		}
 		if nstep == maxDevStep-1 {
-			cell.PathLength = maxDevStep
+			cell.NDevStep = maxDevStep
 		}
 
 	}
-	//	fmt.Println("PathLen: ", cell.PathLength)
+	//	fmt.Println("PathLen: ", cell.NDevStep)
 	//fmt.Println("Phenotype after development:",vpc)
 	//fmt.Println("Id after development:",vpid)
 	copy(cell.E, env)
@@ -582,7 +582,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	copy(cell.H, h1)
 	copy(cell.P, vp)
 
-	if cell.PathLength == maxDevStep {
+	if cell.NDevStep == maxDevStep {
 		return *cell, errors.New("DevCell: did not converge")
 	} else {
 		return *cell, nil

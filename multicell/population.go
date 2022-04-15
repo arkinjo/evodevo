@@ -113,12 +113,12 @@ func (pop *Population) GetMSE() float64 { //average observed plasticity of popul
 	return mse / fn
 }
 
-func (pop *Population) GetMeanPathLength() float64 {
+func (pop *Population) GetMeanNDevStep() float64 {
 	sp := 0
 	fn := float64(len(pop.Indivs) * ncells)
 	for _, indiv := range pop.Indivs {
 		for _, cell := range indiv.Bodies[INovEnv].Cells {
-			sp += cell.PathLength
+			sp += cell.NDevStep
 		}
 	}
 
@@ -488,7 +488,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 		Fitness, WagFit = pop.GetMeanFitness()
 		MSE = pop.GetMSE()
-		PathLen = pop.GetMeanPathLength()
+		PathLen = pop.GetMeanNDevStep()
 		AncCuePlas = pop.GetMeanAncCuePlasticity()
 		NovCuePlas = pop.GetMeanNovCuePlasticity()
 		ObsPlas = pop.GetMeanObsPlasticity()
