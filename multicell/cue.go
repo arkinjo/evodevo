@@ -12,7 +12,7 @@ import (
 
 var rand_cue = rand.New(rand.NewSource(99))
 
-var devNoise float64 = 0.005 // Development environment cue noise
+var devNoise float64 = 0.05 // Development environment cue noise
 //var envNoise float64 = 0.00 // Selection environment noise
 
 type Cue = Vec //Environment cue is a special kind of vector
@@ -158,7 +158,7 @@ func CopyCues(cues Cues) Cues {
 }
 
 func AddNoise2Cue(cue Cue, eta float64) Cue {
-	v := CopyVec(cue)
+	v := CopyVec(cue)  // don't change the input cue
 	tv := GetTrait(v)
 	idv := GetIdVec(v)
 
