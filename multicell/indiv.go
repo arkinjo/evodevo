@@ -505,7 +505,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	var diff float64
 	var convindex int
 
-	emp := NewVec(nenv + ncells) // = env - p0
+	e_p := NewVec(nenv + ncells) // = env - p0
 	g0 := Ones(ngenes)
 	f0 := NewVec(ngenes)
 	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
@@ -519,14 +519,12 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
-	cell.E = CopyVec(env) // env includes noise.
-
 	convindex = 0
 	for nstep := 0; nstep < maxDevStep; nstep++ {
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
-			diffVecs(emp, cell.E, p0)  //
-			multMatVec(ve, G.E, emp)
+			diffVecs(e_p, env, p0)   // env includes noise
+			multMatVec(ve, G.E, e_p)
 			addVecs(f1, vf, ve)
 		} else {
 			copy(f1, vf)
@@ -577,7 +575,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	}
 	//fmt.Println("Phenotype after development:",vpc)
 	//fmt.Println("Id after development:",vpid)
-
+	copy(cell.E, env)
 	copy(cell.F, f1)
 	copy(cell.G, g1)
 	copy(cell.H, h1)
