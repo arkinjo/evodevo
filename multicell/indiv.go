@@ -473,31 +473,10 @@ func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environme
 	return rawfit
 }
 
-func (indiv *Indiv) get_anc_cue_plasticity() float64 { //cue plasticity of individual
+func get_plasticity(body0, body1 Body) float64 { //cue plasticity of individual
 	d2 := 0.0
-	bodies := indiv.Bodies
-	for i, cell := range bodies[IAncEnv].Cells {
-		d2 += Dist2Vecs(cell.P, bodies[INoEnv].Cells[i].P)
-	}
-	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
-	return d2 / float64(ncells*(ncells+nenv))
-}
-
-func (indiv *Indiv) get_nov_cue_plasticity() float64 { //cue plasticity of individual
-	d2 := 0.0
-	bodies := indiv.Bodies
-	for i, cell := range bodies[INovEnv].Cells {
-		d2 += Dist2Vecs(cell.P, bodies[INoEnv].Cells[i].P)
-	}
-	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
-	return d2 / float64(ncells*(ncells+nenv))
-}
-
-func (indiv *Indiv) get_obs_plasticity() float64 { //observed plasticity between two environments
-	d2 := 0.0
-	bodies := indiv.Bodies
-	for i, cell := range bodies[INovEnv].Cells {
-		d2 += Dist2Vecs(cell.P, bodies[IAncEnv].Cells[i].P)
+	for i, cell := range body0.Cells {
+		d2 += Dist2Vecs(cell.P, body1.Cells[i].P)
 	}
 	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
 	return d2 / float64(ncells*(ncells+nenv))
@@ -640,9 +619,9 @@ func (indiv *Indiv) CompareDev(ancenvs, novenvs Cues) Indiv { //Compare developm
 	}
 
 	// Ignoring convergence/divergence for now
-	indiv.AncCuePlas = indiv.get_anc_cue_plasticity()
-	indiv.NovCuePlas = indiv.get_nov_cue_plasticity()
-	indiv.ObsPlas = indiv.get_obs_plasticity()
+	indiv.AncCuePlas = get_plasticity(indiv.Bodies[INoEnv], indiv.Bodies[IAncEnv])
+	indiv.NovCuePlas = get_plasticity(indiv.Bodies[INoEnv], indiv.Bodies[INovEnv])
+	indiv.ObsPlas = get_plasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
 	indiv.Pp = indiv.get_polyphenism(novenvs) // Should this be "envs" or indiv.Bodies[INovEnv].Cues?
 
 	return *indiv
