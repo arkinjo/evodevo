@@ -1,9 +1,8 @@
 package multicell
 
 import (
-	//"fmt"
-	"bufio"
 	"fmt"
+	"bufio"
 	"log"
 	"math"
 	"math/rand"
@@ -13,19 +12,21 @@ import (
 
 var rand_cue = rand.New(rand.NewSource(99))
 
-var devNoise float64 = 0.05 // Development environment cue noise
+var devNoise float64 = 0.005 // Development environment cue noise
 //var envNoise float64 = 0.00 // Selection environment noise
 
 type Cue = Vec //Environment cue is a special kind of vector
 
 type Cues = []Cue //Cue array object
 
-var ZeroEnv Cues
+var ZeroEnvs Cues
 
 func init() {
-	ZeroEnv = make([]Cue, ncells)
-	for i := range ZeroEnv {
-		ZeroEnv[i] = make([]float64, nenv)
+	ZeroEnvs = make([]Cue, ncells)
+	for i := range ZeroEnvs {
+		tv := make([]float64, nenv)
+		idv := UnitVec(ncells, i)
+		ZeroEnvs[i] = append(tv, idv...)
 	}
 }
 
@@ -106,18 +107,6 @@ func SetNoise(eta float64) {
 	devNoise = eta
 }
 
-func AddNoisetoCue(cue Cue, eta float64) Cue {
-	tv := GetTrait(cue)
-	idv := GetIdVec(cue)
-
-	for i, t := range tv {
-		tv[i] = t + eta*rand.NormFloat64()
-	}
-	v := append(tv, idv...)
-
-	return v
-}
-
 func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment cue; ignore id part
 	env1 := CopyVec(cue) //make a copy of the environmental cue to perform operations without affecting original value
 	//Splitting trait part and id part
@@ -167,13 +156,24 @@ func CopyCues(cues Cues) Cues {
 	return vs
 }
 
-func AddNoisetoCues(cues Cues, eta float64) Cues {
-	envs1 := CopyCues(cues)
+func AddNoise2Cue(cue Cue, eta float64) Cue {
+	tv := GetTrait(cue)
+	idv := GetIdVec(cue)
 
-	for i, c := range envs1 {
-		envs1[i] = AddNoisetoCue(c, eta) //hope this works; I actually don't know what I'm doing here
+	for i, t := range tv {
+		tv[i] = t + eta*rand.NormFloat64()
 	}
+	v := append(tv, idv...)
 
+	return v
+}
+
+func AddNoise2Cues(cues Cues, eta float64) Cues {
+	envs1 := CopyCues(cues)
+	for i, c := range envs1 {
+		envs1[i] = AddNoise2Cue(c, eta) //hope this works; I actually don't know what I'm doing here
+	}
+	
 	return envs1
 }
 
