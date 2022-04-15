@@ -24,7 +24,7 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 
 	indivs := make([]Indiv, npop)
 	for i := range indivs {
-		indivs[i] = NewIndiv(i,envs0, envs1)
+		indivs[i] = NewIndiv(i)
 	}
 
 
@@ -60,7 +60,7 @@ func (pop *Population) ClearGenome() {
 
 func (pop *Population) Copy() Population {
 	npop := len(pop.Indivs)
-	ncell := len(pop.Indivs[0].Copy().Copies[INovEnv].Ctypes) //number of cells
+	ncell := len(pop.Indivs[0].Bodies[INovEnv].Cells) //number of cells
 	//fmt.Println("Copying ",ncell,"-cell individuals")
 	pop1 := NewPopulation(ncell, npop)
 	pop1.Gen = pop.Gen
@@ -175,7 +175,7 @@ func (pop *Population) GetMeanPp() float64 { //average degree of polyphenism of 
 func (pop *Population) GetDiversity() float64 { //To be used after development
 	cv := make([]Cue, 0)
 	for _, ind := range pop.Indivs {
-		for _, cell := range ind.Copies[INovEnv].Ctypes {
+		for _, cell := range ind.Bodies[INovEnv].Cells {
 			cv = append(cv, cell.P)
 		}
 	}
@@ -201,7 +201,7 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 	pop.DevPop(gen)
 
 	for _, indiv := range pop.Indivs {
-		for i, c := range indiv.Copies[INovEnv].Ctypes {
+		for i, c := range indiv.Bodies[INovEnv].Cells {
 			for j, p := range c.P {
 				MeanPhenotype[i][j] += p / float64(npop)
 			}
@@ -343,7 +343,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 		l := rand.Intn(npop)
 		dad := parents[k]
 		mom := parents[l]
-		kid0, kid1 := Mate(&dad, &mom, pop.AncEnvs, pop.NovEnvs)
+		kid0, kid1 := Mate(&dad, &mom)
 		nindivs = append(nindivs, kid0)
 		nindivs = append(nindivs, kid1)
 		//ipop += 2
@@ -368,7 +368,7 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 	for index < nNewPop && len(nindivs) < nNewPop { //Forced reproduction in ordered pairs; may cause bugs when population has an odd number of survivors
 		dad := parents[index]
 		mom := parents[index+1]
-		kid0, kid1 := Mate(&dad, &mom, pop.AncEnvs, pop.NovEnvs)
+		kid0, kid1 := Mate(&dad, &mom)
 		nindivs = append(nindivs, kid0)
 		nindivs = append(nindivs, kid1)
 		index = len(nindivs) //update
@@ -389,7 +389,7 @@ func (pop *Population) DevPop(gen int) Population {
 	ch := make(chan Indiv) //channels for parallelization
 	for _, indiv := range pop.Indivs {
 		go func(indiv Indiv) {
-			ch <- indiv.CompareDev(pop.NovEnvs)
+			ch <- indiv.CompareDev(pop.AncEnvs, pop.NovEnvs)
 		}(indiv)
 	}
 	for i := range pop.Indivs {
@@ -539,7 +539,7 @@ func (pop *Population) Dump_Phenotypes(Filename string, gen int) {
 		log.Fatal(err)
 	}
 	for _, indiv := range pop.Indivs {
-		for _, cell := range indiv.Copies[INovEnv].Ctypes {
+		for _, cell := range indiv.Bodies[INovEnv].Cells {
 			copy(trait, cell.P)
 			for _, v := range trait {
 				fmt.Fprintf(fout, "%f\t", v)
@@ -575,17 +575,17 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		defpproj, ancpproj, novpproj, gproj = 0.0, 0.0, 0.0, 0.0
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(defcphen, indiv.Copies[INoEnv].Ctypes[i].P, env) //centralize
+			diffVecs(defcphen, indiv.Bodies[INoEnv].Cells[i].P, env) //centralize
 			defpproj += Innerproduct(defcphen, Paxis[i])
 		}
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(anccphen, indiv.Copies[IAncEnv].Ctypes[i].P, env) //centralize
+			diffVecs(anccphen, indiv.Bodies[IAncEnv].Cells[i].P, env) //centralize
 			ancpproj += Innerproduct(anccphen, Paxis[i])               //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(novcphen, indiv.Copies[INovEnv].Ctypes[i].P, env) //centralize
+			diffVecs(novcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
 			novpproj += Innerproduct(novcphen, Paxis[i])
 		}
 

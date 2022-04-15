@@ -116,9 +116,9 @@ func main() {
 	}
 
 	popstart := pop0.Copy()
-	AncEnvs := multicell.CopyCues(pop0.Envs)
-	OldEnvs := multicell.CopyCues(pop0.Envs)
-	popstart.RefEnvs = AncEnvs
+	AncEnvs := multicell.CopyCues(pop0.NovEnvs)
+	OldEnvs := multicell.CopyCues(pop0.NovEnvs)
+	popstart.AncEnvs = AncEnvs
 	NovEnvs := multicell.NewCues(multicell.GetNcells(), multicell.GetNenv()) //Declaration
 	if PCA_Filename == "" {                                                  //If no directions given
 		NovEnvs = multicell.ChangeEnvs(OldEnvs, denv) //Randomize
@@ -129,12 +129,12 @@ func main() {
 		fmt.Println(pcavecs)
 	}
 
-	popstart.Envs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
+	popstart.NovEnvs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
 
 	tevol := time.Now()
 
-	fmt.Println("Evolving in novel environment :", popstart.Envs)
-	fmt.Println("Ancestral environment :", popstart.RefEnvs)
+	fmt.Println("Evolving in novel environment :", popstart.NovEnvs)
+	fmt.Println("Ancestral environment :", popstart.AncEnvs)
 	gidfilename := fmt.Sprintf("%s_full", Gid_Filename)
 
 	pop1 := multicell.Evolve(true, T_Filename, json_out, gidfilename, epochlength, 1, &popstart)
@@ -142,7 +142,7 @@ func main() {
 
 	dtevol := time.Since(tevol)
 	fmt.Println("Time taken to simulate evolution :", dtevol)
-	fmt.Println(pop1.Envs)
+	fmt.Println(pop1.NovEnvs)
 
 	/*
 
