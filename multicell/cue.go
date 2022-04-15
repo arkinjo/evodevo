@@ -48,6 +48,7 @@ func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 
 func GetTrait(cue Cue) []float64 { //Extract trait part of cue
 	tv := cue[0:nenv]
+	
 	return tv
 }
 
@@ -157,13 +158,14 @@ func CopyCues(cues Cues) Cues {
 }
 
 func AddNoise2Cue(cue Cue, eta float64) Cue {
-	tv := GetTrait(cue)
-	idv := GetIdVec(cue)
+	v := CopyVec(cue)
+	tv := GetTrait(v)
+	idv := GetIdVec(v)
 
 	for i, t := range tv {
 		tv[i] = t + eta*rand.NormFloat64()
 	}
-	v := append(tv, idv...)
+	v = append(tv, idv...)
 
 	return v
 }
