@@ -595,7 +595,7 @@ func (body *Body) DevBody(G Genome, envs Cues) (Body, error) {
 
 	for i, cell := range body.Cells {
 		cell1, e := cell.DevCell(G, nenvs[i])
-		body.Cells[i] = cell1
+		body.Cells[i] = cell1 // Don't forget to update this!
 		if e != nil {
 			err = e
 		}
