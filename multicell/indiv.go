@@ -1,19 +1,19 @@
 package multicell
 
 import (
-	//	"fmt"
 	"errors"
+	//	"fmt"
 	"math"
 	"math/rand"
 )
 
 type Genome struct { //Genome of an individual
-	E  Spmat //Environment cue effect on epigenome
-	F  Spmat //Regulatory effect of epigenetic markers on gene expression
-	G  Spmat //Regulatory effect of gene expression on epigenetic markers
+	E Spmat //Environment cue effect on epigenome
+	F Spmat //Regulatory effect of epigenetic markers on gene expression
+	G Spmat //Regulatory effect of gene expression on epigenetic markers
 	H Spmat //Contribution of gene expression on higher order complexes
 	J Spmat //Interaction between higher order complexes
-	P  Spmat //Resulting expressed phenotype
+	P Spmat //Resulting expressed phenotype
 	//Z  Spmat //Gene expression of offspring
 }
 
@@ -37,14 +37,14 @@ const (
 )
 
 type Indiv struct { //An individual as an unicellular organism
-	Id     int
-	DadId  int
-	MomId  int
-	Genome Genome
-	Bodies []Body //INoEnv, IAncEnv, INovEnv (see above const.)
-	MSE    float64 //Squared error per cue
-	Fit    float64 //Fitness with cues
-	WagFit float64 //Wagner relative fitness
+	Id         int
+	DadId      int
+	MomId      int
+	Genome     Genome
+	Bodies     []Body  //INoEnv, IAncEnv, INovEnv (see above const.)
+	MSE        float64 //Squared error per cue
+	Fit        float64 //Fitness with cues
+	WagFit     float64 //Wagner relative fitness
 	AncCuePlas float64 //Cue Plasticity in ancestral environment
 	NovCuePlas float64 //Cue Plasticity in novel environment
 	ObsPlas    float64 //Observed Plasticity
@@ -283,7 +283,6 @@ func NewCell(id int) Cell { //Creates a new cell given id of cell.
 	g := NewVec(ngenes)
 	h := NewVec(ngenes)
 	p := NewCue(nenv, id)
-
 	cell := Cell{e, f, g, h, p, 0}
 
 	return cell
@@ -292,11 +291,13 @@ func NewCell(id int) Cell { //Creates a new cell given id of cell.
 func (cell *Cell) Copy() Cell {
 	id := GetId(cell.P) //Extract id part of cell phenotype
 	cell1 := NewCell(id)
+
 	cell1.E = CopyVec(cell.E)
 	cell1.F = CopyVec(cell.F)
 	cell1.G = CopyVec(cell.G)
 	cell1.H = CopyVec(cell.H)
 	cell1.P = CopyVec(cell.P)
+	cell1.PathLength = cell.PathLength
 
 	return cell1
 }
@@ -467,7 +468,6 @@ func (indiv *Indiv) get_sse(envs Cues) float64 { //use after development; return
 	return sse
 }
 
-
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
 	rawfit := math.Exp(-baseSelStrength * indiv.MSE)
 	return rawfit
@@ -523,7 +523,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	for nstep := 0; nstep < maxDevStep; nstep++ {
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
-			diffVecs(e_p, env, p0)   // env includes noise
+			diffVecs(e_p, env, p0) // env includes noise
 			multMatVec(ve, G.E, e_p)
 			addVecs(f1, vf, ve)
 		} else {
@@ -573,6 +573,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 		}
 
 	}
+	//	fmt.Println("PathLen: ", cell.PathLength)
 	//fmt.Println("Phenotype after development:",vpc)
 	//fmt.Println("Id after development:",vpid)
 	copy(cell.E, env)
@@ -591,8 +592,10 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 func (body *Body) DevBody(G Genome, envs Cues) (Body, error) {
 	var err error = nil
 	nenvs := AddNoise2Cues(envs, devNoise)
+
 	for i, cell := range body.Cells {
-		_, e := cell.DevCell(G, nenvs[i])
+		cell1, e := cell.DevCell(G, nenvs[i])
+		body.Cells[i] = cell1
 		if e != nil {
 			err = e
 		}
@@ -621,7 +624,7 @@ func (indiv *Indiv) CompareDev(ancenvs, novenvs Cues) Indiv { //Compare developm
 	indiv.AncCuePlas = get_plasticity(indiv.Bodies[INoEnv], indiv.Bodies[IAncEnv])
 	indiv.NovCuePlas = get_plasticity(indiv.Bodies[INoEnv], indiv.Bodies[INovEnv])
 	indiv.ObsPlas = get_plasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
-	indiv.Pp = indiv.get_polyphenism(novenvs) // Should this be "envs" or indiv.Bodies[INovEnv].Cues?
+	indiv.Pp = indiv.get_polyphenism(novenvs)
 
 	return *indiv
 }

@@ -13,7 +13,7 @@ import (
 
 type Population struct { //Population of individuals
 	Gen     int
-	NovEnvs    Cues //Novel Environment
+	NovEnvs Cues //Novel Environment
 	AncEnvs Cues // Ancestral Environment
 	Indivs  []Indiv
 }
@@ -26,7 +26,6 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 	for i := range indivs {
 		indivs[i] = NewIndiv(i)
 	}
-
 
 	p := Population{0, envs0, envs1, indivs}
 	return p
@@ -112,6 +111,18 @@ func (pop *Population) GetMSE() float64 { //average observed plasticity of popul
 	}
 
 	return mse / fn
+}
+
+func (pop *Population) GetMeanPathLength() float64 {
+	sp := 0
+	fn := float64(len(pop.Indivs) * ncells)
+	for _, indiv := range pop.Indivs {
+		for _, cell := range indiv.Bodies[INovEnv].Cells {
+			sp += cell.PathLength
+		}
+	}
+
+	return float64(sp) / fn
 }
 
 func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plasticity of population
@@ -272,7 +283,7 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined using difference of environment cues
 	axlength2 := 0.0
 
-	e := pop.NovEnvs     //Cue in novel (present) environment
+	e := pop.NovEnvs  //Cue in novel (present) environment
 	e0 := pop.AncEnvs //Cue in ancestral (previous) environment
 	v := NewVec(nenv + ncells)
 	de := NewCues(ncells, nenv)
@@ -297,7 +308,7 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 }
 
 func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
-	e := pop.NovEnvs     // novel environment
+	e := pop.NovEnvs  // novel environment
 	e0 := pop.AncEnvs // ancestral environment
 
 	me := NewCues(ncells, nenv) // midpoint
@@ -405,7 +416,7 @@ func (pop *Population) DevPop(gen int) Population {
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
 	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
-	var MSE, WagFit, Fitness, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div float64
+	var MSE, WagFit, Fitness, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div, PathLen float64
 	var popsize int
 
 	pop := *init_pop
@@ -477,6 +488,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 
 		Fitness, WagFit = pop.GetMeanFitness()
 		MSE = pop.GetMSE()
+		PathLen = pop.GetMeanPathLength()
 		AncCuePlas = pop.GetMeanAncCuePlasticity()
 		NovCuePlas = pop.GetMeanNovCuePlasticity()
 		ObsPlas = pop.GetMeanObsPlasticity()
@@ -496,7 +508,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
 
 		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div, PathLen)
 
 		err = fout.Close()
 		if err != nil {
@@ -504,7 +516,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <ACPl>:%e\t <NCPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \n ", istep, popsize, MSE, Fitness, WagFit, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <ACPl>:%e\t <NCPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e <Path>:%e\n ", istep, popsize, MSE, Fitness, WagFit, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div, PathLen)
 
 		pop = pop.PairReproduce(maxPop)
 
@@ -581,7 +593,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 
 		for i, env := range mu { //For each environment cue
 			diffVecs(anccphen, indiv.Bodies[IAncEnv].Cells[i].P, env) //centralize
-			ancpproj += Innerproduct(anccphen, Paxis[i])               //Plot phenotype when pulled back into ancestral environment at this stage on same axis
+			ancpproj += Innerproduct(anccphen, Paxis[i])              //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
 		for i, env := range mu { //For each environment cue

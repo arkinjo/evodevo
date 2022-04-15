@@ -1,8 +1,8 @@
 package multicell
 
 import (
-	"fmt"
 	"bufio"
+	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -31,7 +31,7 @@ func init() {
 }
 
 func SetSeedCue(seed int64) {
-	rand_cue.Seed(seed);
+	rand_cue.Seed(seed)
 }
 
 func NewCue(nenv, id int) Cue { //Initialize a new cue type object
@@ -48,7 +48,7 @@ func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 
 func GetTrait(cue Cue) []float64 { //Extract trait part of cue
 	tv := cue[0:nenv]
-	
+
 	return tv
 }
 
@@ -174,7 +174,7 @@ func AddNoise2Cues(cues Cues, eta float64) Cues {
 	for i, c := range envs1 {
 		envs1[i] = AddNoise2Cue(c, eta) //hope this works; I actually don't know what I'm doing here
 	}
-	
+
 	return envs1
 }
 

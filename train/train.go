@@ -42,7 +42,7 @@ func main() {
 
 	multicell.SetSeed(int64(*seedPtr))
 	multicell.SetSeedCue(int64(*seed_cuePtr))
-	
+
 	maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
