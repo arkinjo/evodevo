@@ -29,7 +29,7 @@ var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 const baseMutationRate float64 = 0.01 // default probability of mutation of genome
 var mutRate float64                   //declaration
 const baseSelStrength float64 = 50    // default selection strength; to be normalized by number of cells
-const selDevStep float64 = 15.0       // Developmental steps for selection
+const selDevStep float64 = 20.0       // Developmental steps for selection
 
 //var selStrength float64             //declaration; Selection strength per unit cue
 //var minFitness float64
