@@ -93,17 +93,6 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 	return v
 }
 
-/* This is now redundant after introducing CopyVec function
-func CopyCue(cue Cue) Cue { //Returns a copy of an environment cue
-	c0 := cue //this already includes id part
-	lc := len(c0)
-	cv := make([]float64, lc)
-	copy(cv, c0)
-
-	return cv
-}
-*/
-
 func SetNoise(eta float64) {
 	devNoise = eta
 }
