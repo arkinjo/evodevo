@@ -1,7 +1,7 @@
 package multicell
 
 import (
-	"errors"
+	//	"errors"
 	//	"fmt"
 	//	"log"
 	"math"
@@ -70,22 +70,21 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 func (G *Genome) Randomize() {
 
 	if withCue {
-		G.E.Randomize(CueResponseDensity, sde)
+		G.E.Randomize(CueResponseDensity, sdE)
 	}
 
 	if epig {
-		G.F.Randomize(GenomeDensity, sdf)
+		G.F.Randomize(GenomeDensity, sdF)
 	}
-	G.G.Randomize(GenomeDensity, sdg)
+	G.G.Randomize(GenomeDensity, sdG)
 
 	if hoc {
-		G.H.Randomize(GenomeDensity, sdhg)
+		G.H.Randomize(GenomeDensity, sdH)
 		if hoi {
-			G.J.Randomize(GenomeDensity, sdhh)
+			G.J.Randomize(GenomeDensity, sdJ)
 		}
 	}
-	G.P.Randomize(CueResponseDensity, sdp)
-	//G.Z.Randomize(GenomeDensity)
+	G.P.Randomize(CueResponseDensity, sdP)
 }
 
 func (G *Genome) Clear() { //Sets all entries of genome to zero
@@ -359,34 +358,34 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if withCue {
 		t += nenv + ncells
 		if r < t {
-			indiv.Genome.E.mutateSpmat(CueResponseDensity, sde)
+			indiv.Genome.E.mutateSpmat(CueResponseDensity, sdE)
 		}
 	}
 	if epig {
 		t += ngenes
 		if r < t {
-			indiv.Genome.F.mutateSpmat(GenomeDensity, sdf)
+			indiv.Genome.F.mutateSpmat(GenomeDensity, sdF)
 		}
 	}
 	t += ngenes
 	if r < t {
-		indiv.Genome.G.mutateSpmat(GenomeDensity, sdg)
+		indiv.Genome.G.mutateSpmat(GenomeDensity, sdG)
 	}
 	if hoc {
 		t += ngenes
 		if r < t {
-			indiv.Genome.H.mutateSpmat(GenomeDensity, sdhg)
+			indiv.Genome.H.mutateSpmat(GenomeDensity, sdH)
 		}
 		if hoi {
 			t += ngenes
 			if r < t {
-				indiv.Genome.J.mutateSpmat(GenomeDensity, sdhh)
+				indiv.Genome.J.mutateSpmat(GenomeDensity, sdJ)
 			}
 		}
 	}
 	t += nenv + ncells
 	if r < t {
-		indiv.Genome.P.mutateSpmat(CueResponseDensity, sdp)
+		indiv.Genome.P.mutateSpmat(CueResponseDensity, sdP)
 	}
 	/*
 		t += ngenes
@@ -461,20 +460,23 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
-func (indiv *Indiv) get_sse(envs Cues) float64 { //use after development; returns sum of squared errors
+func (indiv *Indiv) get_MSE(envs Cues) float64 { //use after development; returns sum of squared errors
 	sse := 0.0
 
 	for i, cell := range indiv.Bodies[INovEnv].Cells { //range over all cells
 		sse += Dist2Vecs(cell.P, envs[i])
 	}
 
-	return sse
+	return sse / float64(ncells*(nenv+ncells))
 }
 
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
-	fdev := math.Max(float64(indiv.NDevStep)-selDevStep, 0.0) / selDevStep
+	if indiv.NDevStep == maxDevStep {
+		return 0.0
+	}
 
-	rawfit := math.Exp(-baseSelStrength*indiv.MSE - fdev)
+	fdev := math.Max(float64(indiv.NDevStep-10), 0.0) / 20.0
+	rawfit := math.Exp(-baseSelStrength*indiv.MSE - 0.5*fdev*fdev)
 	return rawfit
 }
 
@@ -506,7 +508,7 @@ func (indiv *Indiv) get_polyphenism(envs Cues) float64 { //Degree of polyphenism
 	}
 }
 
-func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell given cue
+func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	var diff float64
 	var convindex int
 
@@ -569,7 +571,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 			convindex = 0
 		}
 		if convindex > ccStep {
-			cell.NDevStep = nstep //steady state reached
+			cell.NDevStep = nstep - ccStep //steady state reached
 			break
 		}
 		if nstep == maxDevStep-1 {
@@ -586,34 +588,22 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 	copy(cell.H, h1)
 	copy(cell.P, vp)
 
-	if cell.NDevStep == maxDevStep {
-		return *cell, errors.New("DevCell: did not converge")
-	} else {
-		return *cell, nil
-	}
+	return *cell
 }
 
-func (body *Body) DevBody(G Genome, envs Cues) (Body, error) {
-	var err error = nil
+func (body *Body) DevBody(G Genome, envs Cues) Body {
 	nenvs := AddNoise2Cues(envs, devNoise)
 	for i, cell := range body.Cells {
-		cell1, e := cell.DevCell(G, nenvs[i])
-		body.Cells[i] = cell1 // Don't forget to update this!
-		if e != nil {
-			err = e
-		}
+		body.Cells[i] = cell.DevCell(G, nenvs[i])
 	}
 
-	return *body, err
+	return *body
 }
 
 func (indiv *Indiv) CompareDev(ancenvs, novenvs Cues) Indiv { //Compare developmental process under different conditions
-
-	bodies := indiv.Bodies
-
-	bodies[INoEnv].DevBody(indiv.Genome, ZeroEnvs)
-	bodies[IAncEnv].DevBody(indiv.Genome, ancenvs)
-	_, errnov := bodies[INovEnv].DevBody(indiv.Genome, novenvs)
+	indiv.Bodies[INoEnv].DevBody(indiv.Genome, ZeroEnvs)
+	indiv.Bodies[IAncEnv].DevBody(indiv.Genome, ancenvs)
+	indiv.Bodies[INovEnv].DevBody(indiv.Genome, novenvs)
 
 	maxdev := 0
 	for _, cell := range indiv.Bodies[INovEnv].Cells {
@@ -622,14 +612,8 @@ func (indiv *Indiv) CompareDev(ancenvs, novenvs Cues) Indiv { //Compare developm
 		}
 	}
 	indiv.NDevStep = maxdev
-
-	sse := indiv.get_sse(novenvs)
-	if errnov != nil {
-		indiv.Fit = 0 //minimum fitness if cells don't converge
-	} else {
-		indiv.MSE = sse / float64(ncells*(nenv+ncells))
-		indiv.Fit = indiv.get_fitness() //Fitness with cues
-	}
+	indiv.MSE = indiv.get_MSE(novenvs)
+	indiv.Fit = indiv.get_fitness()
 
 	// Ignoring convergence/divergence for now
 	indiv.AncCuePlas = get_plasticity(indiv.Bodies[INoEnv], indiv.Bodies[IAncEnv])
