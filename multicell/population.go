@@ -18,7 +18,7 @@ type Population struct { //Population of individuals
 	Indivs  []Indiv
 }
 
-type PopStats struct {
+type PopStats struct { // Statistics of population (mean values of quantities of interest)
 	MSE        float64
 	WagFit     float64
 	Fitness    float64
