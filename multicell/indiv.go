@@ -472,7 +472,9 @@ func (indiv *Indiv) get_sse(envs Cues) float64 { //use after development; return
 }
 
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
-	rawfit := math.Exp(-baseSelStrength * indiv.MSE)
+	fdev := math.Max(float64(indiv.NDevStep)-selDevStep, 0.0) / selDevStep
+
+	rawfit := math.Exp(-baseSelStrength*indiv.MSE - fdev)
 	return rawfit
 }
 
