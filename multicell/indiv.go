@@ -3,6 +3,7 @@ package multicell
 import (
 	"errors"
 	//	"fmt"
+	//	"log"
 	"math"
 	"math/rand"
 )
@@ -49,6 +50,7 @@ type Indiv struct { //An individual as an unicellular organism
 	NovCuePlas float64 //Cue Plasticity in novel environment
 	ObsPlas    float64 //Observed Plasticity
 	Pp         float64 //Degree of polyphenism
+	NDevStep   int     // Maximum number of developmental steps in cells under NovEnv.
 }
 
 func NewGenome() Genome { //Generate new genome matrix ensemble
@@ -327,7 +329,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 
 	mse := 0.0
 
-	indiv := Indiv{id, 0, 0, genome, bodies, mse, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, bodies, mse, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0}
 
 	return indiv
 }
@@ -343,6 +345,7 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 	indiv1.Fit = indiv.Fit
 	indiv1.ObsPlas = indiv.ObsPlas
 	indiv1.Pp = indiv.Pp
+	indiv1.NDevStep = indiv.NDevStep
 
 	return indiv1
 }
@@ -448,8 +451,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		bodies1[i] = NewBody(ncells)
 	}
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -564,8 +567,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 			convindex = 0
 		}
 		if convindex > ccStep {
-			cell.NDevStep = nstep - ccStep //steady state reached
-			//fmt.Println(nstep) //step of steady state; for unit testing
+			cell.NDevStep = nstep //steady state reached
 			break
 		}
 		if nstep == maxDevStep-1 {
@@ -592,7 +594,6 @@ func (cell *Cell) DevCell(G Genome, env Cue) (Cell, error) { //Develops a cell g
 func (body *Body) DevBody(G Genome, envs Cues) (Body, error) {
 	var err error = nil
 	nenvs := AddNoise2Cues(envs, devNoise)
-
 	for i, cell := range body.Cells {
 		cell1, e := cell.DevCell(G, nenvs[i])
 		body.Cells[i] = cell1 // Don't forget to update this!
@@ -611,6 +612,14 @@ func (indiv *Indiv) CompareDev(ancenvs, novenvs Cues) Indiv { //Compare developm
 	bodies[INoEnv].DevBody(indiv.Genome, ZeroEnvs)
 	bodies[IAncEnv].DevBody(indiv.Genome, ancenvs)
 	_, errnov := bodies[INovEnv].DevBody(indiv.Genome, novenvs)
+
+	maxdev := 0
+	for _, cell := range indiv.Bodies[INovEnv].Cells {
+		if cell.NDevStep > maxdev {
+			maxdev = cell.NDevStep
+		}
+	}
+	indiv.NDevStep = maxdev
 
 	sse := indiv.get_sse(novenvs)
 	if errnov != nil {
