@@ -110,9 +110,10 @@ func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or
 	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
 
 	//initializing theoretical standard deviations for entries of each matrix
-	sdE = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
-	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
+	sdE = 0.5 * math.Sqrt(cuestrength/(CueResponseDensity*float64(nenv+ncells)*(1+cuestrength)))
 	sdG = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
+
+	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
 	sdH = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+hoistrength))
 	sdJ = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + hoistrength)))
 	sdP = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
