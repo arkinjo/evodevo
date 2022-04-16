@@ -222,15 +222,18 @@ func ChangeEnvs2(cues Cues, n int) Cues { //Flips precisely n bits in each envir
 }
 
 func GetMeanCue(cues Cues) Cue { //elementwise arithmetic mean of environment cue
-	//ncells := len(cues)
-	//ncues := len(cues)
 	cv := NewVec(nenv + ncells)
 	for _, env := range cues {
 		for j, t := range env {
-			cv[j] += t / float64(len(cues))
+			cv[j] += t
 		}
 	}
 
+	fn := 1 / float64(len(cues))
+
+	for j, t := range cv {
+		cv[j] = t * fn
+	}
 	return cv
 }
 
@@ -240,8 +243,11 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	sigma2 := 0.0
 	for _, c := range cues {
 		diffVecs(v, c, mu)
-		sigma2 += Veclength2(v) / float64(len(cues))
+		sigma2 += Veclength2(v)
 	}
+
+	sigma2 /= float64(len(cues))
+
 	return sigma2
 }
 
