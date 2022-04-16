@@ -29,7 +29,7 @@ var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 const baseMutationRate float64 = 0.01 // default probability of mutation of genome
 var mutRate float64                   //declaration
 const baseSelStrength float64 = 50    // default selection strength; to be normalized by number of cells
-const selDevStep float64 = 20.0       // Developmental steps for selection
+const selDevStep float64 = 15.0       // Developmental steps for selection
 
 //var selStrength float64             //declaration; Selection strength per unit cue
 //var minFitness float64
@@ -38,18 +38,19 @@ const minWagnerFitness float64 = 0.01
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var withCue bool = false // with or without environmental cues.
-var cuestrength float64  //declaration
+var cuestrength float64  // cue strength
 var epig bool = true     // Epigenetic marker layer
 var hoc bool = true      // Higher order complexes layer
 var hoi bool = false
 var hoistrength float64 //declaration
 
-var sde float64  //declaration
-var sdf float64  //declaration
-var sdg float64  //declaration
-var sdhg float64 //declaration
-var sdhh float64 //declaration
-var sdp float64  //declaration
+// theoretical standard deviation of matrix elements
+var sdE float64
+var sdF float64
+var sdG float64
+var sdH float64
+var sdJ float64
+var sdP float64
 
 //Remark: defaults to full model!
 
@@ -109,12 +110,12 @@ func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or
 	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
 
 	//initializing theoretical standard deviations for entries of each matrix
-	sdg = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
-	sde = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
-	sdf = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
-	sdhg = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+hoistrength))
-	sdhh = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + hoistrength)))
-	sdp = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
+	sdE = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
+	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
+	sdG = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
+	sdH = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+hoistrength))
+	sdJ = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + hoistrength)))
+	sdP = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
 }
 
 func GetMaxPop() int {
