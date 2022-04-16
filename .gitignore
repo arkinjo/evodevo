@@ -28,3 +28,5 @@ evodevo
 *.dot
 
 analysis/.Rhistory
+train/train
+test/test
