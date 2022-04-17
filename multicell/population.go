@@ -327,7 +327,7 @@ func (pop *Population) DevPop(gen int) Population {
 	ch := make(chan Indiv) //channels for parallelization
 	for _, indiv := range pop.Indivs {
 		go func(indiv Indiv) {
-			ch <- indiv.CompareDev(pop.AncEnvs, pop.NovEnvs)
+			ch <- indiv.Develop(pop.AncEnvs, pop.NovEnvs)
 		}(indiv)
 	}
 	for i := range pop.Indivs {

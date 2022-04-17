@@ -600,7 +600,7 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 	return *body
 }
 
-func (indiv *Indiv) CompareDev(ancenvs, novenvs Cues) Indiv { //Compare developmental process under different conditions
+func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare developmental process under different conditions
 	indiv.Bodies[INoEnv].DevBody(indiv.Genome, ZeroEnvs)
 	indiv.Bodies[IAncEnv].DevBody(indiv.Genome, ancenvs)
 	indiv.Bodies[INovEnv].DevBody(indiv.Genome, novenvs)
