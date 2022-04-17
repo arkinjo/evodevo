@@ -466,11 +466,11 @@ func (body *Body) set_MeanErr(envs Cues) { //use after development; returns sum 
 	sse := 0.0
 
 	for i, cell := range body.Cells { //range over all cells
-		//sse += Dist2Vecs(cell.P, envs[i])
-		sse += DistVecs1(cell.P, envs[i])
+		//sse += Dist2Vecs(cell.P, envs[i]) // L2 norm
+		sse += DistVecs1(cell.P, envs[i]) // L1 norm
 	}
-
-	body.MeanErr = sse / float64(ncells*(nenv+ncells))
+	//	body.MeanErr = math.Sqrt(sse / float64(ncells*(nenv+ncells))) // L2
+	body.MeanErr = sse / float64(ncells*(nenv+ncells)) // L1
 }
 
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
