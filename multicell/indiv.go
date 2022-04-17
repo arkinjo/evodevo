@@ -28,7 +28,8 @@ type Cell struct { //A 'cell' is characterized by its gene expression and phenot
 }
 
 type Body struct { //Do we want to reimplement this?
-	Cells []Cell // Array of cells of different types
+	MeanErr float64
+	Cells   []Cell // Array of cells of different types
 }
 
 const (
@@ -43,7 +44,7 @@ type Indiv struct { //An individual as an unicellular organism
 	MomId      int
 	Genome     Genome
 	Bodies     []Body  //INoEnv, IAncEnv, INovEnv (see above const.)
-	MSE        float64 //Squared error per cue
+	MeanErr    float64 //Mean error per cue = bodies[INovEnv].MeanErr
 	Fit        float64 //Fitness with cues
 	WagFit     float64 //Wagner relative fitness
 	AncCuePlas float64 //Cue Plasticity in ancestral environment
@@ -308,11 +309,12 @@ func NewBody(ncells int) Body { // Creates an array of new cells of length Ncell
 	for id := range cells {
 		cells[id] = NewCell(id) //Initialize each cell
 	}
-	return Body{cells}
+	return Body{math.Inf(1), cells}
 }
 
 func (body *Body) Copy() Body {
 	body1 := NewBody(ncells)
+	body1.MeanErr = body.MeanErr
 	for i, cell := range body.Cells {
 		body1.Cells[i] = cell.Copy()
 	}
@@ -460,14 +462,15 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
-func (indiv *Indiv) get_MSE(envs Cues) float64 { //use after development; returns sum of squared errors
+func (body *Body) set_MeanErr(envs Cues) { //use after development; returns sum of squared errors
 	sse := 0.0
 
-	for i, cell := range indiv.Bodies[INovEnv].Cells { //range over all cells
-		sse += Dist2Vecs(cell.P, envs[i])
+	for i, cell := range body.Cells { //range over all cells
+		//sse += Dist2Vecs(cell.P, envs[i])
+		sse += DistVecs1(cell.P, envs[i])
 	}
 
-	return sse / float64(ncells*(nenv+ncells))
+	body.MeanErr = sse / float64(ncells*(nenv+ncells))
 }
 
 func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
@@ -476,7 +479,7 @@ func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environme
 	}
 
 	fdev := math.Max(float64(indiv.NDevStep)-selDevStep, 0.0) / selDevStep
-	rawfit := math.Exp(-baseSelStrength*indiv.MSE - fdev)
+	rawfit := math.Exp(-baseSelStrength*indiv.MeanErr - fdev)
 	return rawfit
 }
 
@@ -597,6 +600,8 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 		body.Cells[i] = cell.DevCell(G, nenvs[i])
 	}
 
+	body.set_MeanErr(envs)
+
 	return *body
 }
 
@@ -612,7 +617,7 @@ func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare development
 		}
 	}
 	indiv.NDevStep = maxdev
-	indiv.MSE = indiv.get_MSE(novenvs)
+	indiv.MeanErr = indiv.Bodies[INovEnv].MeanErr
 	indiv.Fit = indiv.get_fitness()
 
 	// Ignoring convergence/divergence for now
