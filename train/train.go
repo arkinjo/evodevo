@@ -31,7 +31,6 @@ func main() {
 	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
 	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
-	//HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename", "traj", "filename of trajectories")
@@ -104,13 +103,13 @@ func main() {
 	envtraj := make([]multicell.Cues, 1) //Trajectory of environment cue
 	envtraj[0] = popstart.AncEnvs
 	novvec := make([]bool, 0)
-	//novvec[0] = false
-
-	//OldEnvs := multicell.NewCues(multicell.GetNcells(), multicell.GetNenv())
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
-		envtraj = append(envtraj, popstart.NovEnvs) //existing envtraj entries should not be updated with each append/update. Could it be reading popstart.Envs on each append? This bug resurfaced after implementing in concatenated vector format!
+		envtraj = append(envtraj, popstart.NovEnvs)
+		//existing envtraj entries should not be updated with each append/update.
+		//Could it be reading popstart.Envs on each append?
+		//This bug resurfaced after implementing in concatenated vector format!
 
 		if epoch != 0 {
 			fmt.Println("Epoch ", epoch, "has environments", popstart.NovEnvs)
