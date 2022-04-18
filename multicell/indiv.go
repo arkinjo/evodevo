@@ -478,7 +478,7 @@ func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environme
 		return 0.0
 	}
 
-	fdev := math.Max(float64(indiv.NDevStep)-selDevStep, 0.0) / selDevStep
+	fdev := float64(indiv.NDevStep) / selDevStep
 	rawfit := math.Exp(-baseSelStrength*indiv.MeanErr - fdev)
 	return rawfit
 }
