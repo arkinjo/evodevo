@@ -33,8 +33,8 @@ func main() {
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
-	tfilenamePtr := flag.String("tfilename", "traj", "filename of trajectories")
-	pfilenamePtr := flag.String("pfilename", "pvec", "filename of phenotypes")
+	tfilenamePtr := flag.String("traj_file", "traj", "filename of trajectories")
+	pfilenamePtr := flag.String("pheno_file", "pvec", "filename of phenotypes")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
