@@ -49,7 +49,7 @@ func (pop *Population) GetStats() PopStats {
 	}
 
 	for _, indiv := range pop.Indivs {
-		mse += indiv.MeanErr
+		mse += indiv.getMeanErr(INovEnv)
 		mf += indiv.Fit
 		mop += indiv.ObsPlas
 		ap += indiv.AncCuePlas
