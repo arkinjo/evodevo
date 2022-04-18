@@ -28,9 +28,9 @@ type Cell struct { //A 'cell' is characterized by its gene expression and phenot
 }
 
 type Body struct { //Do we want to reimplement this?
-	MeanErr float64
+	MeanErr  float64
 	NDevStep int
-	Cells   []Cell // Array of cells of different types
+	Cells    []Cell // Array of cells of different types
 }
 
 const (
@@ -459,7 +459,6 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
-
 func (indiv *Indiv) getMeanErr(ienv int) float64 {
 	return indiv.Bodies[ienv].MeanErr
 }
@@ -475,7 +474,7 @@ func (indiv *Indiv) getFitness() float64 { //fitness in novel/present environmen
 	}
 
 	fdev := float64(ndevstep) / selDevStep
-	ferr := indiv.getMeanErr(INovEnv)*baseSelStrength
+	ferr := indiv.getMeanErr(INovEnv) * baseSelStrength
 	rawfit := math.Exp(-(ferr + fdev))
 	return rawfit
 }
@@ -593,20 +592,17 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 
 func (body *Body) DevBody(G Genome, envs Cues) Body {
 	nenvs := AddNoise2Cues(envs, devNoise)
-	for i, cell := range body.Cells {
-		body.Cells[i] = cell.DevCell(G, nenvs[i])
-	}
-
 	sse := 0.0
 	maxdev := 0
 
-	for i, cell := range body.Cells { //range over all cells
+	for i, cell := range body.Cells {
+		body.Cells[i] = cell.DevCell(G, nenvs[i])
 		sse += DistVecs1(cell.P, envs[i]) // L1 norm
 		if cell.NDevStep > maxdev {
 			maxdev = cell.NDevStep
 		}
-
 	}
+
 	body.MeanErr = sse / float64(ncells*(nenv+ncells)) // L1
 	body.NDevStep = maxdev
 
