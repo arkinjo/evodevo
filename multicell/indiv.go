@@ -469,9 +469,9 @@ func (indiv *Indiv) getNDevStep(ienv int) int {
 
 func (indiv *Indiv) getFitness() float64 { //fitness in novel/present environment
 	ndevstep := indiv.getNDevStep(INovEnv)
-	if ndevstep == maxDevStep {
-		return 0.0
-	}
+	// if ndevstep == maxDevStep {
+	// 	return 0.0
+	// }
 
 	fdev := float64(ndevstep) / selDevStep
 	ferr := indiv.getMeanErr(INovEnv) * baseSelStrength
