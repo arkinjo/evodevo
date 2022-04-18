@@ -10,7 +10,7 @@ var ngenes int = 200  // number of genes
 var nenv int = 40     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
-const maxDevStep int = 100    // Maximum steps for development.
+const maxDevStep int = 200    // Maximum steps for development.
 const ccStep int = 5          // Number of steady steps for convergence
 const epsDev float64 = 1.0e-6 // Convergence criterion of development.
 const eps float64 = 1.0e-50

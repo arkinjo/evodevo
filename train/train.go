@@ -34,8 +34,8 @@ func main() {
 	//HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
-	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
-	pfilenamePtr := flag.String("pfilename", "pvec", "name of file of phenotypes")
+	tfilenamePtr := flag.String("tfilename", "traj", "filename of trajectories")
+	pfilenamePtr := flag.String("pfilename", "pvec", "filename of phenotypes")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
@@ -83,14 +83,12 @@ func main() {
 		pop0.RandomizeGenome()
 	}
 
-	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE, 0644) //create file for recording trajectory
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
-	//fmt.Fprintln(fout, "Epoch \t Generation \t Fitness \t Obs_Plas \t Polyphenism \t Diversity \t Utility") //header
-	fmt.Fprintln(fout, "Epoch \t Generation \t Npop \t MSE \t Fitness \t Wag_Fit \t Anc_Cue_Plas \t Nov_Cue_Plas \t Obs_Plas \t Polyphenism \t Diversity") //header
+	fmt.Fprintln(fout, "#Epoch\tGeneration\tNpop\tME\tFitness\tWag_Fit\tAnc_Cue_Plas\tNov_Cue_Plas\tObs_Plas\tPolyphenism\tDiversity\tNdev") //header
 
 	err = fout.Close()
 	if err != nil {
@@ -130,7 +128,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create json file
+			popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE, 0644) //create json file
 			if err != nil {
 				log.Fatal(err)
 			}
