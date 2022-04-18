@@ -459,20 +459,6 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
-func (body *Body) finishDev(envs Cues) { //use after development; returns sum of squared errors
-	sse := 0.0
-	maxdev := 0
-
-	for i, cell := range body.Cells { //range over all cells
-		sse += DistVecs1(cell.P, envs[i]) // L1 norm
-		if cell.NDevStep > maxdev {
-			maxdev = cell.NDevStep
-		}
-
-	}
-	body.MeanErr = sse / float64(ncells*(nenv+ncells)) // L1
-	body.NDevStep = maxdev
-}
 
 func (indiv *Indiv) getMeanErr(ienv int) float64 {
 	return indiv.Bodies[ienv].MeanErr
@@ -611,7 +597,18 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 		body.Cells[i] = cell.DevCell(G, nenvs[i])
 	}
 
-	body.finishDev(envs)
+	sse := 0.0
+	maxdev := 0
+
+	for i, cell := range body.Cells { //range over all cells
+		sse += DistVecs1(cell.P, envs[i]) // L1 norm
+		if cell.NDevStep > maxdev {
+			maxdev = cell.NDevStep
+		}
+
+	}
+	body.MeanErr = sse / float64(ncells*(nenv+ncells)) // L1
+	body.NDevStep = maxdev
 
 	return *body
 }
