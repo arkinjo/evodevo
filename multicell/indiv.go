@@ -462,7 +462,7 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
-func (body *Body) set_MeanErr(envs Cues) { //use after development; returns sum of squared errors
+func (body *Body) setMeanErr(envs Cues) { //use after development; returns sum of squared errors
 	sse := 0.0
 
 	for i, cell := range body.Cells { //range over all cells
@@ -473,17 +473,22 @@ func (body *Body) set_MeanErr(envs Cues) { //use after development; returns sum 
 	body.MeanErr = sse / float64(ncells*(nenv+ncells)) // L1
 }
 
-func (indiv *Indiv) get_fitness() float64 { //fitness in novel/present environment
+func (indiv *Indiv) getMeanErr(ienv int) float64 {
+	return indiv.Bodies[ienv].MeanErr
+}
+
+func (indiv *Indiv) getFitness() float64 { //fitness in novel/present environment
 	if indiv.NDevStep == maxDevStep {
 		return 0.0
 	}
 
 	fdev := float64(indiv.NDevStep) / selDevStep
-	rawfit := math.Exp(-baseSelStrength*indiv.MeanErr - fdev)
+	ferr := indiv.getMeanErr(INovEnv)*baseSelStrength
+	rawfit := math.Exp(-(ferr + fdev))
 	return rawfit
 }
 
-func get_plasticity(body0, body1 Body) float64 { //cue plasticity of individual
+func getPlasticity(body0, body1 Body) float64 { //cue plasticity of individual
 	d2 := 0.0
 	for i, cell := range body0.Cells {
 		d2 += Dist2Vecs(cell.P, body1.Cells[i].P)
@@ -492,7 +497,7 @@ func get_plasticity(body0, body1 Body) float64 { //cue plasticity of individual
 	return d2 / float64(ncells*(ncells+nenv))
 }
 
-func (indiv *Indiv) get_varpheno() float64 { //Get sum of elementwise variance of phenotype
+func (indiv *Indiv) getVarpheno() float64 { //Get sum of elementwise variance of phenotype
 	pvec := make([]Cue, 0)
 	for _, c := range indiv.Bodies[INovEnv].Cells {
 		pvec = append(pvec, c.P) //Note: To be used AFTER development
@@ -501,12 +506,12 @@ func (indiv *Indiv) get_varpheno() float64 { //Get sum of elementwise variance o
 	return sigma2p
 }
 
-func (indiv *Indiv) get_polyphenism(envs Cues) float64 { //Degree of polyphenism of individual; normalize with variance of environment cue
+func (indiv *Indiv) getPolyphenism(envs Cues) float64 { //Degree of polyphenism of individual; normalize with variance of environment cue
 	sigma2env := GetCueVar(envs)
 	if sigma2env == 0 {
 		return 0
 	} else {
-		sigma2p := indiv.get_varpheno()
+		sigma2p := indiv.getVarpheno()
 		return sigma2p / sigma2env
 	}
 }
@@ -600,7 +605,7 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 		body.Cells[i] = cell.DevCell(G, nenvs[i])
 	}
 
-	body.set_MeanErr(envs)
+	body.setMeanErr(envs)
 
 	return *body
 }
@@ -618,13 +623,13 @@ func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare development
 	}
 	indiv.NDevStep = maxdev
 	indiv.MeanErr = indiv.Bodies[INovEnv].MeanErr
-	indiv.Fit = indiv.get_fitness()
+	indiv.Fit = indiv.getFitness()
 
 	// Ignoring convergence/divergence for now
-	indiv.AncCuePlas = get_plasticity(indiv.Bodies[INoEnv], indiv.Bodies[IAncEnv])
-	indiv.NovCuePlas = get_plasticity(indiv.Bodies[INoEnv], indiv.Bodies[INovEnv])
-	indiv.ObsPlas = get_plasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
-	indiv.Pp = indiv.get_polyphenism(novenvs)
+	indiv.AncCuePlas = getPlasticity(indiv.Bodies[INoEnv], indiv.Bodies[IAncEnv])
+	indiv.NovCuePlas = getPlasticity(indiv.Bodies[INoEnv], indiv.Bodies[INovEnv])
+	indiv.ObsPlas = getPlasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
+	indiv.Pp = indiv.getPolyphenism(novenvs)
 
 	return *indiv
 }
