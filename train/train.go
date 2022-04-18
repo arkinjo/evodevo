@@ -82,7 +82,7 @@ func main() {
 		pop0.RandomizeGenome()
 	}
 
-	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE, 0644) //create file for recording trajectory
+	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create file for recording trajectory
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE, 0644) //create json file
+			popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create json file
 			if err != nil {
 				log.Fatal(err)
 			}
