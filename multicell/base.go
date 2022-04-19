@@ -37,10 +37,11 @@ const minWagnerFitness float64 = 0.01
 
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
-var withCue bool = false // with or without environmental cues.
-var cuestrength float64  // cue strength
-var epig bool = true     // Epigenetic marker layer
-var hoc bool = true      // Higher order complexes layer
+var withCue bool = false        // with or without environmental cues.
+var pheno_feedback bool = false //whether phenotype is fed back
+var cuestrength float64         // cue strength
+var epig bool = true            // Epigenetic marker layer
+var hoc bool = true             // Higher order complexes layer
 var hoi bool = false
 var hoistrength float64 //declaration
 
@@ -77,8 +78,10 @@ func SetNcells(n int) {
 	//minWagnerFitness = math.Exp(-baseSelStrength) //Minimal allowed raw fitness
 }
 
-func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or interaction is present in model
+func SetLayers(ce, ch float64, pfeedback, epigm, HOC bool) { //Define whether each layer or interaction is present in model
+
 	cuestrength = ce //strength of environment cue
+	pheno_feedback = pfeedback
 	hoistrength = ch //strength of interactions between higher order complexes
 
 	//withCue = cue //Whether environment cue has effect on development
@@ -110,7 +113,11 @@ func SetLayers(ce, ch float64, epigm, HOC bool) { //Define whether each layer or
 	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
 
 	//initializing theoretical standard deviations for entries of each matrix
-	sdE = 0.5 * math.Sqrt(cuestrength/(CueResponseDensity*float64(nenv+ncells)*(1+cuestrength)))
+	sdE = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
+	if pheno_feedback {
+		sdE *= math.Sqrt(0.5) // rescale to account for feedback
+	}
+
 	sdG = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
 
 	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))

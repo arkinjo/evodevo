@@ -28,6 +28,7 @@ func main() {
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	noisestrengthPtr := flag.Float64("noisestrength", 0.05, "control size of noise in terms of prop of unit cue")
 	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of var contribution of environmental cue")
+	phenofeedbackPtr := flag.Bool("pheno_feedback", false, "controls phenotype feedback into regulation")
 	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
 	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
@@ -53,7 +54,7 @@ func main() {
 
 	multicell.SetMaxPop(*maxpopsizePtr)
 	multicell.SetNcells(*ncelltypesPtr)
-	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *epigPtr, *HOCPtr)
+	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *phenofeedbackPtr, *epigPtr, *HOCPtr)
 	multicell.SetNoise(*noisestrengthPtr)
 
 	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())

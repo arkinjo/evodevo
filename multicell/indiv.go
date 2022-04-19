@@ -529,8 +529,12 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	for nstep := 0; nstep < maxDevStep; nstep++ {
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
-			diffVecs(e_p, env, p0) // env includes noise
-			multMatVec(ve, G.E, e_p)
+			if pheno_feedback { //If feedback is allowed
+				diffVecs(e_p, env, p0) // env includes noise
+				multMatVec(ve, G.E, e_p)
+			} else {
+				multMatVec(ve, G.E, env)
+			}
 			addVecs(f1, vf, ve)
 		} else {
 			copy(f1, vf)
