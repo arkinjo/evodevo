@@ -17,7 +17,7 @@ const eps float64 = 1.0e-50
 
 const alphaEMA = 2.0 / (1.0 + 5.0) // exponential moving average/variance
 
-const pInitVar = 1000.0 // initial variance of trait.
+const pInitVar = 0.0 // initial variance of trait.
 
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var genelength int                                //calculated from layers present or absent.

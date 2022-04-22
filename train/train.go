@@ -88,7 +88,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Fprintln(fout, "#Epoch\tGeneration\tNpop\tME\tFitness\tWag_Fit\tAnc_Cue_Plas\tNov_Cue_Plas\tObs_Plas\tPolyphenism\tDiversity\tNdev") //header
+	fmt.Fprintln(fout, "#Epoch\tGeneration\tNpop\tCdist\tME\tFitness\tWag_Fit\tAnc_Cue_Plas\tNov_Cue_Plas\tObs_Plas\tPolyphenism\tDiversity\tNdev") //header
 
 	err = fout.Close()
 	if err != nil {
