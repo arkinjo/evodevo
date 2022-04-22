@@ -3,7 +3,7 @@ package multicell
 import (
 	//	"errors"
 	//	"fmt"
-	//	"log"
+	"log"
 	"math"
 	"math/rand"
 )
@@ -548,7 +548,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		if withCue { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
 
-				diffVecs(e_p, env, cell.P) // env includes noise
+				diffVecs(e_p, env, cell.P)
 
 				// Kalman gain
 				pscale := cell.getPscale()
@@ -617,6 +617,9 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 		sse += DistVecs1(cell.P, envs[i]) // L1 norm
 		if cell.NDevStep > maxdev {
 			maxdev = cell.NDevStep
+		}
+		if cell.NDevStep > maxDevStep {
+			log.Println("NDevStep greater than limit: ", cell.NDevStep)
 		}
 	}
 

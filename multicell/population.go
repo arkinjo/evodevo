@@ -57,11 +57,12 @@ func (pop *Population) GetStats() PopStats {
 		ap += indiv.AncCuePlas
 		np += indiv.NovCuePlas
 		pp += indiv.Pp
+		ndev += indiv.Bodies[INovEnv].NDevStep
+
 		if indiv.Fit > maxfit {
 			maxfit = indiv.Fit
 		}
 		for i, cell := range indiv.Bodies[INovEnv].Cells {
-			ndev += cell.NDevStep
 			for j, t := range cell.P {
 				pa[i][j] += t
 			}
@@ -72,12 +73,12 @@ func (pop *Population) GetStats() PopStats {
 	for i, p := range pa {
 		for j := range p {
 			pa[i][j] /= fn
-			cdist += math.Abs(pop.NovEnvs[i][j] - pa[i][j])
+			d := pop.NovEnvs[i][j] - pa[i][j]
+			cdist += d * d
 		}
 	}
 	for _, indiv := range pop.Indivs {
 		for i, cell := range indiv.Bodies[INovEnv].Cells {
-			ndev += cell.NDevStep
 			for j, t := range cell.P {
 				d := pa[i][j] - t
 				pv[i][j] += d * d
@@ -92,12 +93,12 @@ func (pop *Population) GetStats() PopStats {
 		}
 	}
 
-	stats.CDist = cdist
+	stats.CDist = math.Sqrt(cdist)
 	stats.MeanErr = mse / fn
 	meanfit := mf / fn
 	stats.Fitness = meanfit
 	stats.WagFit = meanfit / maxfit
-	stats.NDevStep = float64(ndev) / (fn * float64(ncells))
+	stats.NDevStep = float64(ndev) / fn
 	stats.ObsPlas = mop / (fn * denv)
 	stats.AncCuePlas = ap / fn
 	stats.NovCuePlas = np / fn
