@@ -19,12 +19,13 @@ type Genome struct { //Genome of an individual
 }
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	E        Vec // Epigenetic markers
-	F        Vec // Epigenetic markers
-	G        Vec // Gene expression
-	H        Vec // Higher order complexes
-	P        Vec // Phenotype; id already in cue
-	NDevStep int // Developmental path length
+	F          Vec // Epigenetic markers
+	G          Vec // Gene expression
+	H          Vec // Higher order complexes
+	P          Vec // Phenotype; id already in cue
+	Pave, Pvar Vec // moving average and variance of P
+	NDevStep   int // Developmental path length
+
 }
 
 type Body struct { //Do we want to reimplement this?
@@ -279,12 +280,14 @@ func (G *Genome) NormalizeGenome() Genome {
 }
 
 func NewCell(id int) Cell { //Creates a new cell given id of cell.
-	e := NewCue(nenv, id)
 	f := NewVec(ngenes)
 	g := NewVec(ngenes)
 	h := NewVec(ngenes)
 	p := NewCue(nenv, id)
-	cell := Cell{e, f, g, h, p, 0}
+	pa := NewVec(nenv + ncells)
+	pv := Ones(nenv + ncells)
+	scaleVec(pv, pInitVar, pv)
+	cell := Cell{f, g, h, p, pa, pv, 0}
 
 	return cell
 }
@@ -293,11 +296,12 @@ func (cell *Cell) Copy() Cell {
 	id := GetId(cell.P) //Extract id part of cell phenotype
 	cell1 := NewCell(id)
 
-	cell1.E = CopyVec(cell.E)
 	cell1.F = CopyVec(cell.F)
 	cell1.G = CopyVec(cell.G)
 	cell1.H = CopyVec(cell.H)
 	cell1.P = CopyVec(cell.P)
+	cell1.Pave = CopyVec(cell.Pave)
+	cell1.Pvar = CopyVec(cell.Pvar)
 	cell1.NDevStep = cell.NDevStep
 
 	return cell1
@@ -507,6 +511,25 @@ func (indiv *Indiv) getPolyphenism(envs Cues) float64 { //Degree of polyphenism 
 	}
 }
 
+func (cell *Cell) getPscale() float64 {
+	vt := 0.0
+	for _, v := range cell.Pvar {
+		vt += v
+	}
+
+	pscale := vt / (vt + devNoise*float64(nenv+ncells))
+	return pscale
+}
+
+func (cell *Cell) updateEMA() {
+	for i, p := range cell.P {
+		d := p - cell.Pave[i]
+		incr := alphaEMA * d
+		cell.Pave[i] += incr
+		cell.Pvar[i] = (1 - alphaEMA) * (cell.Pvar[i] + d*incr)
+	}
+}
+
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	var diff float64
 	var convindex int
@@ -526,11 +549,14 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	h1 := NewVec(ngenes)
 
 	convindex = 0
+	pscale := cell.getPscale()
+
 	for nstep := 0; nstep < maxDevStep; nstep++ {
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
 				diffVecs(e_p, env, p0) // env includes noise
+				scaleVec(e_p, pscale, e_p)
 				multMatVec(ve, G.E, e_p)
 			} else {
 				multMatVec(ve, G.E, env)
@@ -585,11 +611,12 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	//	fmt.Println("PathLen: ", cell.NDevStep)
 	//fmt.Println("Phenotype after development:",vpc)
 	//fmt.Println("Id after development:",vpid)
-	copy(cell.E, env)
 	copy(cell.F, f1)
 	copy(cell.G, g1)
 	copy(cell.H, h1)
 	copy(cell.P, vp)
+
+	cell.updateEMA()
 
 	return *cell
 }
