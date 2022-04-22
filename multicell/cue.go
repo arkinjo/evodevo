@@ -1,7 +1,6 @@
 package multicell
 
 import (
-	//"fmt"
 	"bufio"
 	"fmt"
 	"log"
@@ -11,7 +10,7 @@ import (
 	"strconv"
 )
 
-var rand_env = rand.New(rand.NewSource(99))
+var rand_cue = rand.New(rand.NewSource(99))
 
 var devNoise float64 = 0.05 // Development environment cue noise
 //var envNoise float64 = 0.00 // Selection environment noise
@@ -20,8 +19,19 @@ type Cue = Vec //Environment cue is a special kind of vector
 
 type Cues = []Cue //Cue array object
 
-func SetSeedEnv(seed int64) {
-	rand_env.Seed(seed);
+var ZeroEnvs Cues
+
+func init() {
+	ZeroEnvs = make([]Cue, ncells)
+	for i := range ZeroEnvs {
+		tv := make([]float64, nenv)
+		idv := UnitVec(ncells, i)
+		ZeroEnvs[i] = append(tv, idv...)
+	}
+}
+
+func SetSeedCue(seed int64) {
+	rand_cue.Seed(seed)
 }
 
 func NewCue(nenv, id int) Cue { //Initialize a new cue type object
@@ -38,6 +48,7 @@ func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 
 func GetTrait(cue Cue) []float64 { //Extract trait part of cue
 	tv := cue[0:nenv]
+
 	return tv
 }
 
@@ -64,7 +75,7 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 
 	tv := make([]float64, nenv)
 	for i := range tv {
-		r = rand_env.Float64()
+		r = rand_cue.Float64()
 		if r < density { //density is probability of 1
 			tv[i] = 1
 		} else {
@@ -82,31 +93,8 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 	return v
 }
 
-/* This is now redundant after introducing CopyVec function
-func CopyCue(cue Cue) Cue { //Returns a copy of an environment cue
-	c0 := cue //this already includes id part
-	lc := len(c0)
-	cv := make([]float64, lc)
-	copy(cv, c0)
-
-	return cv
-}
-*/
-
 func SetNoise(eta float64) {
 	devNoise = eta
-}
-
-func AddNoisetoCue(cue Cue, eta float64) Cue {
-	tv := GetTrait(cue)
-	idv := GetIdVec(cue)
-
-	for i, t := range tv {
-		tv[i] = t + eta*rand.NormFloat64()
-	}
-	v := append(tv, idv...)
-
-	return v
 }
 
 func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment cue; ignore id part
@@ -158,11 +146,22 @@ func CopyCues(cues Cues) Cues {
 	return vs
 }
 
-func AddNoisetoCues(cues Cues, eta float64) Cues {
-	envs1 := CopyCues(cues)
+func AddNoise2Cue(cue Cue, eta float64) Cue {
+	tv := GetTrait(cue)
+	idv := GetIdVec(cue)
 
+	for i, t := range tv {
+		tv[i] = t + eta*rand.NormFloat64()
+	}
+	tv = append(tv, idv...)
+
+	return tv
+}
+
+func AddNoise2Cues(cues Cues, eta float64) Cues {
+	envs1 := CopyCues(cues)
 	for i, c := range envs1 {
-		envs1[i] = AddNoisetoCue(c, eta) //hope this works; I actually don't know what I'm doing here
+		envs1[i] = AddNoise2Cue(c, eta) //hope this works; I actually don't know what I'm doing here
 	}
 
 	return envs1
@@ -212,15 +211,18 @@ func ChangeEnvs2(cues Cues, n int) Cues { //Flips precisely n bits in each envir
 }
 
 func GetMeanCue(cues Cues) Cue { //elementwise arithmetic mean of environment cue
-	//ncells := len(cues)
-	//ncues := len(cues)
 	cv := NewVec(nenv + ncells)
 	for _, env := range cues {
 		for j, t := range env {
-			cv[j] += t / float64(len(cues))
+			cv[j] += t
 		}
 	}
 
+	fn := 1 / float64(len(cues))
+
+	for j, t := range cv {
+		cv[j] = t * fn
+	}
 	return cv
 }
 
@@ -230,8 +232,11 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	sigma2 := 0.0
 	for _, c := range cues {
 		diffVecs(v, c, mu)
-		sigma2 += Veclength2(v) / float64(len(cues))
+		sigma2 += Veclength2(v)
 	}
+
+	sigma2 /= float64(len(cues))
+
 	return sigma2
 }
 

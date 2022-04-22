@@ -29,7 +29,7 @@ var DevequalGs float64  //bugtesting variable
 func main() {
 	t0 := time.Now()
 	seedPtr := flag.Int("seed", 1, "random seed")
-	seed_envPtr := flag.Int("seed_env", 1, "random seed for environment")
+	seed_cuePtr := flag.Int("seed_cue", 1, "random seed for environmental cue")
 	//epochPtr := flag.Int("nepoch", 1, "number of epochs")
 	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
@@ -37,6 +37,7 @@ func main() {
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	noisestrengthPtr := flag.Float64("noisestrength", 0.05, "control size of noise in terms of prop of unit cue")
 	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of var contribution of environmental cue")
+	phenofeedbackPtr := flag.Bool("pheno_feedback", false, "controls phenotype feedback into regulation")
 	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
 	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
@@ -53,7 +54,7 @@ func main() {
 	flag.Parse()
 
 	multicell.SetSeed(int64(*seedPtr))
-	multicell.SetSeedEnv(int64(*seed_envPtr))
+	multicell.SetSeedCue(int64(*seed_cuePtr))
 	//maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
@@ -68,7 +69,7 @@ func main() {
 	multicell.SetMaxPop(*maxpopsizePtr)
 	multicell.SetNcells(*ncelltypesPtr)
 	pcindex := multicell.MinInt(*pcindexPtr, multicell.GetNcells()*multicell.GetNenv()-1)
-	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *epigPtr, *HOCPtr)
+	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *phenofeedbackPtr, *epigPtr, *HOCPtr)
 	multicell.SetNoise(*noisestrengthPtr)
 
 	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop()) //with randomized genome to start
@@ -116,9 +117,9 @@ func main() {
 	}
 
 	popstart := pop0.Copy()
-	AncEnvs := multicell.CopyCues(pop0.Envs)
-	OldEnvs := multicell.CopyCues(pop0.Envs)
-	popstart.RefEnvs = AncEnvs
+	AncEnvs := multicell.CopyCues(pop0.NovEnvs)
+	OldEnvs := multicell.CopyCues(pop0.NovEnvs)
+	popstart.AncEnvs = AncEnvs
 	NovEnvs := multicell.NewCues(multicell.GetNcells(), multicell.GetNenv()) //Declaration
 	if PCA_Filename == "" {                                                  //If no directions given
 		NovEnvs = multicell.ChangeEnvs(OldEnvs, denv) //Randomize
@@ -129,12 +130,12 @@ func main() {
 		fmt.Println(pcavecs)
 	}
 
-	popstart.Envs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
+	popstart.NovEnvs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
 
 	tevol := time.Now()
 
-	fmt.Println("Evolving in novel environment :", popstart.Envs)
-	fmt.Println("Ancestral environment :", popstart.RefEnvs)
+	fmt.Println("Evolving in novel environment :", popstart.NovEnvs)
+	fmt.Println("Ancestral environment :", popstart.AncEnvs)
 	gidfilename := fmt.Sprintf("%s_full", Gid_Filename)
 
 	pop1 := multicell.Evolve(true, T_Filename, json_out, gidfilename, epochlength, 1, &popstart)
@@ -142,7 +143,7 @@ func main() {
 
 	dtevol := time.Since(tevol)
 	fmt.Println("Time taken to simulate evolution :", dtevol)
-	fmt.Println(pop1.Envs)
+	fmt.Println(pop1.NovEnvs)
 
 	/*
 

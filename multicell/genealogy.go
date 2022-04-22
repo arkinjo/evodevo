@@ -15,24 +15,24 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 
 	nanctraj := []int{}
 	rnanctraj := []int{}
-	pop := NewPopulation(ncells,npop)
-	genfile := fmt.Sprintf("../analysis/%s.dot",dotfilename)
+	pop := NewPopulation(ncells, npop)
+	genfile := fmt.Sprintf("../analysis/%s.dot", dotfilename)
 	fout, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintln(fout,"digraph G {")
+	fmt.Fprintln(fout, "digraph G {")
 	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 	kids := make(map[int]bool)
-	for i:=0; i<npop; i++ {
-		kids[i]=true
+	for i := 0; i < npop; i++ {
+		kids[i] = true
 	}
 	pars := make(map[int]bool)
-	for gen := ngen; gen>0; gen-- {
-		jfilename := fmt.Sprintf("../pops/%s_%d.json",popfilename,gen)
+	for gen := ngen; gen > 0; gen-- {
+		jfilename := fmt.Sprintf("../pops/%s_%d.json", popfilename, gen)
 		popin, err := os.Open(jfilename)
 		if err != nil {
 			log.Fatal(err)
@@ -43,32 +43,32 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 			log.Fatal(err)
 		}
 		err = popin.Close()
-		if err != nil{
+		if err != nil {
 			log.Fatal(err)
 		}
-		
+
 		fout, err = os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		for i := range(kids){
-			indiv = pop.Indivs[i] 
-			pars[indiv.DadId]=true
-			pars[indiv.MomId]=true
-			id = fmt.Sprintf("g%d:id%d",pop.Gen,indiv.Id)
-			dadid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.DadId)
-			momid = fmt.Sprintf("g%d:id%d",pop.Gen-1,indiv.MomId)
-			fmt.Fprintf(fout,"\t %s-> {%s, %s}\n",id,dadid,momid)
+		for i := range kids {
+			indiv = pop.Indivs[i]
+			pars[indiv.DadId] = true
+			pars[indiv.MomId] = true
+			id = fmt.Sprintf("g%d:id%d", pop.Gen, indiv.Id)
+			dadid = fmt.Sprintf("g%d:id%d", pop.Gen-1, indiv.DadId)
+			momid = fmt.Sprintf("g%d:id%d", pop.Gen-1, indiv.MomId)
+			fmt.Fprintf(fout, "\t %s-> {%s, %s}\n", id, dadid, momid)
 		}
 		err = fout.Close()
-			if err != nil {
-				log.Fatal(err)
-			}
+		if err != nil {
+			log.Fatal(err)
+		}
 		npars = len(pars)
 		rnanctraj = append(rnanctraj, npars)
 		kids = make(map[int]bool)
-		for i := range(pars){
+		for i := range pars {
 			kids[i] = pars[i]
 		}
 		pars = make(map[int]bool) //re-initialize
@@ -77,7 +77,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintln(fout,"}")
+	fmt.Fprintln(fout, "}")
 	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)
@@ -85,7 +85,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int { //Du
 
 	//Order of proptraj is recorded backwards, need to reverse it
 	copy(nanctraj, rnanctraj)
-	for i:=0; i<ngen; i++{
+	for i := 0; i < ngen; i++ {
 		nanctraj = append(nanctraj, rnanctraj[ngen-1-i])
 	}
 

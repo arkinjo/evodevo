@@ -13,19 +13,79 @@ import (
 
 type Population struct { //Population of individuals
 	Gen     int
-	Envs    Cues //Environment of population in this epoch
-	RefEnvs Cues //Environment of population in previous epoch
+	NovEnvs Cues //Novel Environment
+	AncEnvs Cues // Ancestral Environment
 	Indivs  []Indiv
 }
 
+type PopStats struct { // Statistics of population (mean values of quantities of interest)
+	MeanErr    float64
+	WagFit     float64
+	Fitness    float64
+	AncCuePlas float64
+	NovCuePlas float64
+	ObsPlas    float64
+	Polyp      float64
+	Div        float64
+	NDevStep   float64
+}
+
+func (pop *Population) GetStats() PopStats {
+	var stats PopStats
+	mf := 0.0
+	maxfit := 0.0
+	mse := 0.0
+	ndev := 0
+	mop := 0.0 // mean observed plasticity
+	ap := 0.0  // mean ancestral plasticity
+	np := 0.0  // mean (novel) plasticity
+	pp := 0.0  // polyphenism
+	fn := float64(len(pop.Indivs))
+	cv := make([]Cue, 0)
+
+	denv := 0.0
+	for i, env := range pop.NovEnvs { //To normalize wrt change in environment cue
+		denv += Hammingdist(env, pop.AncEnvs[i])
+	}
+
+	for _, indiv := range pop.Indivs {
+		mse += indiv.getMeanErr(INovEnv)
+		mf += indiv.Fit
+		mop += indiv.ObsPlas
+		ap += indiv.AncCuePlas
+		np += indiv.NovCuePlas
+		pp += indiv.Pp
+		if indiv.Fit > maxfit {
+			maxfit = indiv.Fit
+		}
+		for _, cell := range indiv.Bodies[INovEnv].Cells {
+			ndev += cell.NDevStep
+			cv = append(cv, cell.P)
+		}
+
+	}
+	stats.MeanErr = mse / fn
+	meanfit := mf / fn
+	stats.Fitness = meanfit
+	stats.WagFit = meanfit / maxfit
+	stats.NDevStep = float64(ndev) / (fn * float64(ncells))
+	stats.ObsPlas = mop / (fn * denv)
+	stats.AncCuePlas = ap / fn
+	stats.NovCuePlas = np / fn
+	stats.Polyp = pp / fn
+	stats.Div = GetCueVar(cv)
+
+	return stats
+}
+
 func NewPopulation(ncell, npop int) Population { //Initialize new population
+	envs0 := NewCues(ncell, nenv)
+	envs1 := NewCues(ncell, nenv)
+
 	indivs := make([]Indiv, npop)
 	for i := range indivs {
 		indivs[i] = NewIndiv(i)
 	}
-
-	envs0 := NewCues(ncell, nenv)
-	envs1 := NewCues(ncell, nenv)
 
 	p := Population{0, envs0, envs1, indivs}
 	return p
@@ -59,12 +119,12 @@ func (pop *Population) ClearGenome() {
 
 func (pop *Population) Copy() Population {
 	npop := len(pop.Indivs)
-	ncell := len(pop.Indivs[0].Copy().Copies[INovEnv].Ctypes) //number of cells
+	ncell := len(pop.Indivs[0].Bodies[INovEnv].Cells) //number of cells
 	//fmt.Println("Copying ",ncell,"-cell individuals")
 	pop1 := NewPopulation(ncell, npop)
 	pop1.Gen = pop.Gen
-	pop1.Envs = CopyCues(pop.Envs)
-	pop1.RefEnvs = CopyCues(pop.RefEnvs)
+	pop1.NovEnvs = CopyCues(pop.NovEnvs)
+	pop1.AncEnvs = CopyCues(pop.AncEnvs)
 	for i, indiv := range pop.Indivs {
 		pop1.Indivs[i] = indiv.Copy()
 	}
@@ -75,132 +135,13 @@ func (pop *Population) SortPopIndivs() {
 	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id }) //Hopefully this works
 }
 
-func (pop *Population) GetMeanFitness() (float64, float64) { //average fitness of population
-	mf := 0.0
-	maxfit := 0.0
-	fn := float64(len(pop.Indivs))
-	for _, indiv := range pop.Indivs {
-		mf += indiv.Fit
-		if indiv.Fit > maxfit {
-			maxfit = indiv.Fit
-		}
-	}
-	meanfit := mf / fn
-	wagfit := meanfit / maxfit
-
-	return meanfit, wagfit
-}
-
-/*
-func (pop *Population) GetMeanWagFit() float64 { //average Wagner fitness of population
-	mf := 0.0
-	fn := float64(len(pop.Indivs))
-	for _, indiv := range pop.Indivs {
-		mf += indiv.WagFit
-	}
-
-	return mf / fn
-}
-*/
-
-func (pop *Population) GetMSE() float64 { //average observed plasticity of population
-	mse := 0.0
-	fn := float64(len(pop.Indivs))
-	for _, indiv := range pop.Indivs {
-		mse += indiv.MSE
-	}
-
-	return mse / fn
-}
-
-func (pop *Population) GetMeanObsPlasticity() float64 { //average observed plasticity of population
-	mp := 0.0
-	fn := float64(len(pop.Indivs))
-	denv := 0.0
-	for i, env := range pop.Envs { //To normalize wrt change in environment cue
-		denv += Hammingdist(env, pop.RefEnvs[i])
-	}
-	for _, indiv := range pop.Indivs {
-		mp += indiv.ObsPlas
-	}
-
-	return mp / (fn * denv)
-}
-
-func (pop *Population) GetMeanAncCuePlasticity() float64 { //average cue plasticity of population
-	mp := 0.0
-	fn := float64(len(pop.Indivs))
-	for _, indiv := range pop.Indivs {
-		//fmt.Println("ID:", indiv.Id, "CuePlas:", indiv.CuePlas)
-		mp += indiv.AncCuePlas
-	}
-
-	return mp / fn
-}
-
-func (pop *Population) GetMeanNovCuePlasticity() float64 { //average cue plasticity of population
-	mp := 0.0
-	fn := float64(len(pop.Indivs))
-	for _, indiv := range pop.Indivs {
-		//fmt.Println("ID:", indiv.Id, "CuePlas:", indiv.CuePlas)
-		mp += indiv.NovCuePlas
-	}
-
-	return mp / fn
-}
-
-/*
-func (pop *Population) GetMeanUtility() float64 { //average utility of population
-	mu := 0.0
-	fn := float64(len(pop.Indivs))
-	for _, indiv := range pop.Indivs {
-		mu += indiv.Util
-	}
-
-	return mu / fn
-}
-*/
-
-func (pop *Population) GetMeanPp() float64 { //average degree of polyphenism of population
-	mu := 0.0
-	fn := float64(len(pop.Indivs))
-	for _, indiv := range pop.Indivs {
-		mu += indiv.Pp
-	}
-
-	return mu / fn
-}
-
-func (pop *Population) GetDiversity() float64 { //To be used after development
-	cv := make([]Cue, 0)
-	for _, ind := range pop.Indivs {
-		for _, cell := range ind.Copies[INovEnv].Ctypes {
-			cv = append(cv, cell.P)
-		}
-	}
-	div := GetCueVar(cv)
-
-	return div
-}
-
-/*
-func (pop *Population) GetGeneFunc() float64 {
-	gf := 0.0
-	for _, indiv := range pop.Indivs {
-		gf += indiv.MSE
-		gf += indiv.ObsPlas
-	}
-	return gf
-}
-*/
-
 func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
 	npop := len(pop.Indivs)
 	MeanPhenotype := NewCues(ncells, nenv)
 	pop.DevPop(gen)
 
 	for _, indiv := range pop.Indivs {
-		for i, c := range indiv.Copies[INovEnv].Ctypes {
+		for i, c := range indiv.Bodies[INovEnv].Cells {
 			for j, p := range c.P {
 				MeanPhenotype[i][j] += p / float64(npop)
 			}
@@ -208,8 +149,6 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 	}
 	return MeanPhenotype
 }
-
-//func (pop *Population) CentralizePhenotypes(gen int, Centre Vec)
 
 func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of population
 	var Gtilde Genome
@@ -271,8 +210,8 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined using difference of environment cues
 	axlength2 := 0.0
 
-	e := pop.Envs     //Cue in novel (present) environment
-	e0 := pop.RefEnvs //Cue in ancestral (previous) environment
+	e := pop.NovEnvs  //Cue in novel (present) environment
+	e0 := pop.AncEnvs //Cue in ancestral (previous) environment
 	v := NewVec(nenv + ncells)
 	de := NewCues(ncells, nenv)
 
@@ -296,8 +235,8 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 }
 
 func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
-	e := pop.Envs     // novel environment
-	e0 := pop.RefEnvs // ancestral environment
+	e := pop.NovEnvs  // novel environment
+	e0 := pop.AncEnvs // ancestral environment
 
 	me := NewCues(ncells, nenv) // midpoint
 
@@ -352,7 +291,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
+	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, nindivs} //resets embryonic values to zero!
 
 	return new_population
 
@@ -377,67 +316,23 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
+	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, nindivs} //resets embryonic values to zero!
 
 	return new_population
 }
-
-/*
-func (pop *Population) Reproduce(nNewPop int) Population { //Makes new generation of individuals
-	npop := len(pop.Indivs)
-	var nindivs []Indiv
-	ipop := 0
-	cnt := 0
-	for ipop < nNewPop && cnt < 1000*nNewPop {
-		cnt += 1
-		k := rand.Intn(npop)
-		l := rand.Intn(npop)
-		dad := pop.Indivs[k]
-		mom := pop.Indivs[l]
-		r0 := rand.Float64()
-		r1 := rand.Float64()
-		if r0 < dad.WagFit && r1 < mom.WagFit {
-			kid0, kid1 := Mate(&dad, &mom)
-			nindivs = append(nindivs, kid0)
-			nindivs = append(nindivs, kid1)
-			ipop += 2
-		}
-	}
-	for i := range nindivs {
-		nindivs[i].Id = i //Relabels individuals according to position in array
-	}
-
-	new_population := Population{0, pop.Envs, pop.RefEnvs, nindivs} //resets embryonic values to zero!
-
-	return new_population
-}
-*/
 
 func (pop *Population) DevPop(gen int) Population {
-	novenv := NewCues(ncells, nenv)
-	ancenv := NewCues(ncells, nenv)
-
 	pop.Gen = gen
 
 	ch := make(chan Indiv) //channels for parallelization
 	for _, indiv := range pop.Indivs {
 		go func(indiv Indiv) {
-			copy(novenv, pop.Envs)
-			copy(ancenv, pop.RefEnvs)
-			ch <- indiv.CompareDev(novenv, ancenv)
+			ch <- indiv.Develop(pop.AncEnvs, pop.NovEnvs)
 		}(indiv)
 	}
 	for i := range pop.Indivs {
 		pop.Indivs[i] = <-ch //Update output results
 	}
-
-	/*
-		for i, indiv := range pop.Indivs {
-			copy(novenv, pop.Envs)
-			copy(ancenv, pop.RefEnvs)
-			pop.Indivs[i] = indiv.CompareDev(novenv, ancenv)
-		}
-	*/
 
 	//We might need a sorter here.
 	pop.SortPopIndivs()
@@ -448,7 +343,6 @@ func (pop *Population) DevPop(gen int) Population {
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
 	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
-	var MSE, WagFit, Fitness, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div float64
 	var popsize int
 
 	pop := *init_pop
@@ -466,14 +360,6 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 	}
-
-	//track := true
-	//MSE0 := 0.0
-	//EMA_MSE := 0.0
-
-	//Pl0 := 0.0
-	//dPl := 0.0
-	//EMA_Pl := 0.0
 
 	for istep := 1; istep <= nstep; istep++ {
 		pop.DevPop(istep)
@@ -512,34 +398,16 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		pop.SetWagnerFitness()
-		/*
-			for _, indiv := range pop.Indivs {
-				fmt.Println("Before reproduction: Id: ", indiv.Id, "Wagner Fitness: ", indiv.WagFit, "Fitness: ", indiv.Fit)
-			}
-		*/
 
-		Fitness, WagFit = pop.GetMeanFitness()
-		MSE = pop.GetMSE()
-		AncCuePlas = pop.GetMeanAncCuePlasticity()
-		NovCuePlas = pop.GetMeanNovCuePlasticity()
-		ObsPlas = pop.GetMeanObsPlasticity()
-		Polyp = pop.GetMeanPp()
-		Div = pop.GetDiversity()
-		//Util = pop.GetMeanUtility()
+		pstat := pop.GetStats()
 		popsize = len(pop.Indivs)
-		/*
-			EMA_MSE = 2.0/(l_EMA+1.0)*MSE + (1-2/(l_EMA+1.0))*EMA_MSE
-			EMA_Pl = 2.0/(l_EMA+1.0)*Pl + (1-2/(l_EMA+1.0))*EMA_Pl
-		*/
+
 		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, Fitness, CuePlas, ObsPlas, Polyp, Div, Util)
-
-		//fmt.Fprintf(fout, "%d\t%d\t%f\t%e\t%e\t%e\t%e\n", epoch, istep, MSE, Fitness, Pl, Polyp, Div, Util)
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, MSE, Fitness, WagFit, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.MeanErr, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
 
 		err = fout.Close()
 		if err != nil {
@@ -547,7 +415,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <MSE>: %e\t <Fit>: %e\t <WFit>: %e\t <ACPl>:%e\t <NCPl>:%e\t <OPl>:%e\t <Pp>:%e\t <Div>:%e \n ", istep, popsize, MSE, Fitness, WagFit, AncCuePlas, NovCuePlas, ObsPlas, Polyp, Div)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t <ME>: %e\t <Fit>: %e\t <WFit>: %e\t <ACPl>: %e\t <NCPl>: %e\t <OPl>: %e\t <Pp>: %e\t <Div>: %e <Ndev>: %e\n ", istep, popsize, pstat.MeanErr, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
 
@@ -582,7 +450,7 @@ func (pop *Population) Dump_Phenotypes(Filename string, gen int) {
 		log.Fatal(err)
 	}
 	for _, indiv := range pop.Indivs {
-		for _, cell := range indiv.Copies[INovEnv].Ctypes {
+		for _, cell := range indiv.Bodies[INovEnv].Cells {
 			copy(trait, cell.P)
 			for _, v := range trait {
 				fmt.Fprintf(fout, "%f\t", v)
@@ -618,17 +486,17 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		defpproj, ancpproj, novpproj, gproj = 0.0, 0.0, 0.0, 0.0
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(defcphen, indiv.Copies[INoEnv].Ctypes[i].P, env) //centralize
+			diffVecs(defcphen, indiv.Bodies[INoEnv].Cells[i].P, env) //centralize
 			defpproj += Innerproduct(defcphen, Paxis[i])
 		}
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(anccphen, indiv.Copies[IAncEnv].Ctypes[i].P, env) //centralize
-			ancpproj += Innerproduct(anccphen, Paxis[i])               //Plot phenotype when pulled back into ancestral environment at this stage on same axis
+			diffVecs(anccphen, indiv.Bodies[IAncEnv].Cells[i].P, env) //centralize
+			ancpproj += Innerproduct(anccphen, Paxis[i])              //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(novcphen, indiv.Copies[INovEnv].Ctypes[i].P, env) //centralize
+			diffVecs(novcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
 			novpproj += Innerproduct(novcphen, Paxis[i])
 		}
 
