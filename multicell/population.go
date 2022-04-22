@@ -43,7 +43,7 @@ func (pop *Population) GetStats() PopStats {
 	pp := 0.0  // polyphenism
 	fn := float64(len(pop.Indivs))
 	pa := NewCues(ncells, nenv)
-	cv := make([]Cue, 0)
+	pv := NewCues(ncells, nenv)
 
 	denv := 0.0
 	for i, env := range pop.NovEnvs { //To normalize wrt change in environment cue
@@ -65,7 +65,6 @@ func (pop *Population) GetStats() PopStats {
 			for j, t := range cell.P {
 				pa[i][j] += t
 			}
-			cv = append(cv, cell.P)
 		}
 
 	}
@@ -75,6 +74,22 @@ func (pop *Population) GetStats() PopStats {
 			pa[i][j] /= fn
 		}
 		cdist += DistVecs1(pop.NovEnvs[i], pa[i])
+	}
+	for _, indiv := range pop.Indivs {
+		for i, cell := range indiv.Bodies[INovEnv].Cells {
+			ndev += cell.NDevStep
+			for j, t := range cell.P {
+				d := pa[i][j] - t
+				pv[i][j] += d * d
+			}
+		}
+	}
+
+	div := 0.0
+	for _, pi := range pv {
+		for _, t := range pi {
+			div += t / fn
+		}
 	}
 
 	stats.CDist = cdist
@@ -87,8 +102,7 @@ func (pop *Population) GetStats() PopStats {
 	stats.AncCuePlas = ap / fn
 	stats.NovCuePlas = np / fn
 	stats.Polyp = pp / fn
-
-	stats.Div = GetCueVar(cv)
+	stats.Div = div
 
 	return stats
 }
