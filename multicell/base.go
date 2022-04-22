@@ -254,6 +254,13 @@ func Ones(len int) Vec { //Generate a vector of ones of length len
 	return v
 }
 
+func multVecVec(vout, v0, v1 Vec) { //element-wise vector multiplication
+	for i, v := range v0 {
+		vout[i] = v * v1[i]
+	}
+	return
+}
+
 func multMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
 	for i := range vout {
 		vout[i] = 0.0

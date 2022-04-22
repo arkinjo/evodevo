@@ -511,14 +511,13 @@ func (indiv *Indiv) getPolyphenism(envs Cues) float64 { //Degree of polyphenism 
 	}
 }
 
-func (cell *Cell) getPscale() float64 {
-	vt := 0.0
-	for _, v := range cell.Pvar {
-		vt += v
+func (cell *Cell) getPscale() Cue {
+	vt := NewVec(nenv + ncells)
+	for i, v := range cell.Pvar {
+		vt[i] = v / (v + devNoise)
 	}
 
-	pscale := vt / (vt + devNoise*float64(nenv+ncells))
-	return pscale
+	return vt
 }
 
 func (cell *Cell) updateEMA() {
@@ -556,7 +555,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		if withCue { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
 				diffVecs(e_p, env, p0) // env includes noise
-				scaleVec(e_p, pscale, e_p)
+				multVecVec(e_p, pscale, e_p)
 				multMatVec(ve, G.E, e_p)
 			} else {
 				multMatVec(ve, G.E, env)
