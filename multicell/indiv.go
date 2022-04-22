@@ -312,7 +312,7 @@ func NewBody(ncells int) Body { // Creates an array of new cells of length Ncell
 	for id := range cells {
 		cells[id] = NewCell(id) //Initialize each cell
 	}
-	return Body{math.Inf(1), 0, cells}
+	return Body{0, 0, cells}
 }
 
 func (body *Body) Copy() Body {
