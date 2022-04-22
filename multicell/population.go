@@ -72,8 +72,8 @@ func (pop *Population) GetStats() PopStats {
 	for i, p := range pa {
 		for j := range p {
 			pa[i][j] /= fn
+			cdist += math.Abs(pop.NovEnvs[i][j] - pa[i][j])
 		}
-		cdist += DistVecs1(pop.NovEnvs[i], pa[i])
 	}
 	for _, indiv := range pop.Indivs {
 		for i, cell := range indiv.Bodies[INovEnv].Cells {
@@ -444,7 +444,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		}
 
 		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD>: %e\t<ME>: %e\t<Fit>: %e\t<WFit>: %e\t<ACPl>: %e\t<NCPl>: %e\t<OPl>: %e\t<Pp>: %e\t<Div>: %e<Ndev>: %e\n ", istep, popsize, pstat.CDist, pstat.MeanErr, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD>: %e\t<ME>: %e\t<Fit>: %e\t<WFit>: %e\t<ACPl>: %e\t<NCPl>: %e\t<OPl>: %e\t<Pp>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist, pstat.MeanErr, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
 

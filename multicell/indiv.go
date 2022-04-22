@@ -530,32 +530,30 @@ func (cell *Cell) updateEMA() {
 }
 
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
-	var diff float64
-	var convindex int
-
 	e_p := NewVec(nenv + ncells) // = env - p0
 	g0 := Ones(ngenes)
 	f0 := NewVec(ngenes)
 	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
-	p0 := NewVec(nenv + ncells)
 	ve := NewVec(ngenes)
 	vf := NewVec(ngenes)
 	vg := NewVec(ngenes)
 	vh := NewVec(ngenes)
-	vp := NewVec(nenv + ncells)
+	p1 := NewVec(nenv + ncells)
 	f1 := NewVec(ngenes)
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
-
-	convindex = 0
-	pscale := cell.getPscale()
 
 	for nstep := 0; nstep < maxDevStep; nstep++ {
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
-				diffVecs(e_p, env, p0) // env includes noise
+
+				diffVecs(e_p, env, cell.P) // env includes noise
+
+				// Kalman gain
+				pscale := cell.getPscale()
 				multVecVec(e_p, pscale, e_p)
+
 				multMatVec(ve, G.E, e_p)
 			} else {
 				multMatVec(ve, G.E, env)
@@ -585,37 +583,26 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 			copy(h1, g1) //identity map
 		}
 
-		multMatVec_T(vp, G.P, h1)
-		applyFnVec(rho, vp)
-		diff = DistVecs1(h0, h1) //+ DistVecs1(g0, g1) + DistVecs1(f0, f1) //Stricter convergence criterion requiring convergence in all layers
-		//		diff = DistVecs1(p0, vp)
+		multMatVec_T(p1, G.P, h1)
+		applyFnVec(rho, p1)
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
-		copy(p0, vp)
-		if diff < epsDev { //if criterion is reached
-			convindex++ //increment by one
-		} else {
-			convindex = 0
+		copy(cell.P, p1)
+		cell.updateEMA()
+		diff := 0.0
+		for _, v := range cell.Pvar {
+			diff += v
 		}
-		if convindex > ccStep {
-			cell.NDevStep = nstep - ccStep //steady state reached
+		diff /= float64(len(cell.Pvar))
+		cell.NDevStep = nstep
+		if diff < epsDev {
 			break
 		}
-		if nstep == maxDevStep-1 {
-			cell.NDevStep = maxDevStep
-		}
-
 	}
-	//	fmt.Println("PathLen: ", cell.NDevStep)
-	//fmt.Println("Phenotype after development:",vpc)
-	//fmt.Println("Id after development:",vpid)
 	copy(cell.F, f1)
 	copy(cell.G, g1)
 	copy(cell.H, h1)
-	copy(cell.P, vp)
-
-	cell.updateEMA()
 
 	return *cell
 }

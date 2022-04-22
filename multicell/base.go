@@ -12,7 +12,7 @@ var ncells int = 1    //number of cell types/phenotypes to be trained simultaneo
 
 const maxDevStep int = 200    // Maximum steps for development.
 const ccStep int = 5          // Number of steady steps for convergence
-const epsDev float64 = 1.0e-6 // Convergence criterion of development.
+const epsDev float64 = 1.0e-3 // Convergence criterion of development.
 const eps float64 = 1.0e-50
 
 const alphaEMA = 2.0 / (1.0 + 5.0) // exponential moving average/variance
