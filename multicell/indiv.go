@@ -513,10 +513,11 @@ func (indiv *Indiv) getPolyphenism(envs Cues) float64 { //Degree of polyphenism 
 
 func (cell *Cell) getPscale() Cue {
 	vt := NewVec(nenv + ncells)
+	evar := devNoise * devNoise
 	for i, v := range cell.Pvar {
-		vt[i] = v / (v + devNoise)
+		vt[i] = v / (v + evar)
 	}
-
+	log.Println("Kalman gain", vt)
 	return vt
 }
 
@@ -543,7 +544,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
-	for nstep := 0; nstep < maxDevStep; nstep++ {
+	for nstep := 1; nstep <= maxDevStep; nstep++ {
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
@@ -551,8 +552,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 				diffVecs(e_p, env, cell.P)
 
 				// Kalman gain
-				pscale := cell.getPscale()
-				multVecVec(e_p, pscale, e_p)
+				//pscale := cell.getPscale()
+				//multVecVec(e_p, pscale, e_p)
 
 				multMatVec(ve, G.E, e_p)
 			} else {
