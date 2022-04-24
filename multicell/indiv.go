@@ -459,7 +459,6 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 
 	kid0.Mutate()
 	kid1.Mutate()
-	//Mutation happens with 100% probability
 
 	return kid0, kid1
 }

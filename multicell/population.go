@@ -20,7 +20,9 @@ type Population struct { //Population of individuals
 
 type PopStats struct { // Statistics of population (mean values of quantities of interest)
 	CDist      float64 // Distance between average phenotype and env.
-	MeanErr    float64
+	MeanErr1   float64 // || p(e1) - e1 || (Nov)
+	MeanErr0   float64 // || p(e0) - e0 || (Anc)
+	MeanDiff   float64 // || p(e1) - e0 || (Nov-Anc)
 	WagFit     float64
 	Fitness    float64
 	AncCuePlas float64
@@ -35,7 +37,9 @@ func (pop *Population) GetStats() PopStats {
 	var stats PopStats
 	mf := 0.0
 	maxfit := 0.0
-	mse := 0.0
+	merr1 := 0.0
+	merr0 := 0.0
+	mdiff := 0.0
 	ndev := 0
 	mop := 0.0 // mean observed plasticity
 	ap := 0.0  // mean ancestral plasticity
@@ -51,7 +55,9 @@ func (pop *Population) GetStats() PopStats {
 	}
 
 	for _, indiv := range pop.Indivs {
-		mse += indiv.getMeanErr(INovEnv)
+		merr1 += indiv.getMeanErr(INovEnv)
+		merr0 += indiv.getMeanErr(IAncEnv)
+		mdiff += indiv.Dp1e0
 		mf += indiv.Fit
 		mop += indiv.ObsPlas
 		ap += indiv.AncCuePlas
@@ -94,7 +100,9 @@ func (pop *Population) GetStats() PopStats {
 	}
 
 	stats.CDist = math.Sqrt(cdist)
-	stats.MeanErr = mse / fn
+	stats.MeanErr1 = merr1 / fn
+	stats.MeanErr0 = merr0 / fn
+	stats.MeanDiff = mdiff / fn
 	meanfit := mf / fn
 	stats.Fitness = meanfit
 	stats.WagFit = meanfit / maxfit
@@ -437,15 +445,14 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist, pstat.MeanErr, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist, pstat.MeanErr1, pstat.MeanErr0, pstat.MeanDiff, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
 
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		//fmt.Printf("Evol_step: %d\t <Fit>: %f\t <Pl>:%e\t <Pp>:%e\t <Div>:%e \t <u>:%e\n ", istep, Fitness, Pl, Polyp, Div, Util)
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD>: %e\t<ME>: %e\t<Fit>: %e\t<WFit>: %e\t<ACPl>: %e\t<NCPl>: %e\t<OPl>: %e\t<Pp>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist, pstat.MeanErr, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf>: %e\t<Fit>: %e\t<WFit>: %e\t<ACPl>: %e\t<NCPl>: %e\t<OPl>: %e\t<Pp>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist, pstat.MeanErr1, pstat.MeanErr0, pstat.MeanDiff, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
 

@@ -88,7 +88,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Fprintln(fout, "#Epoch\tGen\tNpop\tCenterEnv\tMeanErr \tFitness \tWag_Fit \tAnc_Cue_Plas \tNov_Cue_Plas \tObs_Plas \tPolyphenism \tDiversity \tNdev") //header
+	fmt.Fprintln(fout, "#Epoch\tGen\tNpop\tCenterEnv\tMeanErr1 \tMeanErr0 \tMeanDiff \tFitness \tWag_Fit \tAnc_Cue_Plas \tNov_Cue_Plas \tObs_Plas \tPolyphenism \tDiversity \tNdev") //header
 
 	err = fout.Close()
 	if err != nil {
