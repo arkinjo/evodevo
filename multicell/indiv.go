@@ -527,6 +527,7 @@ func (cell *Cell) updateEMA() {
 		incr := alphaEMA * d
 		cell.Pave[i] += incr
 		cell.Pvar[i] = (1 - alphaEMA) * (cell.Pvar[i] + d*incr)
+		cell.P[i] = cell.Pave[i]
 	}
 }
 
