@@ -20,9 +20,9 @@ type Population struct { //Population of individuals
 
 type PopStats struct { // Statistics of population (mean values of quantities of interest)
 	CDist      float64 // Distance between average phenotype and env.
-	MeanErr1   float64 // || p(e1) - e1 || (Nov)
-	MeanErr0   float64 // || p(e0) - e0 || (Anc)
-	MeanDiff   float64 // || p(e1) - e0 || (Nov-Anc)
+	PErr1      float64 // || p(e1) - e1 || (Nov)
+	PErr0      float64 // || p(e0) - e0 || (Anc)
+	PEDiff     float64 // || p(e1) - e0 || (Nov-Anc)
 	WagFit     float64
 	Fitness    float64
 	AncCuePlas float64
@@ -51,12 +51,12 @@ func (pop *Population) GetStats() PopStats {
 
 	denv := 0.0
 	for i, env := range pop.NovEnvs { //To normalize wrt change in environment cue
-		denv += Hammingdist(env, pop.AncEnvs[i])
+		denv += DistVecs1(env, pop.AncEnvs[i])
 	}
 
 	for _, indiv := range pop.Indivs {
-		merr1 += indiv.getMeanErr(INovEnv)
-		merr0 += indiv.getMeanErr(IAncEnv)
+		merr1 += indiv.getPErr(INovEnv)
+		merr0 += indiv.getPErr(IAncEnv)
 		mdiff += indiv.Dp1e0
 		mf += indiv.Fit
 		mop += indiv.ObsPlas
@@ -100,9 +100,9 @@ func (pop *Population) GetStats() PopStats {
 	}
 
 	stats.CDist = math.Sqrt(cdist)
-	stats.MeanErr1 = merr1 / fn
-	stats.MeanErr0 = merr0 / fn
-	stats.MeanDiff = mdiff / fn
+	stats.PErr1 = merr1 / (fn * denv)
+	stats.PErr0 = merr0 / (fn * denv)
+	stats.PEDiff = mdiff / (fn * denv)
 	meanfit := mf / fn
 	stats.Fitness = meanfit
 	stats.WagFit = meanfit / maxfit
@@ -445,14 +445,14 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist, pstat.MeanErr1, pstat.MeanErr0, pstat.MeanDiff, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist, pstat.PErr1, pstat.PErr0, pstat.PEDiff, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
 
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf>: %e\t<Fit>: %e\t<WFit>: %e\t<ACPl>: %e\t<NCPl>: %e\t<OPl>: %e\t<Pp>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist, pstat.MeanErr1, pstat.MeanErr0, pstat.MeanDiff, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf>: %e\t<Fit>: %e\t<WFit>: %e\t<ACPl>: %e\t<NCPl>: %e\t<OPl>: %e\t<Pp>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist, pstat.PErr1, pstat.PErr0, pstat.PEDiff, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
 

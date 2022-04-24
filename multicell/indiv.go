@@ -29,7 +29,7 @@ type Cell struct { //A 'cell' is characterized by its gene expression and phenot
 }
 
 type Body struct { //Do we want to reimplement this?
-	MeanErr  float64
+	PErr     float64
 	NDevStep int
 	Cells    []Cell // Array of cells of different types
 }
@@ -317,7 +317,7 @@ func NewBody(ncells int) Body { // Creates an array of new cells of length Ncell
 
 func (body *Body) Copy() Body {
 	body1 := NewBody(ncells)
-	body1.MeanErr = body.MeanErr
+	body1.PErr = body.PErr
 	body1.NDevStep = body.NDevStep
 	for i, cell := range body.Cells {
 		body1.Cells[i] = cell.Copy()
@@ -463,8 +463,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	return kid0, kid1
 }
 
-func (indiv *Indiv) getMeanErr(ienv int) float64 {
-	return indiv.Bodies[ienv].MeanErr
+func (indiv *Indiv) getPErr(ienv int) float64 {
+	return indiv.Bodies[ienv].PErr
 }
 
 func (indiv *Indiv) getNDevStep(ienv int) int {
@@ -478,7 +478,7 @@ func (indiv *Indiv) getFitness() float64 { //fitness in novel/present environmen
 	}
 
 	fdev := float64(ndevstep) / selDevStep
-	ferr := indiv.getMeanErr(INovEnv) * baseSelStrength
+	ferr := indiv.getPErr(INovEnv) * baseSelStrength
 	rawfit := math.Exp(-(ferr + fdev))
 	return rawfit
 }
@@ -633,7 +633,7 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 		}
 	}
 
-	body.MeanErr = sse / float64(ncells*(nenv+ncells)) // L1
+	body.PErr = sse
 	body.NDevStep = maxdev
 
 	return *body
