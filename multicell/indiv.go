@@ -19,11 +19,12 @@ type Genome struct { //Genome of an individual
 }
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	F        Vec // Epigenetic markers
-	G        Vec // Gene expression
-	H        Vec // Higher order complexes
-	P, Pvar  Vec // moving average and variance of P (P is already EMA)
-	NDevStep int // Developmental path length
+	F        Vec     // Epigenetic markers
+	G        Vec     // Gene expression
+	H        Vec     // Higher order complexes
+	P, Pvar  Vec     // moving average and variance of P (P is already EMA)
+	PErr     float64 // ||e - p||_1
+	NDevStep int     // Developmental path length
 
 }
 
@@ -285,7 +286,7 @@ func NewCell(id int) Cell { //Creates a new cell given id of cell.
 	p := NewCue(nenv, id)
 	pv := Ones(nenv + ncells)
 	scaleVec(pv, pInitVar, pv)
-	cell := Cell{f, g, h, p, pv, 0}
+	cell := Cell{f, g, h, p, pv, 0.0, 0}
 
 	return cell
 }
@@ -299,6 +300,7 @@ func (cell *Cell) Copy() Cell {
 	cell1.H = CopyVec(cell.H)
 	cell1.P = CopyVec(cell.P)
 	cell1.Pvar = CopyVec(cell.Pvar)
+	cell1.PErr = cell.PErr
 	cell1.NDevStep = cell.NDevStep
 
 	return cell1
@@ -602,6 +604,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	copy(cell.F, f1)
 	copy(cell.G, g1)
 	copy(cell.H, h1)
+	cell.PErr = DistVecs1(cell.P, env)
 
 	return *cell
 }
@@ -612,7 +615,7 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 
 	for i, cell := range body.Cells {
 		body.Cells[i] = cell.DevCell(G, envs[i])
-		sse += DistVecs1(cell.P, envs[i]) // L1 norm
+		sse += cell.PErr
 		if cell.NDevStep > maxdev {
 			maxdev = cell.NDevStep
 		}
