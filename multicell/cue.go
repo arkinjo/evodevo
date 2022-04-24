@@ -149,13 +149,13 @@ func CopyCues(cues Cues) Cues {
 func AddNoise2Cue(cue Cue, eta float64) Cue {
 	tv := GetTrait(cue)
 	idv := GetIdVec(cue)
-
+	v := CopyVec(tv)
 	for i, t := range tv {
-		tv[i] = t + eta*rand.NormFloat64()
+		v[i] = t + eta*rand.NormFloat64()
 	}
-	tv = append(tv, idv...)
+	v = append(v, idv...)
 
-	return tv
+	return v
 }
 
 func AddNoise2Cues(cues Cues, eta float64) Cues {

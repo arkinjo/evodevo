@@ -545,12 +545,14 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
+	renv := AddNoise2Cue(env, devNoise)
+
 	for nstep := 1; nstep <= maxDevStep; nstep++ {
 		multMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
 
-				diffVecs(e_p, env, cell.P)
+				diffVecs(e_p, renv, cell.P)
 
 				// Kalman gain
 				//pscale := cell.getPscale()
@@ -558,7 +560,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 
 				multMatVec(ve, G.E, e_p)
 			} else {
-				multMatVec(ve, G.E, env)
+				multMatVec(ve, G.E, renv)
 			}
 			addVecs(f1, vf, ve)
 		} else {
@@ -610,12 +612,11 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 }
 
 func (body *Body) DevBody(G Genome, envs Cues) Body {
-	nenvs := AddNoise2Cues(envs, devNoise)
 	sse := 0.0
 	maxdev := 0
 
 	for i, cell := range body.Cells {
-		body.Cells[i] = cell.DevCell(G, nenvs[i])
+		body.Cells[i] = cell.DevCell(G, envs[i])
 		sse += DistVecs1(cell.P, envs[i]) // L1 norm
 		if cell.NDevStep > maxdev {
 			maxdev = cell.NDevStep
