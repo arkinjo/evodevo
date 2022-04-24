@@ -19,12 +19,11 @@ type Genome struct { //Genome of an individual
 }
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	F          Vec // Epigenetic markers
-	G          Vec // Gene expression
-	H          Vec // Higher order complexes
-	P          Vec // Phenotype; id already in cue
-	Pave, Pvar Vec // moving average and variance of P
-	NDevStep   int // Developmental path length
+	F        Vec // Epigenetic markers
+	G        Vec // Gene expression
+	H        Vec // Higher order complexes
+	P, Pvar  Vec // moving average and variance of P (P is already EMA)
+	NDevStep int // Developmental path length
 
 }
 
@@ -284,10 +283,9 @@ func NewCell(id int) Cell { //Creates a new cell given id of cell.
 	g := NewVec(ngenes)
 	h := NewVec(ngenes)
 	p := NewCue(nenv, id)
-	pa := NewVec(nenv + ncells)
 	pv := Ones(nenv + ncells)
 	scaleVec(pv, pInitVar, pv)
-	cell := Cell{f, g, h, p, pa, pv, 0}
+	cell := Cell{f, g, h, p, pv, 0}
 
 	return cell
 }
@@ -300,7 +298,6 @@ func (cell *Cell) Copy() Cell {
 	cell1.G = CopyVec(cell.G)
 	cell1.H = CopyVec(cell.H)
 	cell1.P = CopyVec(cell.P)
-	cell1.Pave = CopyVec(cell.Pave)
 	cell1.Pvar = CopyVec(cell.Pvar)
 	cell1.NDevStep = cell.NDevStep
 
@@ -521,13 +518,12 @@ func (cell *Cell) getPscale() Cue {
 	return vt
 }
 
-func (cell *Cell) updateEMA() {
-	for i, p := range cell.P {
-		d := p - cell.Pave[i]
+func (cell *Cell) updateEMA(pnew Vec) {
+	for i, pi := range pnew {
+		d := pi - cell.P[i]
 		incr := alphaEMA * d
-		cell.Pave[i] += incr
+		cell.P[i] += incr
 		cell.Pvar[i] = (1 - alphaEMA) * (cell.Pvar[i] + d*incr)
-		cell.P[i] = cell.Pave[i]
 	}
 }
 
@@ -592,8 +588,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
-		copy(cell.P, p1)
-		cell.updateEMA()
+		cell.updateEMA(p1)
 		diff := 0.0
 		for _, v := range cell.Pvar {
 			diff += v
