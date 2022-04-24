@@ -487,7 +487,7 @@ func getPlasticity(body0, body1 Body) float64 { //cue plasticity of individual
 	for i, cell := range body0.Cells {
 		d2 += Dist2Vecs(cell.P, body1.Cells[i].P)
 	}
-	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
+
 	return d2 / float64(ncells*(ncells+nenv))
 }
 
@@ -520,7 +520,7 @@ func (cell *Cell) getPscale() Cue {
 	return vt
 }
 
-func (cell *Cell) updateEMA(pnew Vec) {
+func (cell *Cell) updatePEMA(pnew Vec) {
 	for i, pi := range pnew {
 		d := pi - cell.P[i]
 		incr := alphaEMA * d
@@ -590,7 +590,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
-		cell.updateEMA(p1)
+		cell.updatePEMA(p1)
 		diff := 0.0
 		for _, v := range cell.Pvar {
 			diff += v
