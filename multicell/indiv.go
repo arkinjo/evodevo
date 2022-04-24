@@ -52,6 +52,7 @@ type Indiv struct { //An individual as an unicellular organism
 	NovCuePlas float64 //Cue Plasticity in novel environment
 	ObsPlas    float64 //Observed Plasticity
 	Pp         float64 //Degree of polyphenism
+	Dp1e0      float64 // ||p(e1) - e0||
 }
 
 func NewGenome() Genome { //Generate new genome matrix ensemble
@@ -331,7 +332,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 		bodies[i] = NewBody(ncells)
 	}
 
-	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -347,6 +348,7 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 	indiv1.Fit = indiv.Fit
 	indiv1.ObsPlas = indiv.ObsPlas
 	indiv1.Pp = indiv.Pp
+	indiv1.Dp1e0 = indiv.Dp1e0
 
 	return indiv1
 }
@@ -452,8 +454,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		bodies1[i] = NewBody(ncells)
 	}
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -489,6 +491,14 @@ func getPlasticity(body0, body1 Body) float64 { //cue plasticity of individual
 	}
 
 	return d2 / float64(ncells*(ncells+nenv))
+}
+
+func getPEDiff(body Body, envs Cues) float64 {
+	diff := 0.0
+	for i, c := range body.Cells {
+		diff += DistVecs1(c.P, envs[i])
+	}
+	return diff / float64(len(envs)*len(envs[0]))
 }
 
 func (indiv *Indiv) getVarpheno() float64 { //Get sum of elementwise variance of phenotype
@@ -642,6 +652,6 @@ func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare development
 	indiv.NovCuePlas = getPlasticity(indiv.Bodies[INoEnv], indiv.Bodies[INovEnv])
 	indiv.ObsPlas = getPlasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
 	indiv.Pp = indiv.getPolyphenism(novenvs)
-
+	indiv.Dp1e0 = getPEDiff(indiv.Bodies[INovEnv], ancenvs)
 	return *indiv
 }
