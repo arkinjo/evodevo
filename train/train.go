@@ -83,14 +83,7 @@ func main() {
 		pop0.RandomizeGenome()
 	}
 
-	fout, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create file for recording trajectory
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Fprintln(fout, "#Epoch\tGen\tNpop\tCPEnvDist1 \tCPEnvDist0 \tMeanErr1 \tMeanErr0 \tMeanDp1e0 \tMeanDp0e1 \tFitness \tWag_Fit \tObs_Plas \tDiversity \tNdev") //header
-
-	err = fout.Close()
+	ftraj, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create file for recording trajectory
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,7 +109,7 @@ func main() {
 			fmt.Println("Epoch ", epoch, "has environments", popstart.NovEnvs)
 		}
 
-		pop1 := multicell.Evolve(false, T_Filename, json_out, "", epochlength, epoch, &popstart)
+		pop1 := multicell.Evolve(false, ftraj, json_out, "", epochlength, epoch, &popstart)
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population; just before epoch change
@@ -155,6 +148,10 @@ func main() {
 		novvec = append(novvec, err == nil)
 		//fmt.Println("Novel environment after :", popstart.NovEnvs)
 		//fmt.Println("Ancestral environment after :", popstart.AncEnvs)
+	}
+	err = ftraj.Close()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	fmt.Printf("Trajectory of population written to %s \n", T_Filename)

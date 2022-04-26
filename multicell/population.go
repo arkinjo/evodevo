@@ -374,7 +374,7 @@ func (pop *Population) DevPop(gen int) Population {
 	return *pop
 }
 
-func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
+func Evolve(test bool, ftraj *os.File, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
 	var popsize int
 
@@ -392,6 +392,8 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 	}
+
+	fmt.Fprintln(ftraj, "#Epoch\tGen\tNpop\tCPEnvDist1 \tCPEnvDist0 \tMeanErr1 \tMeanErr0 \tMeanDp1e0 \tMeanDp0e1 \tFitness \tWag_Fit \tObs_Plas \tDiversity \tNdev") //header
 
 	for istep := 1; istep <= nstep; istep++ {
 		pop.DevPop(istep)
@@ -434,17 +436,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		pstat := pop.GetStats()
 		popsize = len(pop.Indivs)
 
-		fout, err := os.OpenFile(tfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist1, pstat.CDist0, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
-
-		err = fout.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
+		fmt.Fprintf(ftraj, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist1, pstat.CDist0, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
 		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD1>: %e\t<CD0>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf10>: %e\t<MDf01>: %e\t<Fit>: %e\t<WFit>: %e\t<Plas>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist1, pstat.CDist0, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
@@ -457,6 +449,7 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 		*/
 
 	}
+
 	if test && gidfilename != "" {
 		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
