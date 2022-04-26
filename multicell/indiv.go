@@ -35,8 +35,7 @@ type Body struct { //Do we want to reimplement this?
 }
 
 const (
-	INoEnv  = iota //No env
-	IAncEnv        // Previous env
+	IAncEnv = iota // Previous env
 	INovEnv        // Current env
 )
 
@@ -45,14 +44,12 @@ type Indiv struct { //An individual as an unicellular organism
 	DadId      int
 	MomId      int
 	Genome     Genome
-	Bodies     []Body  //INoEnv, IAncEnv, INovEnv (see above const.)
+	Bodies     []Body  //IAncEnv, INovEnv (see above const.)
 	Fit        float64 //Fitness with cues
 	WagFit     float64 //Wagner relative fitness
-	AncCuePlas float64 //Cue Plasticity in ancestral environment
-	NovCuePlas float64 //Cue Plasticity in novel environment
-	ObsPlas    float64 //Observed Plasticity
-	Pp         float64 //Degree of polyphenism
+	Plasticity float64 //Observed Plasticity
 	Dp1e0      float64 // ||p(e1) - e0||
+	Dp0e1      float64 // ||p(e0) - e1||
 }
 
 func NewGenome() Genome { //Generate new genome matrix ensemble
@@ -332,7 +329,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 		bodies[i] = NewBody(ncells)
 	}
 
-	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -346,9 +343,9 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 		indiv1.Bodies[i] = body.Copy()
 	}
 	indiv1.Fit = indiv.Fit
-	indiv1.ObsPlas = indiv.ObsPlas
-	indiv1.Pp = indiv.Pp
+	indiv1.Plasticity = indiv.Plasticity
 	indiv1.Dp1e0 = indiv.Dp1e0
+	indiv1.Dp0e1 = indiv.Dp0e1
 
 	return indiv1
 }
@@ -391,13 +388,6 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if r < t {
 		indiv.Genome.P.mutateSpmat(CueResponseDensity, sdP)
 	}
-	/*
-		t += ngenes
-		if r < t {
-			indiv.Genome.Z.mutateSpmat(GenomeDensity)
-		}
-	*/
-
 	return
 }
 
@@ -416,8 +406,6 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 			hg := ng0.H.Mat[i]
 			hh := ng0.J.Mat[i]
 			p := ng0.P.Mat[i]
-			//z := ng0.Z.Mat[i]
-			//z0 := nz0[i]
 
 			ng0.E.Mat[i] = ng1.E.Mat[i]
 			ng0.F.Mat[i] = ng1.F.Mat[i]
@@ -425,8 +413,6 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 			ng0.H.Mat[i] = ng1.H.Mat[i]
 			ng0.J.Mat[i] = ng1.J.Mat[i]
 			ng0.P.Mat[i] = ng1.P.Mat[i]
-			//ng0.Z.Mat[i] = ng1.Z.Mat[i]
-			//nz0[i] = nz1[i]
 
 			ng1.E.Mat[i] = e
 			ng1.F.Mat[i] = f
@@ -434,8 +420,6 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 			ng1.H.Mat[i] = hg
 			ng1.J.Mat[i] = hh
 			ng1.P.Mat[i] = p
-			//ng1.Z.Mat[i] = z
-			//nz1[i] = z0
 		}
 	}
 
@@ -454,8 +438,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		bodies1[i] = NewBody(ncells)
 	}
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -497,7 +481,7 @@ func getPEDiff(body Body, envs Cues) float64 {
 	for i, c := range body.Cells {
 		diff += DistVecs1(c.P, envs[i])
 	}
-	return diff / float64(len(envs)*len(envs[0]))
+	return diff / float64(ncells*(ncells+nenv))
 }
 
 func (indiv *Indiv) getVarpheno() float64 { //Get sum of elementwise variance of phenotype
@@ -507,16 +491,6 @@ func (indiv *Indiv) getVarpheno() float64 { //Get sum of elementwise variance of
 	}
 	sigma2p := GetCueVar(pvec)
 	return sigma2p
-}
-
-func (indiv *Indiv) getPolyphenism(envs Cues) float64 { //Degree of polyphenism of individual; normalize with variance of environment cue
-	sigma2env := GetCueVar(envs)
-	if sigma2env == 0 {
-		return 0
-	} else {
-		sigma2p := indiv.getVarpheno()
-		return sigma2p / sigma2env
-	}
 }
 
 func (cell *Cell) getPscale() Cue {
@@ -633,24 +607,21 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 		}
 	}
 
-	body.PErr = sse
+	body.PErr = sse / float64(ncells*(ncells+nenv))
 	body.NDevStep = maxdev
 
 	return *body
 }
 
 func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare developmental process under different conditions
-	indiv.Bodies[INoEnv].DevBody(indiv.Genome, ZeroEnvs)
 	indiv.Bodies[IAncEnv].DevBody(indiv.Genome, ancenvs)
 	indiv.Bodies[INovEnv].DevBody(indiv.Genome, novenvs)
 
 	indiv.Fit = indiv.getFitness()
 
 	// Ignoring convergence/divergence for now
-	indiv.AncCuePlas = getPlasticity(indiv.Bodies[INoEnv], indiv.Bodies[IAncEnv])
-	indiv.NovCuePlas = getPlasticity(indiv.Bodies[INoEnv], indiv.Bodies[INovEnv])
-	indiv.ObsPlas = getPlasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
-	indiv.Pp = indiv.getPolyphenism(novenvs)
+	indiv.Plasticity = getPlasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
 	indiv.Dp1e0 = getPEDiff(indiv.Bodies[INovEnv], ancenvs)
+	indiv.Dp0e1 = getPEDiff(indiv.Bodies[IAncEnv], novenvs)
 	return *indiv
 }

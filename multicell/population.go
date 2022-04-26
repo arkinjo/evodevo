@@ -19,16 +19,15 @@ type Population struct { //Population of individuals
 }
 
 type PopStats struct { // Statistics of population (mean values of quantities of interest)
-	CDist      float64 // Distance between average phenotype and env.
-	PErr1      float64 // || p(e1) - e1 || (Nov)
-	PErr0      float64 // || p(e0) - e0 || (Anc)
-	PEDiff     float64 // || p(e1) - e0 || (Nov-Anc)
+	CDist1     float64 // ||<p(e1)> - e1||
+	CDist0     float64 // ||<p(e1)> - e0||
+	PErr1      float64 // <|| p(e1) - e1 ||> (Nov)
+	PErr0      float64 // <|| p(e0) - e0 ||> (Anc)
+	PED10      float64 // <|| p(e1) - e0 ||> (Nov-Anc)
+	PED01      float64 // <|| p(e0) - e1 ||> (Anc-Nov)
 	WagFit     float64
 	Fitness    float64
-	AncCuePlas float64
-	NovCuePlas float64
-	ObsPlas    float64
-	Polyp      float64
+	Plasticity float64
 	Div        float64
 	NDevStep   float64
 }
@@ -39,12 +38,10 @@ func (pop *Population) GetStats() PopStats {
 	maxfit := 0.0
 	merr1 := 0.0
 	merr0 := 0.0
-	mdiff := 0.0
+	md10 := 0.0
+	md01 := 0.0
 	ndev := 0
 	mop := 0.0 // mean observed plasticity
-	ap := 0.0  // mean ancestral plasticity
-	np := 0.0  // mean (novel) plasticity
-	pp := 0.0  // polyphenism
 	fn := float64(len(pop.Indivs))
 	pa := NewCues(ncells, nenv)
 	pv := NewCues(ncells, nenv)
@@ -57,12 +54,10 @@ func (pop *Population) GetStats() PopStats {
 	for _, indiv := range pop.Indivs {
 		merr1 += indiv.getPErr(INovEnv)
 		merr0 += indiv.getPErr(IAncEnv)
-		mdiff += indiv.Dp1e0
+		md10 += indiv.Dp1e0
+		md01 += indiv.Dp0e1
 		mf += indiv.Fit
-		mop += indiv.ObsPlas
-		ap += indiv.AncCuePlas
-		np += indiv.NovCuePlas
-		pp += indiv.Pp
+		mop += indiv.Plasticity
 		ndev += indiv.Bodies[INovEnv].NDevStep
 
 		if indiv.Fit > maxfit {
@@ -75,12 +70,14 @@ func (pop *Population) GetStats() PopStats {
 		}
 
 	}
-	cdist := 0.0
+	cdist1 := 0.0
+	cdist0 := 0.0
 	for i, p := range pa {
 		for j := range p {
 			pa[i][j] /= fn
-			d := pop.NovEnvs[i][j] - pa[i][j]
-			cdist += d * d
+			cdist1 += math.Abs(pop.NovEnvs[i][j] - pa[i][j])
+			cdist0 += math.Abs(pop.AncEnvs[i][j] - pa[i][j])
+
 		}
 	}
 	for _, indiv := range pop.Indivs {
@@ -99,18 +96,17 @@ func (pop *Population) GetStats() PopStats {
 		}
 	}
 
-	stats.CDist = math.Sqrt(cdist)
-	stats.PErr1 = merr1 / (fn * denv)
-	stats.PErr0 = merr0 / (fn * denv)
-	stats.PEDiff = mdiff / (fn * denv)
+	stats.CDist1 = cdist1 / float64(ncells*(nenv+ncells))
+	stats.CDist0 = cdist0 / float64(ncells*(nenv+ncells))
+	stats.PErr1 = merr1 / fn
+	stats.PErr0 = merr0 / fn
+	stats.PED10 = md10 / fn
+	stats.PED01 = md01 / fn
 	meanfit := mf / fn
 	stats.Fitness = meanfit
 	stats.WagFit = meanfit / maxfit
 	stats.NDevStep = float64(ndev) / fn
-	stats.ObsPlas = mop / (fn * denv)
-	stats.AncCuePlas = ap / fn
-	stats.NovCuePlas = np / fn
-	stats.Polyp = pp / fn
+	stats.Plasticity = mop / (fn * denv)
 	stats.Div = div
 
 	return stats
@@ -380,11 +376,9 @@ func (pop *Population) DevPop(gen int) Population {
 
 func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
 	var jfilename, id_filename, id, dadid, momid string
-	//var Fitness, CuePlas, ObsPlas, Polyp, Div, Util float64
 	var popsize int
 
 	pop := *init_pop
-	//bugfixpop := NewPopulation(len(pop.Envs.Es),len(pop.Indivs))
 
 	if test && gidfilename != "" { //write genealogy in test mode
 		id_filename = fmt.Sprintf("../analysis/%s.dot", gidfilename)
@@ -445,14 +439,14 @@ func Evolve(test bool, tfilename, jsonout, gidfilename string, nstep, epoch int,
 			log.Fatal(err)
 		}
 
-		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist, pstat.PErr1, pstat.PErr0, pstat.PEDiff, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
+		fmt.Fprintf(fout, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist1, pstat.CDist0, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf>: %e\t<Fit>: %e\t<WFit>: %e\t<ACPl>: %e\t<NCPl>: %e\t<OPl>: %e\t<Pp>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist, pstat.PErr1, pstat.PErr0, pstat.PEDiff, pstat.Fitness, pstat.WagFit, pstat.AncCuePlas, pstat.NovCuePlas, pstat.ObsPlas, pstat.Polyp, pstat.Div, pstat.NDevStep)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD1>: %e\t<CD0>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf10>: %e\t<MDf01>: %e\t<Fit>: %e\t<WFit>: %e\t<Plas>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist1, pstat.CDist0, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
 
@@ -523,7 +517,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		defpproj, ancpproj, novpproj, gproj = 0.0, 0.0, 0.0, 0.0
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(defcphen, indiv.Bodies[INoEnv].Cells[i].P, env) //centralize
+			diffVecs(defcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
 			defpproj += Innerproduct(defcphen, Paxis[i])
 		}
 
@@ -582,8 +576,6 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 				}
 			}
 		*/
-		//fmt.Printf("Nov: %e\t Anc: %e\t G: %e\n", novpproj, ancpproj, gproj)
-		//gproj = gproj / math.Sqrt(float64(genelength*ngenes)) //Normalize wrt genome size
 		fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", defpproj, ancpproj, novpproj, gproj)
 	}
 	err = fout.Close()
