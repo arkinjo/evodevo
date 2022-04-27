@@ -146,25 +146,13 @@ func CopyCues(cues Cues) Cues {
 	return vs
 }
 
-func AddNoise2Cue(cue Cue, eta float64) Cue {
+func AddNoise2Cue(cue_out, cue Cue, eta float64) {
 	tv := GetTrait(cue)
-	idv := GetIdVec(cue)
-	v := CopyVec(tv)
 	for i, t := range tv {
-		v[i] = t + eta*rand.NormFloat64()
-	}
-	v = append(v, idv...)
-
-	return v
-}
-
-func AddNoise2Cues(cues Cues, eta float64) Cues {
-	envs1 := CopyCues(cues)
-	for i, c := range envs1 {
-		envs1[i] = AddNoise2Cue(c, eta) //hope this works; I actually don't know what I'm doing here
+		cue_out[i] = t + eta*rand.NormFloat64()
 	}
 
-	return envs1
+	return
 }
 
 func ChangeEnvs(cues Cues, n int) Cues { //Mutates precisely n bits in environment cue vector 'concatenation'
