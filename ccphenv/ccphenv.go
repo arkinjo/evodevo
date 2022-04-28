@@ -40,7 +40,7 @@ func main() {
 	pop0.ClearGenome()
 
 	if *jsoninPtr != "" {
-		fmt.Println("Importing population from ", *jsoninPtr)
+		fmt.Println("#Importing population from ", *jsoninPtr)
 		popin, err := os.Open(*jsoninPtr)
 		if err != nil {
 			log.Fatal(err)
@@ -54,21 +54,47 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("Successfully imported population")
+		fmt.Println("# Successfully imported population")
 	} else {
 		flag.PrintDefaults()
 		log.Fatal("Specify the input JSON file with -jsonin=filename.")
 	}
 
-	fmt.Println("Cross-covariance:", *state0, *ienv0, " vs ", *state1, *ienv1)
+	fmt.Println("# Cross-covariance:", *state0, *ienv0, " vs ", *state1, *ienv1)
 	fstates0 := pop0.GetFlatStateVec(*state0, *ienv0)
 	fstates1 := pop0.GetFlatStateVec(*state1, *ienv1)
 	mstate0, mstate1, ccmat := multicell.GetCrossCov(fstates0, fstates1)
-	fmt.Println("mean", *state0, *ienv0, len(mstate0), ":", mstate0, "\n")
-	fmt.Println("mean", *state1, *ienv1, len(mstate1), ":", mstate1, "\n")
-	fmt.Println("ccmat[0][0]", ccmat[0][0])
-	runSVD(ccmat)
-	//	myEigenSym(ccmat)
+	vals, U, V := runSVD(ccmat)
+	fmt.Println("#Singular Values: ", vals)
+	project(fstates0, fstates1, mstate0, mstate1, U, V)
+}
+
+func project(data0, data1 []multicell.Vec, mean0, mean1 multicell.Vec, U, V *mat.Dense) {
+	dim0, _ := U.Dims()
+	dim1, _ := V.Dims()
+
+	m0 := mat.NewVecDense(dim0, mean0)
+	m1 := mat.NewVecDense(dim1, mean1)
+
+	for k := range data0 {
+		fmt.Printf("%3d", k)
+		for i := 0; i < 3; i++ {
+
+			p := mat.NewVecDense(dim0, data0[k])
+			p.SubVec(p, m0)
+			axis := U.ColView(i)
+			x := mat.Dot(p, axis)
+			fmt.Printf("\t%e", x)
+		}
+		for i := 0; i < 3; i++ {
+			p := mat.NewVecDense(dim1, data1[k])
+			p.SubVec(p, m1)
+			axis := V.ColView(i)
+			x := mat.Dot(p, axis)
+			fmt.Printf("\t%e", x)
+		}
+		fmt.Printf("\n")
+	}
 }
 
 func getTest3by3Matrix() multicell.Dmat {
@@ -87,7 +113,7 @@ func getTest3by3Matrix() multicell.Dmat {
 	return dmat
 }
 
-func runSVD(ccmat multicell.Dmat) {
+func runSVD(ccmat multicell.Dmat) ([]float64, *mat.Dense, *mat.Dense) {
 	dim0 := len(ccmat)
 	dim1 := len(ccmat[0])
 	C := mat.NewDense(dim0, dim1, nil)
@@ -107,14 +133,8 @@ func runSVD(ccmat multicell.Dmat) {
 	svd.UTo(U)
 	svd.VTo(V)
 	vals := svd.Values(nil)
-	fmt.Println("\nSValues:", vals)
 
-	for i := 0; i < dim0; i++ {
-		fmt.Printf("U\t%f\n", U.At(i, 0))
-	}
-	for i := 0; i < dim1; i++ {
-		fmt.Printf("V\t%f\n", V.At(i, 0))
-	}
+	return vals, U, V
 }
 
 func myEigenSym(m multicell.Dmat) {
