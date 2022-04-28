@@ -61,7 +61,9 @@ func main() {
 	}
 
 	fmt.Println("Cross-covariance:", *state0, *ienv0, " vs ", *state1, *ienv1)
-	mstate0, mstate1, ccmat := pop0.GetCellCrossCov(*state0, *ienv0, *state1, *ienv1)
+	fstates0 := pop0.GetFlatStateVec(*state0, *ienv0)
+	fstates1 := pop0.GetFlatStateVec(*state1, *ienv1)
+	mstate0, mstate1, ccmat := multicell.GetCrossCov(fstates0, fstates1)
 	fmt.Println("mean", *state0, *ienv0, len(mstate0), ":", mstate0, "\n")
 	fmt.Println("mean", *state1, *ienv1, len(mstate1), ":", mstate1, "\n")
 	fmt.Println("ccmat[0][0]", ccmat[0][0])
