@@ -5,10 +5,25 @@ import (
 	"math/rand"
 )
 
+type Settings struct {
+	MaxPop  int     // Maximum number of individuals in population
+	NCells  int     // Number of cell types
+	ELayer  bool    // e present?
+	FLayer  bool    // f present?
+	HLayer  bool    // h present?
+	JLayer  bool    //  J present?
+	Pfback  bool    // P feedback to E layer
+	SDNoise float64 // stdev of environmental noise
+}
+
+var default_settings = Settings{1000, 1, true, true, true, true, true, 0.05}
+
 var maxPop int = 1000 // population size
 var ngenes int = 200  // number of genes
 var nenv int = 40     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
+var pheno_feedback bool = false
+var devNoise float64 = 0.05
 
 const maxDevStep int = 200    // Maximum steps for development.
 const ccStep int = 5          // Number of steady steps for convergence
@@ -37,13 +52,12 @@ const minWagnerFitness float64 = 0.01
 
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
-var withCue bool = false        // with or without environmental cues.
-var pheno_feedback bool = false //whether phenotype is fed back
-var cuestrength float64         // cue strength
-var epig bool = true            // Epigenetic marker layer
-var hoc bool = true             // Higher order complexes layer
+var withCue bool = false // with or without environmental cues.
+var cuestrength float64  // cue strength
+var epig bool = true     // Epigenetic marker layer
+var hoc bool = true      // Higher order complexes layer
 var hoi bool = false
-var hoistrength float64 //declaration
+var jstrength float64 //declaration
 
 // theoretical standard deviation of matrix elements
 var sdE float64
@@ -69,45 +83,40 @@ func SetSeed(seed int64) {
 	rand.Seed(seed)
 }
 
-func SetMaxPop(n int) {
-	maxPop = n
-}
-
-func SetNcells(n int) {
-	ncells = n
-	//selStrength = baseSelStrength / float64(n*(n+nenv))
-	//minWagnerFitness = math.Exp(-baseSelStrength) //Minimal allowed raw fitness
-}
-
-func SetLayers(ce, ch float64, pfeedback, epigm, HOC bool) { //Define whether each layer or interaction is present in model
-
-	cuestrength = ce //strength of environment cue
-	pheno_feedback = pfeedback
-	hoistrength = ch //strength of interactions between higher order complexes
-
-	//withCue = cue //Whether environment cue has effect on development
-	epig = epigm //Layer representing epigenetic markers
-	hoc = HOC    //Layer representing higher-order complexes
-	//hoi = HOI    //Allow interaction between higher-order complexes
-
-	genelength = ngenes + nenv + ncells //G and P layers present by default
-	if ce != 0 {
-		withCue = true
-		genelength += nenv + ncells
+func SetParams(s Settings) { //Define whether each layer or interaction is present in model
+	maxPop = s.MaxPop
+	withCue = s.ELayer
+	if s.ELayer {
+		cuestrength = 1.0
 	} else {
-		withCue = false
+		cuestrength = 0.0
 	}
 
-	if epig {
+	if s.JLayer {
+		jstrength = 1.0
+	} else {
+		jstrength = 0.0
+	}
+
+	epig = s.FLayer
+	hoc = s.HLayer
+	hoi = s.JLayer
+	pheno_feedback = s.Pfback
+	ncells = s.NCells
+	devNoise = s.SDNoise
+
+	genelength = ngenes + (nenv + ncells) //G and P layers present by default
+	if s.ELayer {
+		genelength += nenv + ncells
+	}
+
+	if s.FLayer {
 		genelength += ngenes
 	}
-	if hoc {
+	if s.HLayer {
 		genelength += ngenes
-		if ch != 0 {
-			hoi = true
+		if s.JLayer {
 			genelength += ngenes
-		} else {
-			hoi = false
 		}
 	}
 
@@ -115,15 +124,15 @@ func SetLayers(ce, ch float64, pfeedback, epigm, HOC bool) { //Define whether ea
 
 	//initializing theoretical standard deviations for entries of each matrix
 	sdE = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
-	if pheno_feedback {
+	if s.Pfback {
 		sdE *= math.Sqrt(0.5) // rescale to account for feedback
 	}
 
 	sdG = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
 
 	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
-	sdH = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+hoistrength))
-	sdJ = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + hoistrength)))
+	sdH = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+jstrength))
+	sdJ = math.Sqrt(jstrength / (GenomeDensity * float64(ngenes) * (1 + jstrength)))
 	sdP = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
 }
 

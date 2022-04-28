@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -31,17 +29,11 @@ func main() {
 	seedPtr := flag.Int("seed", 1, "random seed")
 	seed_cuePtr := flag.Int("seed_cue", 1, "random seed for environmental cue")
 	//epochPtr := flag.Int("nepoch", 1, "number of epochs")
-	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
-	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
+	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
+
 	pcindexPtr := flag.Int("pcindex", 0, "index of principal component of environment")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	noisestrengthPtr := flag.Float64("noisestrength", 0.05, "control size of noise in terms of prop of unit cue")
-	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of var contribution of environmental cue")
-	phenofeedbackPtr := flag.Bool("pheno_feedback", false, "controls phenotype feedback into regulation")
-	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
-	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
-	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
-	//HOIPtr := flag.Bool("HOI", true, "Allow interactions between higher order complexes")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
@@ -66,36 +58,15 @@ func main() {
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
 
-	multicell.SetMaxPop(*maxpopsizePtr)
-	multicell.SetNcells(*ncelltypesPtr)
 	pcindex := multicell.MinInt(*pcindexPtr, multicell.GetNcells()*multicell.GetNenv()-1)
-	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *phenofeedbackPtr, *epigPtr, *HOCPtr)
-	multicell.SetNoise(*noisestrengthPtr)
 
-	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop()) //with randomized genome to start
+	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
+	multicell.SetParams(pop0.Params)
 
 	if json_in != "" { //read input population as a json file, if given
-		fmt.Println("Importing initial population from ", json_in)
-		popin, err := os.Open(json_in)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		byteValue, _ := ioutil.ReadAll(popin)
-		pop0.ClearGenome() //Clear genome before unmarshalling json
-		err = json.Unmarshal(byteValue, &pop0)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = popin.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Successfully imported population")
+		pop0.FromJSON(json_in)
 	} else {
-		fmt.Println("Randomizing initial population")
-		pop0.RandomizeGenome()
+		log.Fatal("JSON input required.")
 	}
 
 	fmt.Println("Initialization of population complete")
@@ -129,7 +100,7 @@ func main() {
 	fmt.Println("Ancestral environment :", popstart.AncEnvs)
 	gidfilename := fmt.Sprintf("%s_full", Gid_Filename)
 
-	pop1 := multicell.Evolve(true, ftraj, json_out, gidfilename, epochlength, 1, &popstart)
+	pop1 := popstart.Evolve(true, ftraj, json_out, gidfilename, epochlength, 1)
 	fmt.Println("End of epoch")
 
 	dtevol := time.Since(tevol)

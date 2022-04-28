@@ -12,23 +12,9 @@ import (
 
 var rand_cue = rand.New(rand.NewSource(99))
 
-var devNoise float64 = 0.05 // Development environment cue noise
-//var envNoise float64 = 0.00 // Selection environment noise
-
 type Cue = Vec //Environment cue is a special kind of vector
 
 type Cues = []Cue //Cue array object
-
-var ZeroEnvs Cues
-
-func init() {
-	ZeroEnvs = make([]Cue, ncells)
-	for i := range ZeroEnvs {
-		tv := make([]float64, nenv)
-		idv := UnitVec(ncells, i)
-		ZeroEnvs[i] = append(tv, idv...)
-	}
-}
 
 func SetSeedCue(seed int64) {
 	rand_cue.Seed(seed)
@@ -91,10 +77,6 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 	v := append(tv, idv...)
 
 	return v
-}
-
-func SetNoise(eta float64) {
-	devNoise = eta
 }
 
 func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment cue; ignore id part

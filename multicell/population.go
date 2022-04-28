@@ -3,19 +3,19 @@ package multicell
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
 	"os"
 	"sort"
-	//	"io/ioutil"
 )
 
 type Population struct { //Population of individuals
+	Params  Settings
 	Gen     int
-	NovEnvs Cues    //Novel Environment
-	AncEnvs Cues    // Ancestral Environment
-	SDNoise float64 // Environmenta noise
+	NovEnvs Cues //Novel Environment
+	AncEnvs Cues // Ancestral Environment
 	Indivs  []Indiv
 }
 
@@ -122,8 +122,50 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{0, envs0, envs1, devNoise, indivs}
+	p := Population{default_settings, 0, envs0, envs1, indivs}
 	return p
+}
+
+func (pop *Population) FromJSON(filename string) {
+	fmt.Printf("Importing initial population from %s \n", filename)
+	pop.ClearGenome()
+	fin, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	byteValue, _ := ioutil.ReadAll(fin)
+	err = json.Unmarshal(byteValue, pop)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = fin.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Successfully imported population")
+}
+
+func (pop *Population) ToJSON(filename string) {
+	jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
+	if err != nil {
+		log.Fatal(err)
+	}
+	fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create json file
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = fout.Write(jsonpop)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Successfuly exported population to ", filename)
 }
 
 func (pop *Population) SetWagnerFitness() { //compute normalized fitness value similar to Wagner (1996).
@@ -326,7 +368,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, pop.SDNoise, nindivs} //resets embryonic values to zero!
+	new_population := Population{pop.Params, 0, pop.NovEnvs, pop.AncEnvs, nindivs} //resets embryonic values to zero!
 
 	return new_population
 
@@ -351,7 +393,7 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, pop.SDNoise, nindivs} //resets embryonic values to zero!
+	new_population := Population{pop.Params, 0, pop.NovEnvs, pop.AncEnvs, nindivs} //resets embryonic values to zero!
 
 	return new_population
 }
@@ -375,11 +417,11 @@ func (pop *Population) DevPop(gen int) Population {
 	return *pop
 }
 
-func Evolve(test bool, ftraj *os.File, jsonout, gidfilename string, nstep, epoch int, init_pop *Population) Population { //Records population trajectory and writes files
-	var jfilename, id_filename, id, dadid, momid string
+func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout, gidfilename string, nstep, epoch int) Population { //Records population trajectory and writes files
+	var id_filename, id, dadid, momid string
 	var popsize int
 
-	pop := *init_pop
+	pop := *pop0
 
 	if test && gidfilename != "" { //write genealogy in test mode
 		id_filename = fmt.Sprintf("../analysis/%s.dot", gidfilename)
@@ -412,23 +454,8 @@ func Evolve(test bool, ftraj *os.File, jsonout, gidfilename string, nstep, epoch
 				}
 			}
 			if jsonout != "" { //Export JSON population of each generation in test mode
-				jfilename = fmt.Sprintf("../pops/%s_%d.json", jsonout, pop.Gen)
-				jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
-				if err != nil {
-					log.Fatal(err)
-				}
-				popout, err := os.OpenFile(jfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create json file
-				if err != nil {
-					log.Fatal(err)
-				}
-				_, err = popout.Write(jsonpop)
-				if err != nil {
-					log.Fatal(err)
-				}
-				err = popout.Close()
-				if err != nil {
-					log.Fatal()
-				}
+				filename := fmt.Sprintf("../pops/%s_%3.3d.json", jsonout, pop.Gen)
+				pop.ToJSON(filename)
 			}
 		}
 
@@ -442,13 +469,6 @@ func Evolve(test bool, ftraj *os.File, jsonout, gidfilename string, nstep, epoch
 		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD1>: %e\t<CD0>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf10>: %e\t<MDf01>: %e\t<Fit>: %e\t<WFit>: %e\t<Plas>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist1, pstat.CDist0, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
-
-		/*
-			for _, indiv := range pop.Indivs {
-				fmt.Println("After reproduction: Id: ", indiv.Id, "Wagner Fitness: ", indiv.WagFit, "Fitness: ", indiv.Fit) //Bugtest
-			}
-		*/
-
 	}
 
 	if test && gidfilename != "" {
