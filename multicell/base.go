@@ -413,26 +413,20 @@ func MinInt(x, y int) int { //Returns minimum of two integers
 func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	cv := NewVec(len(vecs[0]))
 	for _, v := range vecs {
-		for j, t := range v {
-			cv[j] += t
-		}
+		addVecs(cv, cv, v)
 	}
 
 	fn := 1 / float64(len(vecs))
 
-	for j, t := range cv {
-		cv[j] = t * fn
-	}
+	scaleVec(cv, fn, cv)
+
 	return cv
 }
 
 func GetCrossCov(vecs0, vecs1 []Vec) (Vec, Vec, Dmat) {
-	dim0 := len(vecs0[0])
-	dim1 := len(vecs1[0])
-	ccmat := NewDmat(dim0, dim1)
-
 	cv0 := GetMeanVec(vecs0)
 	cv1 := GetMeanVec(vecs1)
+	ccmat := NewDmat(len(cv0), len(cv1))
 
 	for k := range vecs0 {
 		for i, c0 := range cv0 {

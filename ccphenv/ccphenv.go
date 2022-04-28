@@ -29,9 +29,6 @@ func main() {
 	multicell.SetNcells(*ncelltypesPtr)
 	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *phenofeedbackPtr, *epigPtr, *HOCPtr)
 
-	ncells := multicell.GetNcells()
-	nenv := multicell.GetNenv()
-
 	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
 	pop0.ClearGenome()
 
@@ -53,31 +50,78 @@ func main() {
 	}
 	fmt.Println("Successfully imported population")
 
-	ccdim := ncells + nenv
-	mphen, menv, ccmat := pop0.GetPhenoEnvCC(multicell.IAncEnv)
-	fmt.Println("mean phenotype", mphen)
-	fmt.Println("mean envs", menv)
-	C := mat.NewDense(ccdim, ccdim, nil)
-	for i := range ccmat {
-		for j, v := range ccmat[0] {
+	mphen, menv, ccmat := pop0.GetCellCrossCov(multicell.CellP, multicell.INovEnv, multicell.CellE, multicell.INovEnv)
+	fmt.Println("mean phenotype", len(mphen), ":", mphen)
+	fmt.Println("mean envs", len(menv), ":", menv)
+	fmt.Println("ccmat[0][0]", ccmat[0][0])
+	runSVD(ccmat)
+	//	myEigenSym(ccmat)
+}
+
+func getTest3by3Matrix() multicell.Dmat {
+
+	dmat := multicell.NewDmat(3, 3)
+	dmat[0][0] = 1
+	dmat[0][1] = 2
+	dmat[0][2] = -3
+	dmat[1][0] = 2
+	dmat[1][1] = 3
+	dmat[1][2] = 4
+	dmat[2][0] = -3
+	dmat[2][1] = 4
+	dmat[2][2] = 5
+
+	return dmat
+}
+
+func runSVD(ccmat multicell.Dmat) {
+	dim0 := len(ccmat)
+	dim1 := len(ccmat[0])
+	C := mat.NewDense(dim0, dim1, nil)
+	for i, ci := range ccmat {
+		for j, v := range ci {
 			C.Set(i, j, v)
 		}
 	}
+
 	var svd mat.SVD
 	ok := svd.Factorize(C, mat.SVDFull)
 	if !ok {
 		log.Fatal("SVD failed.")
 	}
-	U := mat.NewDense(ccdim, ccdim, nil)
-	V := mat.NewDense(ccdim, ccdim, nil)
+	U := mat.NewDense(dim0, dim0, nil)
+	V := mat.NewDense(dim1, dim1, nil)
 	svd.UTo(U)
 	svd.VTo(V)
 	vals := svd.Values(nil)
-	fmt.Println("Values:", vals)
+	fmt.Println("\nSValues:", vals)
 
-	for i := 0; i < ccdim; i++ {
-		fmt.Printf("SVec\t%f\t%f:", U.At(i, 0), V.At(i, 0))
-		fmt.Println()
+	for i := 0; i < dim0; i++ {
+		fmt.Printf("U\t%f\n", U.At(i, 0))
+	}
+	for i := 0; i < dim1; i++ {
+		fmt.Printf("V\t%f\n", V.At(i, 0))
+	}
+}
 
+func myEigenSym(m multicell.Dmat) {
+	dim := len(m)
+	a := mat.NewSymDense(dim, nil)
+	for i := 0; i < dim; i++ {
+		for j := 0; j < dim; j++ {
+			a.SetSym(i, j, m[i][j])
+		}
+	}
+
+	var eig mat.EigenSym
+	ok := eig.Factorize(a, true)
+	if !ok {
+		log.Fatal("EigenSym failed.")
+	}
+	fmt.Println("EigenValues: ", eig.Values(nil))
+	U := mat.NewDense(dim, dim, nil)
+	eig.VectorsTo(U)
+	for i := 0; i < dim; i++ {
+		fmt.Printf("EV\t%f\n", U.At(i, dim-1))
 	}
 }

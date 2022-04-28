@@ -577,19 +577,22 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	}
 }
 
-func (pop *Population) GetPhenoEnvCC(ienv int) (Vec, Vec, Dmat) {
-	envs := make([]Cue, 0)
-	phens := make([]Cue, 0)
+func (pop *Population) GetCellCrossCov(is0, ienv0, is1, ienv1 int) (Vec, Vec, Dmat) {
+	vs0 := make([]Vec, 0)
+	vs1 := make([]Vec, 0)
 	for _, indiv := range pop.Indivs {
-		tenv := make([]float64, 0)
-		tphen := make([]float64, 0)
-		for _, cell := range indiv.Bodies[ienv].Cells {
-			tenv = append(tenv, cell.E...)
-			tphen = append(tphen, cell.P...)
+		tv0 := make([]float64, 0)
+		for _, cell := range indiv.Bodies[ienv0].Cells {
+			tv0 = append(tv0, cell.GetState(is0)...)
 		}
-		envs = append(envs, tenv)
-		phens = append(phens, tphen)
+		vs0 = append(vs0, tv0)
+		tv1 := make([]float64, 0)
+		for _, cell := range indiv.Bodies[ienv1].Cells {
+			tv1 = append(tv1, cell.GetState(is1)...)
+		}
+		vs1 = append(vs1, tv1)
 	}
 
-	return GetCrossCov(phens, envs)
+	return GetCrossCov(vs0, vs1)
+
 }

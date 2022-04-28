@@ -30,6 +30,14 @@ const (
 	INovEnv        // Current env
 )
 
+const ( // Index for cell state vectors
+	CellE = iota
+	CellF
+	CellG
+	CellH
+	CellP
+)
+
 type Indiv struct { //An individual as an unicellular organism
 	Id         int
 	DadId      int
@@ -69,6 +77,25 @@ func (cell *Cell) Copy() Cell {
 	cell1.NDevStep = cell.NDevStep
 
 	return cell1
+}
+
+func (cell *Cell) GetState(ivec int) Vec {
+	switch ivec {
+	case CellE:
+		return cell.E
+	case CellF:
+		return cell.F
+	case CellG:
+		return cell.G
+	case CellH:
+		return cell.H
+	case CellP:
+		return cell.P
+	default:
+		log.Fatal("Cell.GetState: Unknown state vector")
+	}
+
+	return nil
 }
 
 func NewBody(ncells int) Body { // Creates an array of new cells of length Ncells
