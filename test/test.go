@@ -61,10 +61,10 @@ func main() {
 	pcindex := multicell.MinInt(*pcindexPtr, multicell.GetNcells()*multicell.GetNenv()-1)
 
 	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
-	multicell.SetParams(pop0.Params)
 
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)
+		multicell.SetParams(pop0.Params)
 	} else {
 		log.Fatal("JSON input required.")
 	}
