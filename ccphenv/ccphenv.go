@@ -33,7 +33,9 @@ func main() {
 	nenv := multicell.GetNenv()
 
 	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
+	pop0.ClearGenome()
 
+	fmt.Println("Importing population from ", *jsoninPtr)
 	popin, err := os.Open(*jsoninPtr)
 	if err != nil {
 		log.Fatal(err)
@@ -50,11 +52,11 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println("Successfully imported population")
-	fmt.Println(pop0)
+
 	ccdim := ncells + nenv
-	ccmat := multicell.NewDmat(ccdim, ccdim)
-	pop0.GetPhenoEnvCC(ccmat, multicell.INovEnv)
-	fmt.Println(ccmat)
+	mphen, menv, ccmat := pop0.GetPhenoEnvCC(multicell.IAncEnv)
+	fmt.Println("mean phenotype", mphen)
+	fmt.Println("mean envs", menv)
 	C := mat.NewDense(ccdim, ccdim, nil)
 	for i := range ccmat {
 		for j, v := range ccmat[0] {
@@ -74,12 +76,8 @@ func main() {
 	fmt.Println("Values:", vals)
 
 	for i := 0; i < ccdim; i++ {
-		for j := 0; j <= i; j++ {
-			u1 := V.ColView(i)
-			u2 := V.ColView(j)
-			dot := mat.Dot(u1, u2)
-			fmt.Printf("\t%e", dot)
-		}
+		fmt.Printf("SVec\t%f\t%f:", U.At(i, 0), V.At(i, 0))
 		fmt.Println()
+
 	}
 }

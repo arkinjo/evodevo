@@ -202,6 +202,14 @@ func NewDmat(nrow, ncol int) Dmat {
 	return mat
 }
 
+func CopyDmat(mat1, mat0 Dmat) {
+	for i, di := range mat0 {
+		for j, dij := range di {
+			mat1[i][j] = dij
+		}
+	}
+}
+
 func NewSpmat(nrow, ncol int) Spmat { //Initialize new sparse matrix
 	mat := make([](map[int]float64), nrow)
 	for i := range mat {
@@ -416,4 +424,32 @@ func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 		cv[j] = t * fn
 	}
 	return cv
+}
+
+func GetCrossCov(vecs0, vecs1 []Vec) (Vec, Vec, Dmat) {
+	dim0 := len(vecs0[0])
+	dim1 := len(vecs1[0])
+	ccmat := NewDmat(dim0, dim1)
+
+	cv0 := GetMeanVec(vecs0)
+	cv1 := GetMeanVec(vecs1)
+
+	for k := range vecs0 {
+		for i, c0 := range cv0 {
+			d0 := vecs0[k][i] - c0
+			for j, c1 := range cv1 {
+				d1 := vecs1[k][j] - c1
+				ccmat[i][j] += d0 * d1
+			}
+		}
+	}
+
+	fn := 1.0 / float64(len(vecs0))
+	for i := range cv0 {
+		for j := range cv1 {
+			ccmat[i][j] *= fn
+		}
+	}
+
+	return cv0, cv1, ccmat
 }
