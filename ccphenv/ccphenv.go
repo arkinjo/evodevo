@@ -1,6 +1,6 @@
 package main
 
-// practice using gonum
+// Cross-covariance analysis of state vectors.
 
 import (
 	"encoding/json"
