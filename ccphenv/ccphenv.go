@@ -22,11 +22,14 @@ func main() {
 	phenofeedbackPtr := flag.Bool("pheno_feedback", false, "controls phenotype feedback into regulation")
 	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
-	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
+
 	state0 := flag.String("state0", "P", "State 0 (one of E, F, G, H, P)")
 	state1 := flag.String("state1", "P", "State 1 (one of E, F, G, H, P)")
 	ienv0 := flag.Int("ienv0", 0, "0 = Ancestral; 1 = Novel environment")
 	ienv1 := flag.Int("ienv1", 1, "0 = Ancestral; 1 = Novel environment")
+
+	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
+
 	flag.Parse()
 
 	multicell.SetMaxPop(*maxpopsizePtr)
@@ -36,23 +39,26 @@ func main() {
 	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
 	pop0.ClearGenome()
 
-	fmt.Println("Importing population from ", *jsoninPtr)
-	popin, err := os.Open(*jsoninPtr)
-	if err != nil {
-		log.Fatal(err)
+	if *jsoninPtr != "" {
+		fmt.Println("Importing population from ", *jsoninPtr)
+		popin, err := os.Open(*jsoninPtr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		byteValue, _ := ioutil.ReadAll(popin)
+		err = json.Unmarshal(byteValue, &pop0)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = popin.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Successfully imported population")
+	} else {
+		flag.PrintDefaults()
+		log.Fatal("Specify the input JSON file with -jsonin=filename.")
 	}
-
-	byteValue, _ := ioutil.ReadAll(popin)
-	err = json.Unmarshal(byteValue, &pop0)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = popin.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Successfully imported population")
 
 	fmt.Println("Cross-covariance:", *state0, *ienv0, " vs ", *state1, *ienv1)
 	mstate0, mstate1, ccmat := pop0.GetCellCrossCov(*state0, *ienv0, *state1, *ienv1)
