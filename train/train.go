@@ -20,18 +20,27 @@ var jfilename string
 
 func main() {
 	t0 := time.Now()
-	seedPtr := flag.Int("seed", 1, "random seed")
-	seed_cuePtr := flag.Int("seed_cue", 1, "random seed for environmental cue")
-	epochPtr := flag.Int("nepoch", 20, "number of epochs")
 	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
-	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
-	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	noisestrengthPtr := flag.Float64("noisestrength", 0.05, "control size of noise in terms of prop of unit cue")
+	multicell.SetMaxPop(*maxpopsizePtr)
+
+	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular c
+	multicell.SetNcells(*ncelltypesPtr)
+
 	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of var contribution of environmental cue")
+	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
 	phenofeedbackPtr := flag.Bool("pheno_feedback", false, "controls phenotype feedback into regulation")
 	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
-	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
+	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *phenofeedbackPtr, *epigPtr, *HOCPtr)
+
+	seedPtr := flag.Int("seed", 1, "random seed")
+	seed_cuePtr := flag.Int("seed_cue", 1, "random seed for environmental cue")
+	multicell.SetSeed(int64(*seedPtr))
+	multicell.SetSeedCue(int64(*seed_cuePtr))
+
+	epochPtr := flag.Int("nepoch", 20, "number of epochs")
+	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
+	noisestrengthPtr := flag.Float64("noisestrength", 0.05, "control size of noise in terms of prop of unit cue")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("traj_file", "traj", "filename of trajectories")
@@ -39,9 +48,6 @@ func main() {
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
-
-	multicell.SetSeed(int64(*seedPtr))
-	multicell.SetSeedCue(int64(*seed_cuePtr))
 
 	maxepochs := *epochPtr
 	epochlength := *genPtr
@@ -52,9 +58,6 @@ func main() {
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
 
-	multicell.SetMaxPop(*maxpopsizePtr)
-	multicell.SetNcells(*ncelltypesPtr)
-	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *phenofeedbackPtr, *epigPtr, *HOCPtr)
 	multicell.SetNoise(*noisestrengthPtr)
 
 	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())

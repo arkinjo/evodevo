@@ -61,6 +61,7 @@ type Spmat struct {
 }
 
 type Vec = []float64 //Vector is a slice
+type Dmat = []Vec
 
 //var genrand = rand.New(rand.NewSource(99)) //This is bad for concurrency. DO NOT USE!
 
@@ -190,6 +191,15 @@ func sigmah(x float64) float64 { //Activation function for higher order complexe
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
 	return lecunatan(x)
+}
+
+func NewDmat(nrow, ncol int) Dmat {
+	mat := make([]Vec, nrow)
+	for i := range mat {
+		mat[i] = NewVec(ncol)
+	}
+
+	return mat
 }
 
 func NewSpmat(nrow, ncol int) Spmat { //Initialize new sparse matrix
@@ -390,4 +400,20 @@ func MinInt(x, y int) int { //Returns minimum of two integers
 	} else {
 		return y
 	}
+}
+
+func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
+	cv := NewVec(len(vecs[0]))
+	for _, v := range vecs {
+		for j, t := range v {
+			cv[j] += t
+		}
+	}
+
+	fn := 1 / float64(len(vecs))
+
+	for j, t := range cv {
+		cv[j] = t * fn
+	}
+	return cv
 }

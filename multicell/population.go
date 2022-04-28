@@ -576,3 +576,44 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		log.Fatal(err)
 	}
 }
+
+func (pop *Population) GetPhenoEnvCC(ccmat [][]float64, ienv int) {
+	envs := make([]Cue, 0)
+	phens := make([]Cue, 0)
+	for _, indiv := range pop.Indivs {
+		tenv := make([]float64, 0)
+		tphen := make([]float64, 0)
+		for _, cell := range indiv.Bodies[ienv].Cells {
+			fmt.Println("E", cell.E)
+			fmt.Println("P", cell.P)
+			tenv = append(tenv, cell.E...)
+			tphen = append(tphen, cell.P...)
+		}
+		envs = append(envs, tenv)
+		phens = append(phens, tphen)
+	}
+
+	menvs := GetMeanVec(envs)
+	mphens := GetMeanVec(phens)
+
+	npop := len(pop.Indivs)
+	for k := 0; k < npop; k++ {
+		for i, mp := range mphens {
+			dp := phens[k][i] - mp
+			for j, me := range menvs {
+				de := envs[k][j] - me
+				fmt.Println(">", k, i, j, phens[k][i], envs[k][j])
+				ccmat[i][j] += dp * de
+			}
+		}
+	}
+
+	fn := 1.0 / float64(npop)
+	for i := range mphens {
+		for j := range menvs {
+			ccmat[i][j] *= fn
+		}
+	}
+
+	return
+}
