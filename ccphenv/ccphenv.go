@@ -3,25 +3,17 @@ package main
 // Cross-covariance analysis of state vectors.
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
+
 	"github.com/arkinjo/evodevo/multicell"
 	"gonum.org/v1/gonum/mat"
-	"io/ioutil"
-	"log"
-	//	"math/rand"
-	"os"
 )
 
 func main() {
-	maxpopsizePtr := flag.Int("maxpop", 1000, "maximum number of individuals in population")
-	ncelltypesPtr := flag.Int("celltypes", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular c
-	cuestrengthPtr := flag.Float64("cuestrength", 1.0, "control size of var contribution of environmental cue")
-	epigPtr := flag.Bool("epig", true, "Add layer representing epigenetic markers")
-	phenofeedbackPtr := flag.Bool("pheno_feedback", false, "controls phenotype feedback into regulation")
-	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
-	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
+	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 
 	state0 := flag.String("state0", "P", "State 0 (one of E, F, G, H, P)")
 	state1 := flag.String("state1", "P", "State 1 (one of E, F, G, H, P)")
@@ -32,29 +24,10 @@ func main() {
 
 	flag.Parse()
 
-	multicell.SetMaxPop(*maxpopsizePtr)
-	multicell.SetNcells(*ncelltypesPtr)
-	multicell.SetLayers(*cuestrengthPtr, *hoistrengthPtr, *phenofeedbackPtr, *epigPtr, *HOCPtr)
-
-	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop())
-	pop0.ClearGenome()
-
+	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
 	if *jsoninPtr != "" {
-		fmt.Println("#Importing population from ", *jsoninPtr)
-		popin, err := os.Open(*jsoninPtr)
-		if err != nil {
-			log.Fatal(err)
-		}
-		byteValue, _ := ioutil.ReadAll(popin)
-		err = json.Unmarshal(byteValue, &pop0)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = popin.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("# Successfully imported population")
+		pop0.FromJSON(*jsoninPtr)
+		multicell.SetParams(pop0.Params)
 	} else {
 		flag.PrintDefaults()
 		log.Fatal("Specify the input JSON file with -jsonin=filename.")
