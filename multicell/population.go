@@ -577,7 +577,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	}
 }
 
-func (pop *Population) GetCellCrossCov(is0, ienv0, is1, ienv1 int) (Vec, Vec, Dmat) {
+func (pop *Population) GetCellCrossCov(is0 string, ienv0 int, is1 string, ienv1 int) (Vec, Vec, Dmat) {
 	vs0 := make([]Vec, 0)
 	vs1 := make([]Vec, 0)
 	for _, indiv := range pop.Indivs {

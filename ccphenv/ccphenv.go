@@ -23,6 +23,10 @@ func main() {
 	hoistrengthPtr := flag.Float64("hoistrength", 1.0, "control size of var contribution of higher order interactions")
 	HOCPtr := flag.Bool("HOC", true, "Add layer representing higher order complexes")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
+	state0 := flag.String("state0", "P", "State 0 (one of E, F, G, H, P)")
+	state1 := flag.String("state1", "P", "State 1 (one of E, F, G, H, P)")
+	ienv0 := flag.Int("ienv0", 0, "0 = Ancestral; 1 = Novel environment")
+	ienv1 := flag.Int("ienv1", 1, "0 = Ancestral; 1 = Novel environment")
 	flag.Parse()
 
 	multicell.SetMaxPop(*maxpopsizePtr)
@@ -50,9 +54,10 @@ func main() {
 	}
 	fmt.Println("Successfully imported population")
 
-	mphen, menv, ccmat := pop0.GetCellCrossCov(multicell.CellP, multicell.INovEnv, multicell.CellE, multicell.INovEnv)
-	fmt.Println("mean phenotype", len(mphen), ":", mphen)
-	fmt.Println("mean envs", len(menv), ":", menv)
+	fmt.Println("Cross-covariance:", *state0, *ienv0, " vs ", *state1, *ienv1)
+	mstate0, mstate1, ccmat := pop0.GetCellCrossCov(*state0, *ienv0, *state1, *ienv1)
+	fmt.Println("mean", *state0, *ienv0, len(mstate0), ":", mstate0, "\n")
+	fmt.Println("mean", *state1, *ienv1, len(mstate1), ":", mstate1, "\n")
 	fmt.Println("ccmat[0][0]", ccmat[0][0])
 	runSVD(ccmat)
 	//	myEigenSym(ccmat)

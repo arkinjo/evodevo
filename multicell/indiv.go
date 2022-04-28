@@ -79,23 +79,23 @@ func (cell *Cell) Copy() Cell {
 	return cell1
 }
 
-func (cell *Cell) GetState(ivec int) Vec {
+func (cell *Cell) GetState(ivec string) Vec {
 	switch ivec {
-	case CellE:
+	case "E":
 		return cell.E
-	case CellF:
+	case "F":
 		return cell.F
-	case CellG:
+	case "G":
 		return cell.G
-	case CellH:
+	case "H":
 		return cell.H
-	case CellP:
+	case "P":
 		return cell.P
 	default:
 		log.Fatal("Cell.GetState: Unknown state vector")
 	}
 
-	return nil
+	return nil // neven happens
 }
 
 func NewBody(ncells int) Body { // Creates an array of new cells of length Ncells
