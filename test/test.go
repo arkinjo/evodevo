@@ -75,9 +75,8 @@ func main() {
 	pop0 := multicell.NewPopulation(multicell.GetNcells(), multicell.GetMaxPop()) //with randomized genome to start
 
 	if json_in != "" { //read input population as a json file, if given
-		fmt.Println("Importing initial population")
-		jfilename := fmt.Sprintf("../pops/%s.json", json_in)
-		popin, err := os.Open(jfilename)
+		fmt.Println("Importing initial population from ", json_in)
+		popin, err := os.Open(json_in)
 		if err != nil {
 			log.Fatal(err)
 		}
