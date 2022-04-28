@@ -288,37 +288,37 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	AddNoise2Cue(cell.E, env, devNoise)
 
 	for nstep := 1; nstep <= maxDevStep; nstep++ {
-		multMatVec(vf, G.G, g0)
+		MultMatVec(vf, G.G, g0)
 		if withCue { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
 
-				diffVecs(e_p, cell.E, cell.P)
+				DiffVecs(e_p, cell.E, cell.P)
 
 				// Kalman gain
 				//pscale := cell.getPscale()
 				//multVecVec(e_p, pscale, e_p)
 
-				multMatVec(ve, G.E, e_p)
+				MultMatVec(ve, G.E, e_p)
 			} else {
-				multMatVec(ve, G.E, cell.E)
+				MultMatVec(ve, G.E, cell.E)
 			}
-			addVecs(f1, vf, ve)
+			AddVecs(f1, vf, ve)
 		} else {
 			copy(f1, vf)
 		}
 		applyFnVec(sigmaf, f1)
 		if epig { //Allow or disallow epigenetic layer
-			multMatVec(g1, G.F, f1)
+			MultMatVec(g1, G.F, f1)
 			applyFnVec(sigmag, g1)
 		} else { //Remove epigenetic layer if false
 			copy(g1, f1)
 		}
 		if hoc { //If layer for higher order complexes is present
-			multMatVec(vg, G.H, g1)
+			MultMatVec(vg, G.H, g1)
 
 			if hoi { //If interactions between higher order complexes is present
-				multMatVec(vh, G.J, h0)
-				addVecs(h1, vg, vh)
+				MultMatVec(vh, G.J, h0)
+				AddVecs(h1, vg, vh)
 			} else {
 				copy(h1, vg)
 			}
@@ -327,7 +327,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 			copy(h1, g1) //identity map
 		}
 
-		multMatVec_T(p1, G.P, h1)
+		MultMatVec_T(p1, G.P, h1)
 		applyFnVec(rho, p1)
 		copy(f0, f1)
 		copy(g0, g1)

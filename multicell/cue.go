@@ -203,7 +203,7 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	v := NewVec(nenv + ncells)
 	sigma2 := 0.0
 	for _, c := range cues {
-		diffVecs(v, c, mu)
+		DiffVecs(v, c, mu)
 		sigma2 += Veclength2(v)
 	}
 
@@ -253,12 +253,6 @@ func PCAtoCue(pcafilename string) ([]Cues, [][][]float64) { //Converts PCA vecto
 		}
 	}
 	fmt.Println(len(traits) == len(values))
-	/*
-		if len(traits) != nenv*ncells { //Is this even needed?
-			err := errors.New("input incompatable with size")
-			return PCAenvs, err
-		}
-	*/
 	for i, t := range traits {
 		prdir = i / (nenv * ncells) //take advantage of integer division
 		r = i % (nenv * ncells)     //remainder
@@ -270,4 +264,12 @@ func PCAtoCue(pcafilename string) ([]Cues, [][][]float64) { //Converts PCA vecto
 	}
 
 	return PCAenvs, PCAvecs //, nil
+}
+
+func FlattenEnvs(cues Cues) Vec {
+	var v Vec
+	for _, cue := range cues {
+		v = append(v, cue...)
+	}
+	return v
 }

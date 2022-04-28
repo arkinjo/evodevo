@@ -277,7 +277,7 @@ func multVecVec(vout, v0, v1 Vec) { //element-wise vector multiplication
 	return
 }
 
-func multMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
+func MultMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
 	for i := range vout {
 		vout[i] = 0.0
 	}
@@ -290,13 +290,13 @@ func multMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
 	return
 }
 
-func scaleVec(vout Vec, s float64, vin Vec) {
+func ScaleVec(vout Vec, s float64, vin Vec) {
 	for i, v := range vin {
 		vout[i] = s * v
 	}
 }
 
-func multMatVec_T(vout Vec, mat Spmat, vin Vec) { //Matrix transposition and then multiplication
+func MultMatVec_T(vout Vec, mat Spmat, vin Vec) { //Matrix transposition and then multiplication
 	for i := range vout {
 		vout[i] = 0.0
 	}
@@ -310,13 +310,13 @@ func multMatVec_T(vout Vec, mat Spmat, vin Vec) { //Matrix transposition and the
 	return
 }
 
-func addVecs(vout, v0, v1 Vec) { //Sum of vectors
+func AddVecs(vout, v0, v1 Vec) { //Sum of vectors
 	for i := range vout {
 		vout[i] = v0[i] + v1[i]
 	}
 }
 
-func diffVecs(vout, v0, v1 Vec) { //Difference of vectors
+func DiffVecs(vout, v0, v1 Vec) { //Difference of vectors
 	for i := range vout {
 		vout[i] = v0[i] - v1[i]
 	}
@@ -413,12 +413,12 @@ func MinInt(x, y int) int { //Returns minimum of two integers
 func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	cv := NewVec(len(vecs[0]))
 	for _, v := range vecs {
-		addVecs(cv, cv, v)
+		AddVecs(cv, cv, v)
 	}
 
 	fn := 1 / float64(len(vecs))
 
-	scaleVec(cv, fn, cv)
+	ScaleVec(cv, fn, cv)
 
 	return cv
 }

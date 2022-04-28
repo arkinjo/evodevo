@@ -13,8 +13,9 @@ import (
 
 type Population struct { //Population of individuals
 	Gen     int
-	NovEnvs Cues //Novel Environment
-	AncEnvs Cues // Ancestral Environment
+	NovEnvs Cues    //Novel Environment
+	AncEnvs Cues    // Ancestral Environment
+	SDNoise float64 // Environmenta noise
 	Indivs  []Indiv
 }
 
@@ -121,7 +122,7 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{0, envs0, envs1, indivs}
+	p := Population{0, envs0, envs1, devNoise, indivs}
 	return p
 }
 
@@ -250,7 +251,7 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 	de := NewCues(ncells, nenv)
 
 	for i, p := range e {
-		diffVecs(v, p, e0[i])
+		DiffVecs(v, p, e0[i])
 		axlength2 += Veclength2(v)
 		de[i] = v //ids must stay the same
 	}
@@ -325,7 +326,7 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, nindivs} //resets embryonic values to zero!
+	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, pop.SDNoise, nindivs} //resets embryonic values to zero!
 
 	return new_population
 
@@ -350,7 +351,7 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 		nindivs[i].Id = i //Relabels individuals according to position in array
 	}
 
-	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, nindivs} //resets embryonic values to zero!
+	new_population := Population{0, pop.NovEnvs, pop.AncEnvs, pop.SDNoise, nindivs} //resets embryonic values to zero!
 
 	return new_population
 }
@@ -510,17 +511,17 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 		defpproj, ancpproj, novpproj, gproj = 0.0, 0.0, 0.0, 0.0
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(defcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
+			DiffVecs(defcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
 			defpproj += Innerproduct(defcphen, Paxis[i])
 		}
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(anccphen, indiv.Bodies[IAncEnv].Cells[i].P, env) //centralize
+			DiffVecs(anccphen, indiv.Bodies[IAncEnv].Cells[i].P, env) //centralize
 			ancpproj += Innerproduct(anccphen, Paxis[i])              //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
 		for i, env := range mu { //For each environment cue
-			diffVecs(novcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
+			DiffVecs(novcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
 			novpproj += Innerproduct(novcphen, Paxis[i])
 		}
 

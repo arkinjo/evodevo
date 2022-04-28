@@ -61,12 +61,42 @@ func main() {
 	}
 
 	fmt.Println("# Cross-covariance:", *state0, *ienv0, " vs ", *state1, *ienv1)
+
 	fstates0 := pop0.GetFlatStateVec(*state0, *ienv0)
 	fstates1 := pop0.GetFlatStateVec(*state1, *ienv1)
 	mstate0, mstate1, ccmat := multicell.GetCrossCov(fstates0, fstates1)
-	vals, U, V := runSVD(ccmat)
+
+	U, vals, V := runSVD(ccmat)
 	fmt.Println("#Singular Values: ", vals)
 	project(fstates0, fstates1, mstate0, mstate1, U, V)
+	LinearResponse(&pop0)
+}
+
+func LinearResponse(pop *multicell.Population) {
+	env0 := multicell.FlattenEnvs(pop.AncEnvs)
+	env1 := multicell.FlattenEnvs(pop.NovEnvs)
+	dim := len(env0)
+	denv := multicell.NewVec(dim)
+	multicell.DiffVecs(denv, env1, env0)
+
+	fe0 := pop.GetFlatStateVec("E", 0)
+	fp0 := pop.GetFlatStateVec("P", 0)
+	fp1 := pop.GetFlatStateVec("P", 1)
+	p0_ave, _, pe_cov := multicell.GetCrossCov(fp0, fe0)
+	p1_ave := multicell.GetMeanVec(fp1)
+	dp := multicell.NewVec(dim)
+	multicell.DiffVecs(dp, p1_ave, p0_ave)
+
+	dpp := multicell.NewVec(dim)
+	for i, ci := range pe_cov {
+		for j, v := range ci {
+			dpp[i] += v * denv[j]
+		}
+	}
+
+	for i, de := range denv {
+		fmt.Printf("LRT\t%2d\t%e\t%e\t%e\n", i, de, dp[i], dpp[i])
+	}
 }
 
 func project(data0, data1 []multicell.Vec, mean0, mean1 multicell.Vec, U, V *mat.Dense) {
@@ -76,44 +106,29 @@ func project(data0, data1 []multicell.Vec, mean0, mean1 multicell.Vec, U, V *mat
 	m0 := mat.NewVecDense(dim0, mean0)
 	m1 := mat.NewVecDense(dim1, mean1)
 
+	t0 := mat.NewVecDense(dim0, nil)
+	t1 := mat.NewVecDense(dim1, nil)
 	for k := range data0 {
-		fmt.Printf("%3d", k)
+		fmt.Printf("Indiv\t%3d", k)
+		p0 := mat.NewVecDense(dim0, data0[k])
 		for i := 0; i < 3; i++ {
-
-			p := mat.NewVecDense(dim0, data0[k])
-			p.SubVec(p, m0)
+			t0.SubVec(p0, m0)
 			axis := U.ColView(i)
-			x := mat.Dot(p, axis)
+			x := mat.Dot(t0, axis)
 			fmt.Printf("\t%e", x)
 		}
+		p1 := mat.NewVecDense(dim1, data1[k])
 		for i := 0; i < 3; i++ {
-			p := mat.NewVecDense(dim1, data1[k])
-			p.SubVec(p, m1)
+			t1.SubVec(p1, m1)
 			axis := V.ColView(i)
-			x := mat.Dot(p, axis)
+			x := mat.Dot(t1, axis)
 			fmt.Printf("\t%e", x)
 		}
 		fmt.Printf("\n")
 	}
 }
 
-func getTest3by3Matrix() multicell.Dmat {
-
-	dmat := multicell.NewDmat(3, 3)
-	dmat[0][0] = 1
-	dmat[0][1] = 2
-	dmat[0][2] = -3
-	dmat[1][0] = 2
-	dmat[1][1] = 3
-	dmat[1][2] = 4
-	dmat[2][0] = -3
-	dmat[2][1] = 4
-	dmat[2][2] = 5
-
-	return dmat
-}
-
-func runSVD(ccmat multicell.Dmat) ([]float64, *mat.Dense, *mat.Dense) {
+func runSVD(ccmat multicell.Dmat) (*mat.Dense, []float64, *mat.Dense) {
 	dim0 := len(ccmat)
 	dim1 := len(ccmat[0])
 	C := mat.NewDense(dim0, dim1, nil)
@@ -134,7 +149,7 @@ func runSVD(ccmat multicell.Dmat) ([]float64, *mat.Dense, *mat.Dense) {
 	svd.VTo(V)
 	vals := svd.Values(nil)
 
-	return vals, U, V
+	return U, vals, V
 }
 
 func myEigenSym(m multicell.Dmat) {
@@ -157,4 +172,20 @@ func myEigenSym(m multicell.Dmat) {
 	for i := 0; i < dim; i++ {
 		fmt.Printf("EV\t%f\n", U.At(i, dim-1))
 	}
+}
+
+func getTest3by3Matrix() multicell.Dmat {
+
+	dmat := multicell.NewDmat(3, 3)
+	dmat[0][0] = 1
+	dmat[0][1] = 2
+	dmat[0][2] = -3
+	dmat[1][0] = 2
+	dmat[1][1] = 3
+	dmat[1][2] = 4
+	dmat[2][0] = -3
+	dmat[2][1] = 4
+	dmat[2][2] = 5
+
+	return dmat
 }
