@@ -490,7 +490,7 @@ func (pop *Population) Dump_Phenotypes(Filename string, gen int) {
 
 	trait := make([]float64, nenv) //trait part only
 
-	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	fout, err := os.OpenFile(Filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -518,14 +518,13 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	defcphen := make(Vec, nenv+ncells)
 
 	mu := pop.Get_Mid_Env()
-	//fmt.Println("Middle environment : ", mu)
-	Projfilename := fmt.Sprintf("../analysis/%s_%d.dat", Filename, gen)
+	Projfilename := fmt.Sprintf("../analysis/%s_%3.3d.dat", Filename, gen)
 
-	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintln(fout, "DefPhen \t AncPhen \t NovPhen \t Genotype")
+	fmt.Fprintln(fout, "#DefPhen \t AncPhen \t NovPhen \t Genotype")
 
 	for _, indiv := range pop.Indivs {
 		defpproj, ancpproj, novpproj, gproj = 0.0, 0.0, 0.0, 0.0

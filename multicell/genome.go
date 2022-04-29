@@ -123,8 +123,6 @@ func DiffGenomes(Gout, G1, G0 *Genome) { //Elementwise difference between two ge
 	}
 
 	Gout.P = DiffSpmat(&G1.P, &G0.P)
-	//Gout.Z = DiffSpmat(&G1.Z, &G0.Z)
-	//Remark: Ensure that Gout is initialized and empty before applying operation
 }
 
 func (G *Genome) NormalizeGenome() Genome {
@@ -174,62 +172,30 @@ func (G *Genome) NormalizeGenome() Genome {
 			lambda2 += v * v
 		}
 	}
-	/*
-		for _, m := range G.Z.Mat {
-			for _, v := range m {
-				lambda2 += v * v
-			}
-		}
-	*/
 
 	if lambda2 == 0 {
 		return eG //avoid division by zero
 	}
 
 	lambda := math.Sqrt(lambda2)
-
+	sca := 1.0 / lambda
 	if withCue {
-		for i, m := range eG.E.Mat {
-			for j := range m {
-				eG.E.Mat[i][j] = eG.E.Mat[i][j] / lambda
-			}
-		}
+		eG.E.Scale(sca)
 	}
 
 	if epig {
-		for i, m := range eG.F.Mat {
-			for j := range m {
-				eG.F.Mat[i][j] = eG.F.Mat[i][j] / lambda
-			}
-		}
+		eG.F.Scale(sca)
 	}
 
-	for i, m := range eG.G.Mat {
-		for j := range m {
-			eG.G.Mat[i][j] = eG.G.Mat[i][j] / lambda
-		}
-	}
-
+	eG.G.Scale(sca)
 	if hoc {
-		for i, m := range eG.H.Mat {
-			for j := range m {
-				eG.H.Mat[i][j] = eG.H.Mat[i][j] / lambda
-			}
-		}
+		eG.H.Scale(sca)
 		if hoi {
-			for i, m := range eG.J.Mat {
-				for j := range m {
-					eG.J.Mat[i][j] = eG.J.Mat[i][j] / lambda
-				}
-			}
+			eG.J.Scale(sca)
 		}
 	}
 
-	for i, m := range eG.P.Mat {
-		for j := range m {
-			eG.P.Mat[i][j] = eG.P.Mat[i][j] / lambda
-		}
-	}
+	eG.P.Scale(sca)
 
 	return eG
 }

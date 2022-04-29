@@ -260,6 +260,14 @@ func DiffSpmat(m1, m2 *Spmat) Spmat { //This function works fine
 	return d
 }
 
+func (sp *Spmat) Scale(c float64) {
+	for i, mi := range sp.Mat {
+		for j := range mi {
+			sp.Mat[i][j] *= c
+		}
+	}
+}
+
 func NewVec(len int) Vec { //Generate a new (zero) vector of length len
 	v := make([]float64, len)
 	return v
