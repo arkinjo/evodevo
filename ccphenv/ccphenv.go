@@ -20,13 +20,13 @@ func main() {
 	ienv0 := flag.Int("ienv0", 0, "0 = Ancestral; 1 = Novel environment")
 	ienv1 := flag.Int("ienv1", 1, "0 = Ancestral; 1 = Novel environment")
 
-	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
+	jsoninP := flag.String("jsonin", "", "json file of input population") //default to empty string
 
 	flag.Parse()
 
 	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	if *jsoninPtr != "" {
-		pop0.FromJSON(*jsoninPtr)
+	if *jsoninP != "" {
+		pop0.FromJSON(*jsoninP)
 		multicell.SetParams(pop0.Params)
 	} else {
 		flag.PrintDefaults()
@@ -43,6 +43,115 @@ func main() {
 	fmt.Println("#Singular Values: ", vals)
 	project(fstates0, fstates1, mstate0, mstate1, U, V)
 	LinearResponse(&pop0)
+	PCA_PP(&pop0)
+	PCA_PE(&pop0)
+}
+
+func PCA_PP(pop *multicell.Population) {
+	fp0 := pop.GetFlatStateVec("P", 0)
+	fp1 := pop.GetFlatStateVec("P", 1)
+	fp := pop.GetFlatStateVec("P", 0)
+
+	for _, p := range fp1 {
+		fp = append(fp, p)
+	}
+	mp, _, cov := multicell.GetCrossCov(fp, fp)
+	dim := len(mp)
+	mv := mat.NewVecDense(dim, mp)
+
+	evs, U := runEigenSym(cov)
+
+	for i, v := range evs {
+		fmt.Printf("PP_val\t%3d\t%e\n", i, v)
+	}
+
+	env0 := multicell.FlattenEnvs(pop.AncEnvs)
+	env1 := multicell.FlattenEnvs(pop.NovEnvs)
+	denv := multicell.NewVec(dim)
+	multicell.DiffVecs(denv, env1, env0)
+	de := mat.NewVecDense(dim, denv)
+
+	for k := range fp0 {
+		p0 := mat.NewVecDense(dim, fp0[k])
+		p1 := mat.NewVecDense(dim, fp1[k])
+		p0.SubVec(p0, mv)
+		p1.SubVec(p1, mv)
+		fmt.Printf("PP_prj\t%3d", k)
+		for i := 0; i < 3; i++ {
+			axis := U.ColView(dim - i - 1)
+			x := mat.Dot(axis, p0)
+			y := mat.Dot(axis, p1)
+			if mat.Dot(axis, de) < 0.0 {
+				x *= -1.0
+				y *= -1.0
+			}
+			fmt.Printf("\t%e\t%e", x, y)
+		}
+		fmt.Printf("\n")
+	}
+}
+
+func PCA_PE(pop *multicell.Population) {
+	fp0 := pop.GetFlatStateVec("P", 0)
+	fp1 := pop.GetFlatStateVec("P", 1)
+	fe0 := pop.GetFlatStateVec("E", 0)
+	fe1 := pop.GetFlatStateVec("E", 1)
+	fp := pop.GetFlatStateVec("P", 0)
+	fe := pop.GetFlatStateVec("E", 0)
+
+	for k, p := range fp1 {
+		fp = append(fp, p)
+		fe = append(fe, fe1[k])
+	}
+	pave, eave, cov := multicell.GetCrossCov(fp, fe)
+	dim := len(pave)
+	mp := mat.NewVecDense(dim, pave)
+	me := mat.NewVecDense(dim, eave)
+
+	U, sv, V := runSVD(cov)
+
+	for i, v := range sv {
+		fmt.Printf("PE_val\t%3d\t%e\n", i, v)
+	}
+
+	env0 := multicell.FlattenEnvs(pop.AncEnvs)
+	env1 := multicell.FlattenEnvs(pop.NovEnvs)
+	denv := multicell.NewVec(dim)
+	multicell.DiffVecs(denv, env1, env0)
+	de := mat.NewVecDense(dim, denv)
+
+	for k := range fp0 {
+		p0 := mat.NewVecDense(dim, fp0[k])
+		p1 := mat.NewVecDense(dim, fp1[k])
+		e0 := mat.NewVecDense(dim, fe0[k])
+		e1 := mat.NewVecDense(dim, fe1[k])
+
+		p0.SubVec(p0, mp)
+		p1.SubVec(p1, mp)
+
+		e0.SubVec(e0, me)
+		e1.SubVec(e1, me)
+
+		fmt.Printf("PE_prj\t%3d", k)
+		for i := 0; i < 3; i++ {
+			u := U.ColView(i)
+			v := V.ColView(i)
+			xp := mat.Dot(u, p0)
+			xe := mat.Dot(v, e0)
+			yp := mat.Dot(u, p1)
+			ye := mat.Dot(v, e1)
+			if mat.Dot(u, de) < 0.0 {
+				xp *= -1.0
+				yp *= -1.0
+			}
+			if mat.Dot(v, de) < 0.0 {
+				xp *= -1.0
+				yp *= -1.0
+			}
+			fmt.Printf("\t%e\t%e\t%e\t%e", xe, xp, ye, yp)
+		}
+		fmt.Printf("\n")
+	}
 }
 
 func LinearResponse(pop *multicell.Population) {
@@ -125,12 +234,12 @@ func runSVD(ccmat multicell.Dmat) (*mat.Dense, []float64, *mat.Dense) {
 	return U, vals, V
 }
 
-func myEigenSym(m multicell.Dmat) {
-	dim := len(m)
+func runEigenSym(cov multicell.Dmat) ([]float64, *mat.Dense) {
+	dim := len(cov)
 	a := mat.NewSymDense(dim, nil)
 	for i := 0; i < dim; i++ {
 		for j := 0; j < dim; j++ {
-			a.SetSym(i, j, m[i][j])
+			a.SetSym(i, j, cov[i][j])
 		}
 	}
 
@@ -139,12 +248,11 @@ func myEigenSym(m multicell.Dmat) {
 	if !ok {
 		log.Fatal("EigenSym failed.")
 	}
-	fmt.Println("EigenValues: ", eig.Values(nil))
+
 	U := mat.NewDense(dim, dim, nil)
 	eig.VectorsTo(U)
-	for i := 0; i < dim; i++ {
-		fmt.Printf("EV\t%f\n", U.At(i, dim-1))
-	}
+
+	return eig.Values(nil), U
 }
 
 func getTest3by3Matrix() multicell.Dmat {
