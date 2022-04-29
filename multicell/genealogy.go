@@ -24,14 +24,22 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int {
 		jfilename := fmt.Sprintf("../pops/%s_%3.3d.json", popfilename, gen)
 		pop.FromJSON(jfilename)
 
+		ids := make([]string, 0)
 		for _, indiv := range pop.Indivs {
 			pars[indiv.DadId] = true
 			pars[indiv.MomId] = true
 			id = fmt.Sprintf("g%d:id%d", pop.Gen, indiv.Id)
+			ids = append(ids, id)
 			dadid = fmt.Sprintf("g%d:id%d", pop.Gen-1, indiv.DadId)
 			momid = fmt.Sprintf("g%d:id%d", pop.Gen-1, indiv.MomId)
 			fmt.Fprintf(fdot, "\t \"%s\"-> {\"%s\", \"%s\"}\n", id, dadid, momid)
 		}
+		fmt.Fprintf(fdot, "subgraph {\n rank = same\n")
+		for _, id := range ids {
+			fmt.Fprintf(fdot, "\"%s\"; ", id)
+		}
+		fmt.Fprintf(fdot, "\n}\n")
+
 		rnanctraj = append(rnanctraj, len(pars))
 		pars = make(map[int]bool) //re-initialize
 	}
