@@ -89,7 +89,7 @@ func main() {
 	fmt.Println("Time taken to make dot file :", dtdot)
 	fmt.Println("Dumping number of ancestors")
 	nancfilename = fmt.Sprintf("../analysis/%s_nanc.dat", Gid_Filename)
-	fout, err := os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644) //create file for recording trajectory
+	fout, err := os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create file for recording trajectory
 	if err != nil {
 		log.Fatal(err)
 	}
