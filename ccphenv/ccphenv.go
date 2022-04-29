@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 
 	"github.com/arkinjo/evodevo/multicell"
 	"gonum.org/v1/gonum/mat"
@@ -34,6 +35,7 @@ func main() {
 	denv := multicell.NewVec(dim)
 	multicell.DiffVecs(denv, env1, env0)
 	dirE := mat.NewVecDense(dim, denv)
+	dirE.ScaleVec(1.0/dirE.Norm(2), dirE)
 
 	e0 := pop.GetFlatStateVec("E", 0)
 	e1 := pop.GetFlatStateVec("E", 1)
@@ -44,16 +46,17 @@ func main() {
 	mp1 := multicell.GetMeanVec(p1)
 	dp := multicell.NewVec(dim)
 	multicell.DiffVecs(dp, mp1, mp0)
+	dirP := mat.NewVecDense(dim, dp)
+	dirP.ScaleVec(1.0/dirP.Norm(2), dirP)
+	Project("P0P0", dirE, dirP, p0, p0)
+	Project("P0P1", dirE, dirP, p0, p1)
+	Project("P1P0", dirE, dirP, p1, p0)
+	Project("P1P1", dirE, dirP, p1, p1)
 
-	Project("P0P0", dirE, p0, p0)
-	Project("P0P1", dirE, p0, p1)
-	Project("P1P0", dirE, p1, p0)
-	Project("P1P1", dirE, p1, p1)
-
-	Project("P0E0", dirE, p0, e0)
-	Project("P0E1", dirE, p0, e1)
-	Project("P1E0", dirE, p1, e0)
-	Project("P1E1", dirE, p1, e1)
+	Project("P0E0", dirE, dirP, p0, e0)
+	Project("P0E1", dirE, dirP, p0, e1)
+	Project("P1E0", dirE, dirP, p1, e0)
+	Project("P1E1", dirE, dirP, p1, e1)
 
 	mixp := make([]multicell.Vec, 0)
 	mixe := make([]multicell.Vec, 0)
@@ -65,8 +68,8 @@ func main() {
 		mixp = append(mixp, p1[k])
 		mixe = append(mixe, e1[k])
 	}
-	Project("mixPP", dirE, mixp, mixp)
-	Project("mixPE", dirE, mixp, mixe)
+	Project("mixPP", dirE, dirP, mixp, mixp)
+	Project("mixPE", dirE, dirP, mixp, mixe)
 
 	deltaP := make([]multicell.Vec, 0)
 	deltaE := make([]multicell.Vec, 0)
@@ -79,8 +82,8 @@ func main() {
 		multicell.DiffVecs(e, e1[k], e0[k])
 		deltaE = append(deltaE, e)
 	}
-	Project("DdPP", dirE, deltaP, deltaP)
-	Project("DdPE", dirE, deltaP, deltaE)
+	Project("dPdP", dirE, dirP, deltaP, deltaP)
+	Project("dPdE", dirE, dirP, deltaP, deltaE)
 
 	delta("delPP", dirE, deltaP, deltaP)
 	delta("delPE", dirE, deltaP, deltaE)
@@ -140,6 +143,8 @@ func LinearResponse(pop *multicell.Population) {
 	multicell.DiffVecs(dp, p1_ave, p0_ave)
 
 	dpp := multicell.NewVec(dim)
+	sigma := pop.Params.SDNoise
+	sigma2 := (sigma * sigma)
 	for i, ci := range pe_cov {
 		for j, v := range ci {
 			dpp[i] += v * denv[j]
@@ -147,11 +152,11 @@ func LinearResponse(pop *multicell.Population) {
 	}
 
 	for i, de := range denv {
-		fmt.Printf("LRT\t%2d\t%e\t%e\t%e\n", i, de, dp[i], dpp[i])
+		fmt.Printf("LRT\t%2d\t%e\t%e\t%e\n", i, de, dp[i], dpp[i]/sigma2)
 	}
 }
 
-func Project(label string, dir *mat.VecDense, data0, data1 [][]float64) {
+func Project(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64) {
 
 	mean0, mean1, ccmat := multicell.GetCrossCov(data0, data1)
 	U, vals, V := runSVD(ccmat)
@@ -167,6 +172,17 @@ func Project(label string, dir *mat.VecDense, data0, data1 [][]float64) {
 	for i, v := range vals {
 		fmt.Printf("%s_vals\t%d\t%e\n", label, i, v)
 	}
+
+	for i := 0; i < dim0; i++ {
+		u := U.ColView(i)
+		v := V.ColView(i)
+		ue := math.Abs(mat.Dot(dirE, u))
+		up := math.Abs(mat.Dot(dirP, u))
+		ve := math.Abs(mat.Dot(dirE, v))
+		vp := math.Abs(mat.Dot(dirP, v))
+		fmt.Printf("%s_aliUV_EP\t%d\t%e\t%e\t%e\t%e\n", label, i, ue, up, ve, vp)
+	}
+
 	for k := range data0 {
 		fmt.Printf("%s_prj\t%3d", label, k)
 		p0 := mat.NewVecDense(dim0, data0[k])
@@ -178,7 +194,7 @@ func Project(label string, dir *mat.VecDense, data0, data1 [][]float64) {
 			t1.SubVec(p1, m1)
 			v := V.ColView(i)
 			x := mat.Dot(t1, v)
-			if mat.Dot(dir, u) < 0.0 {
+			if mat.Dot(dirE, u) < 0.0 {
 				x *= -1
 				y *= -1
 			}
