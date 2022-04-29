@@ -79,12 +79,15 @@ func main() {
 		multicell.DiffVecs(e, e1[k], e0[k])
 		deltaE = append(deltaE, e)
 	}
-	deltaDelta("delPP", dirE, deltaP, deltaP)
-	deltaDelta("delPE", dirE, deltaP, deltaE)
+	Project("DdPP", dirE, deltaP, deltaP)
+	Project("DdPE", dirE, deltaP, deltaE)
+
+	delta("delPP", dirE, deltaP, deltaP)
+	delta("delPE", dirE, deltaP, deltaE)
 	LinearResponse(&pop)
 }
 
-func deltaDelta(label string, dir *mat.VecDense, data0, data1 [][]float64) {
+func delta(label string, dir *mat.VecDense, data0, data1 [][]float64) {
 	dim0 := len(data0[0])
 	dim1 := len(data1[0])
 	cov := multicell.NewDmat(dim0, dim1)
@@ -109,8 +112,8 @@ func deltaDelta(label string, dir *mat.VecDense, data0, data1 [][]float64) {
 		for i := 0; i < 3; i++ {
 			u := U.ColView(i)
 			v := V.ColView(i)
-			x := mat.Dot(u, p0)
-			y := mat.Dot(v, p1)
+			y := mat.Dot(u, p0)
+			x := mat.Dot(v, p1)
 			if mat.Dot(u, dir) < 0.0 {
 				x *= -1.0
 				y *= -1.0
@@ -171,10 +174,10 @@ func Project(label string, dir *mat.VecDense, data0, data1 [][]float64) {
 		for i := 0; i < 3; i++ {
 			t0.SubVec(p0, m0)
 			u := U.ColView(i)
-			x := mat.Dot(t0, u)
+			y := mat.Dot(t0, u)
 			t1.SubVec(p1, m1)
 			v := V.ColView(i)
-			y := mat.Dot(t1, v)
+			x := mat.Dot(t1, v)
 			if mat.Dot(dir, u) < 0.0 {
 				x *= -1
 				y *= -1
