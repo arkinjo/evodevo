@@ -15,140 +15,107 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 
-	state0 := flag.String("state0", "P", "State 0 (one of E, F, G, H, P)")
-	state1 := flag.String("state1", "P", "State 1 (one of E, F, G, H, P)")
-	ienv0 := flag.Int("ienv0", 0, "0 = Ancestral; 1 = Novel environment")
-	ienv1 := flag.Int("ienv1", 1, "0 = Ancestral; 1 = Novel environment")
-
 	jsoninP := flag.String("jsonin", "", "json file of input population") //default to empty string
 
 	flag.Parse()
 
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 	if *jsoninP != "" {
-		pop0.FromJSON(*jsoninP)
-		multicell.SetParams(pop0.Params)
+		pop.FromJSON(*jsoninP)
+		multicell.SetParams(pop.Params)
 	} else {
 		flag.PrintDefaults()
 		log.Fatal("Specify the input JSON file with -jsonin=filename.")
 	}
 
-	fmt.Println("# Cross-covariance:", *state0, *ienv0, " vs ", *state1, *ienv1)
-
-	fstates0 := pop0.GetFlatStateVec(*state0, *ienv0)
-	fstates1 := pop0.GetFlatStateVec(*state1, *ienv1)
-	mstate0, mstate1, ccmat := multicell.GetCrossCov(fstates0, fstates1)
-
-	U, vals, V := runSVD(ccmat)
-	fmt.Println("#Singular Values: ", vals)
-	project(fstates0, fstates1, mstate0, mstate1, U, V)
-	LinearResponse(&pop0)
-	PCA_PP(&pop0)
-	PCA_PE(&pop0)
-}
-
-func PCA_PP(pop *multicell.Population) {
-	fp0 := pop.GetFlatStateVec("P", 0)
-	fp1 := pop.GetFlatStateVec("P", 1)
-	fp := pop.GetFlatStateVec("P", 0)
-
-	for _, p := range fp1 {
-		fp = append(fp, p)
-	}
-	mp, _, cov := multicell.GetCrossCov(fp, fp)
-	dim := len(mp)
-	mv := mat.NewVecDense(dim, mp)
-
-	evs, U := runEigenSym(cov)
-
-	for i, v := range evs {
-		fmt.Printf("PP_val\t%3d\t%e\n", i, v)
-	}
-
 	env0 := multicell.FlattenEnvs(pop.AncEnvs)
 	env1 := multicell.FlattenEnvs(pop.NovEnvs)
+	dim := len(env0)
 	denv := multicell.NewVec(dim)
 	multicell.DiffVecs(denv, env1, env0)
-	de := mat.NewVecDense(dim, denv)
+	dirE := mat.NewVecDense(dim, denv)
 
-	for k := range fp0 {
-		p0 := mat.NewVecDense(dim, fp0[k])
-		p1 := mat.NewVecDense(dim, fp1[k])
-		p0.SubVec(p0, mv)
-		p1.SubVec(p1, mv)
-		fmt.Printf("PP_prj\t%3d", k)
+	e0 := pop.GetFlatStateVec("E", 0)
+	e1 := pop.GetFlatStateVec("E", 1)
+
+	p0 := pop.GetFlatStateVec("P", 0)
+	p1 := pop.GetFlatStateVec("P", 1)
+	mp0 := multicell.GetMeanVec(p0)
+	mp1 := multicell.GetMeanVec(p1)
+	dp := multicell.NewVec(dim)
+	multicell.DiffVecs(dp, mp1, mp0)
+
+	Project("P0P0", dirE, p0, p0)
+	Project("P0P1", dirE, p0, p1)
+	Project("P1P0", dirE, p1, p0)
+	Project("P1P1", dirE, p1, p1)
+
+	Project("P0E0", dirE, p0, e0)
+	Project("P0E1", dirE, p0, e1)
+	Project("P1E0", dirE, p1, e0)
+	Project("P1E1", dirE, p1, e1)
+
+	mixp := make([]multicell.Vec, 0)
+	mixe := make([]multicell.Vec, 0)
+	for k := range p0 {
+		mixp = append(mixp, p0[k])
+		mixe = append(mixe, e0[k])
+	}
+	for k := range p1 {
+		mixp = append(mixp, p1[k])
+		mixe = append(mixe, e1[k])
+	}
+	Project("mixPP", dirE, mixp, mixp)
+	Project("mixPE", dirE, mixp, mixe)
+
+	deltaP := make([]multicell.Vec, 0)
+	deltaE := make([]multicell.Vec, 0)
+	for k, p := range p1 {
+		d := multicell.NewVec(dim)
+		multicell.DiffVecs(d, p, p0[k])
+		deltaP = append(deltaP, d)
+
+		e := multicell.NewVec(dim)
+		multicell.DiffVecs(e, e1[k], e0[k])
+		deltaE = append(deltaE, e)
+	}
+	deltaDelta("delPP", dirE, deltaP, deltaP)
+	deltaDelta("delPE", dirE, deltaP, deltaE)
+	LinearResponse(&pop)
+}
+
+func deltaDelta(label string, dir *mat.VecDense, data0, data1 [][]float64) {
+	dim0 := len(data0[0])
+	dim1 := len(data1[0])
+	cov := multicell.NewDmat(dim0, dim1)
+	for k, p := range data0 {
+		for i, v0 := range p {
+			for j, v1 := range data1[k] {
+				cov[i][j] += v0 * v1
+			}
+		}
+	}
+
+	U, vals, V := runSVD(cov)
+
+	for i, v := range vals {
+		fmt.Printf("%s_val\t%3d\t%e\n", label, i, v)
+	}
+
+	for k := range data0 {
+		p0 := mat.NewVecDense(dim0, data0[k])
+		p1 := mat.NewVecDense(dim1, data1[k])
+		fmt.Printf("%s_prj\t%3d", label, k)
 		for i := 0; i < 3; i++ {
-			axis := U.ColView(dim - i - 1)
-			x := mat.Dot(axis, p0)
-			y := mat.Dot(axis, p1)
-			if mat.Dot(axis, de) < 0.0 {
+			u := U.ColView(i)
+			v := V.ColView(i)
+			x := mat.Dot(u, p0)
+			y := mat.Dot(v, p1)
+			if mat.Dot(u, dir) < 0.0 {
 				x *= -1.0
 				y *= -1.0
 			}
 			fmt.Printf("\t%e\t%e", x, y)
-		}
-		fmt.Printf("\n")
-	}
-}
-
-func PCA_PE(pop *multicell.Population) {
-	fp0 := pop.GetFlatStateVec("P", 0)
-	fp1 := pop.GetFlatStateVec("P", 1)
-	fe0 := pop.GetFlatStateVec("E", 0)
-	fe1 := pop.GetFlatStateVec("E", 1)
-	fp := pop.GetFlatStateVec("P", 0)
-	fe := pop.GetFlatStateVec("E", 0)
-
-	for k, p := range fp1 {
-		fp = append(fp, p)
-		fe = append(fe, fe1[k])
-	}
-	pave, eave, cov := multicell.GetCrossCov(fp, fe)
-	dim := len(pave)
-	mp := mat.NewVecDense(dim, pave)
-	me := mat.NewVecDense(dim, eave)
-
-	U, sv, V := runSVD(cov)
-
-	for i, v := range sv {
-		fmt.Printf("PE_val\t%3d\t%e\n", i, v)
-	}
-
-	env0 := multicell.FlattenEnvs(pop.AncEnvs)
-	env1 := multicell.FlattenEnvs(pop.NovEnvs)
-	denv := multicell.NewVec(dim)
-	multicell.DiffVecs(denv, env1, env0)
-	de := mat.NewVecDense(dim, denv)
-
-	for k := range fp0 {
-		p0 := mat.NewVecDense(dim, fp0[k])
-		p1 := mat.NewVecDense(dim, fp1[k])
-		e0 := mat.NewVecDense(dim, fe0[k])
-		e1 := mat.NewVecDense(dim, fe1[k])
-
-		p0.SubVec(p0, mp)
-		p1.SubVec(p1, mp)
-
-		e0.SubVec(e0, me)
-		e1.SubVec(e1, me)
-
-		fmt.Printf("PE_prj\t%3d", k)
-		for i := 0; i < 3; i++ {
-			u := U.ColView(i)
-			v := V.ColView(i)
-			xp := mat.Dot(u, p0)
-			xe := mat.Dot(v, e0)
-			yp := mat.Dot(u, p1)
-			ye := mat.Dot(v, e1)
-			if mat.Dot(u, de) < 0.0 {
-				xp *= -1.0
-				yp *= -1.0
-			}
-			if mat.Dot(v, de) < 0.0 {
-				xp *= -1.0
-				yp *= -1.0
-			}
-			fmt.Printf("\t%e\t%e\t%e\t%e", xe, xp, ye, yp)
 		}
 		fmt.Printf("\n")
 	}
@@ -181,7 +148,11 @@ func LinearResponse(pop *multicell.Population) {
 	}
 }
 
-func project(data0, data1 []multicell.Vec, mean0, mean1 multicell.Vec, U, V *mat.Dense) {
+func Project(label string, dir *mat.VecDense, data0, data1 [][]float64) {
+
+	mean0, mean1, ccmat := multicell.GetCrossCov(data0, data1)
+	U, vals, V := runSVD(ccmat)
+
 	dim0, _ := U.Dims()
 	dim1, _ := V.Dims()
 
@@ -190,21 +161,25 @@ func project(data0, data1 []multicell.Vec, mean0, mean1 multicell.Vec, U, V *mat
 
 	t0 := mat.NewVecDense(dim0, nil)
 	t1 := mat.NewVecDense(dim1, nil)
+	for i, v := range vals {
+		fmt.Printf("%s_vals\t%d\t%e\n", label, i, v)
+	}
 	for k := range data0 {
-		fmt.Printf("Indiv\t%3d", k)
+		fmt.Printf("%s_prj\t%3d", label, k)
 		p0 := mat.NewVecDense(dim0, data0[k])
-		for i := 0; i < 3; i++ {
-			t0.SubVec(p0, m0)
-			axis := U.ColView(i)
-			x := mat.Dot(t0, axis)
-			fmt.Printf("\t%e", x)
-		}
 		p1 := mat.NewVecDense(dim1, data1[k])
 		for i := 0; i < 3; i++ {
+			t0.SubVec(p0, m0)
+			u := U.ColView(i)
+			x := mat.Dot(t0, u)
 			t1.SubVec(p1, m1)
-			axis := V.ColView(i)
-			x := mat.Dot(t1, axis)
-			fmt.Printf("\t%e", x)
+			v := V.ColView(i)
+			y := mat.Dot(t1, v)
+			if mat.Dot(dir, u) < 0.0 {
+				x *= -1
+				y *= -1
+			}
+			fmt.Printf("\t%e\t%e", x, y)
 		}
 		fmt.Printf("\n")
 	}
