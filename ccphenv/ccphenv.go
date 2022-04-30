@@ -48,6 +48,10 @@ func main() {
 	multicell.DiffVecs(dp, mp1, mp0)
 	dirP := mat.NewVecDense(dim, dp)
 	dirP.ScaleVec(1.0/dirP.Norm(2), dirP)
+
+	dotPE := mat.Dot(dirP, dirE)
+	fmt.Printf("dotPE\t%e\n", dotPE)
+
 	Project("P0P0", dirE, dirP, p0, p0)
 	Project("P0P1", dirE, dirP, p0, p1)
 	Project("P1P0", dirE, dirP, p1, p0)
