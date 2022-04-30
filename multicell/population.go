@@ -20,8 +20,7 @@ type Population struct { //Population of individuals
 }
 
 type PopStats struct { // Statistics of population (mean values of quantities of interest)
-	CDist1     float64 // ||<p(e1)> - e1||
-	CDist0     float64 // ||<p(e1)> - e0||
+	PEDot      float64 // (delta P, delta E) dot product
 	PErr1      float64 // <|| p(e1) - e1 ||> (Nov)
 	PErr0      float64 // <|| p(e0) - e0 ||> (Anc)
 	PED10      float64 // <|| p(e1) - e0 ||> (Nov-Anc)
@@ -71,13 +70,9 @@ func (pop *Population) GetStats() PopStats {
 		}
 
 	}
-	cdist1 := 0.0
-	cdist0 := 0.0
 	for i, p := range pa {
 		for j := range p {
 			pa[i][j] /= fn
-			cdist1 += math.Abs(pop.NovEnvs[i][j] - pa[i][j])
-			cdist0 += math.Abs(pop.AncEnvs[i][j] - pa[i][j])
 
 		}
 	}
@@ -96,9 +91,22 @@ func (pop *Population) GetStats() PopStats {
 			div += t / fn
 		}
 	}
+	env0 := FlattenEnvs(pop.AncEnvs)
+	env1 := FlattenEnvs(pop.NovEnvs)
+	dim := len(env0)
+	dirE := NewVec(dim)
+	DiffVecs(dirE, env1, env0)
+	ScaleVec(dirE, 1.0/Norm2(dirE), dirE)
 
-	stats.CDist1 = cdist1 / float64(ncells*(nenv+ncells))
-	stats.CDist0 = cdist0 / float64(ncells*(nenv+ncells))
+	p0 := pop.GetFlatStateVec("P", 0)
+	p1 := pop.GetFlatStateVec("P", 1)
+	mp0 := GetMeanVec(p0)
+	mp1 := GetMeanVec(p1)
+	dirP := NewVec(dim)
+	DiffVecs(dirP, mp1, mp0)
+	ScaleVec(dirP, 1.0/Norm2(dirP), dirP)
+
+	stats.PEDot = Innerproduct(dirP, dirE)
 	stats.PErr1 = merr1 / fn
 	stats.PErr0 = merr0 / fn
 	stats.PED10 = md10 / fn
@@ -464,9 +472,9 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout, gidfilename s
 		pstat := pop.GetStats()
 		popsize = len(pop.Indivs)
 
-		fmt.Fprintf(ftraj, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.CDist1, pstat.CDist0, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
+		fmt.Fprintf(ftraj, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.PEDot, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<CD1>: %e\t<CD0>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf10>: %e\t<MDf01>: %e\t<Fit>: %e\t<WFit>: %e\t<Plas>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.CDist1, pstat.CDist0, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
+		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<PEDot>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf10>: %e\t<MDf01>: %e\t<Fit>: %e\t<WFit>: %e\t<Plas>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.PEDot, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
 	}
