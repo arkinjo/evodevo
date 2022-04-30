@@ -9,17 +9,8 @@ import (
 	"github.com/arkinjo/evodevo/multicell"
 )
 
-var PG_Filename string  //Dump for phenotypes and genotypes
-var Gid_Filename string //Genealogy of ID's
-var nancfilename string
-var json_in string //JSON encoding of initial population; default to empty string
-var json_out string = "popout"
-
-var CopyequalGs float64 //bugtesting variable
-var JSONequalGs float64 //bugtesting variable
-var DevequalGs float64  //bugtesting variable
-
-//var test bool = false //false : training mode, true : testing mode
+var PG_Filename string //Dump for phenotypes and genotypes
+var json_in string     //JSON encoding of initial population; default to empty string
 
 func main() {
 	t0 := time.Now()
@@ -82,13 +73,8 @@ func main() {
 	dtdump := time.Since(tdump)
 	fmt.Println("Time taken to dump projections :", dtdump)
 	fmt.Println("Making DOT genealogy file")
-	tdot := time.Now()
-	multicell.DOT_Genealogy(Gid_Filename, json_in, epochlength, multicell.GetMaxPop())
-	dtdot := time.Since(tdot)
-	fmt.Println("Time taken to make dot file :", dtdot)
 	fmt.Printf("Projections written to %s_*.dat \n", PG_Filename)
-	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_in)
-
 	dt := time.Since(t0)
+
 	fmt.Println("Total time taken : ", dt)
 }
