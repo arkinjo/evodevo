@@ -186,7 +186,7 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	sigma2 := 0.0
 	for _, c := range cues {
 		DiffVecs(v, c, mu)
-		sigma2 += Veclength2(v)
+		sigma2 += Norm2Sq(v)
 	}
 
 	sigma2 /= float64(len(cues))

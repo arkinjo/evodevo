@@ -266,12 +266,12 @@ func Innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v
 	return dot
 }
 
-func Veclength2(v Vec) float64 {
+func Norm2Sq(v Vec) float64 {
 	return Innerproduct(v, v)
 }
 
-func Veclength(v Vec) float64 { //Euclidean Length of vector
-	return math.Sqrt(Veclength2(v))
+func Norm2(v Vec) float64 { //Euclidean Length of vector
+	return math.Sqrt(Norm2Sq(v))
 }
 
 func Dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared

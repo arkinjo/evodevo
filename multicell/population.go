@@ -294,7 +294,7 @@ func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined us
 
 	for i, p := range e {
 		DiffVecs(v, p, e0[i])
-		axlength2 += Veclength2(v)
+		axlength2 += Norm2Sq(v)
 		de[i] = v //ids must stay the same
 	}
 
