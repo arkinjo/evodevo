@@ -1,8 +1,11 @@
 package multicell
 
 import (
+	"log"
 	"math"
 	"math/rand"
+
+	"gonum.org/v1/gonum/mat"
 )
 
 type Settings struct {
@@ -366,4 +369,28 @@ func GetCrossCov(vecs0, vecs1 []Vec) (Vec, Vec, Dmat) {
 	}
 
 	return cv0, cv1, ccmat
+}
+
+func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
+	dim0 := len(ccmat)
+	dim1 := len(ccmat[0])
+	C := mat.NewDense(dim0, dim1, nil)
+	for i, ci := range ccmat {
+		for j, v := range ci {
+			C.Set(i, j, v)
+		}
+	}
+
+	var svd mat.SVD
+	ok := svd.Factorize(C, mat.SVDFull)
+	if !ok {
+		log.Fatal("SVD failed.")
+	}
+	U := mat.NewDense(dim0, dim0, nil)
+	V := mat.NewDense(dim1, dim1, nil)
+	svd.UTo(U)
+	svd.VTo(V)
+	vals := svd.Values(nil)
+
+	return U, vals, V
 }

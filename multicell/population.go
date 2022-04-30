@@ -9,6 +9,8 @@ import (
 	"math/rand"
 	"os"
 	"sort"
+
+	"gonum.org/v1/gonum/mat"
 )
 
 type Population struct { //Population of individuals
@@ -550,4 +552,14 @@ func (pop *Population) GetFlatStateVec(istate string, ienv int) Dmat {
 	}
 
 	return vs0
+}
+
+func (pop *Population) GetPCA(state0 string, ienv0 int, state1 string, ienv1 int) (*mat.Dense, Vec, *mat.Dense) {
+	s0 := pop.GetFlatStateVec(state0, ienv0)
+	s1 := pop.GetFlatStateVec(state1, ienv1)
+
+	_, _, ccmat := GetCrossCov(s0, s1)
+
+	U, vals, V := GetSVD(ccmat)
+	return U, vals, V
 }

@@ -21,7 +21,6 @@ func main() {
 	refgenPtr := flag.Int("refgen", 50, "reference generation for evolved genotype")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
-	gidfilenamePtr := flag.String("geneology", "geneol", "Basename of geneology data files")
 	jsoninPtr := flag.String("jsonin", "", "JSON file of input population") //default to empty string
 
 	flag.Parse()
@@ -30,7 +29,6 @@ func main() {
 	fmt.Println("epochlength", epochlength)
 	refgen := *refgenPtr
 	PG_Filename = *pgfilenamePtr
-	Gid_Filename = *gidfilenamePtr
 
 	json_in = *jsoninPtr
 

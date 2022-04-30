@@ -106,7 +106,7 @@ func delta(label string, dir *mat.VecDense, data0, data1 [][]float64) {
 		}
 	}
 
-	U, vals, V := runSVD(cov)
+	U, vals, V := multicell.GetSVD(cov)
 
 	for i, v := range vals {
 		fmt.Printf("%s_val\t%3d\t%e\n", label, i, v)
@@ -163,7 +163,7 @@ func LinearResponse(pop *multicell.Population) {
 func Project(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64) {
 
 	mean0, mean1, ccmat := multicell.GetCrossCov(data0, data1)
-	U, vals, V := runSVD(ccmat)
+	U, vals, V := multicell.GetSVD(ccmat)
 
 	dim0, _ := U.Dims()
 	dim1, _ := V.Dims()
@@ -177,6 +177,7 @@ func Project(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64) {
 		fmt.Printf("%s_vals\t%d\t%e\n", label, i, v)
 	}
 
+	fmt.Println("#           \tcomp \tu.e \tu.p \tv.e \tv.p")
 	for i := 0; i < dim0; i++ {
 		u := U.ColView(i)
 		v := V.ColView(i)
@@ -187,6 +188,11 @@ func Project(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64) {
 		fmt.Printf("%s_aliUV_EP\t%d\t%e\t%e\t%e\t%e\n", label, i, ue, up, ve, vp)
 	}
 
+	fmt.Printf("#<x1x0> \tcomp ")
+	for i := 0; i < 3; i++ {
+		fmt.Printf("\t x0.u%d \t x1.v%d \t", i, i)
+	}
+	fmt.Printf("\n")
 	for k := range data0 {
 		fmt.Printf("%s_prj\t%3d", label, k)
 		p0 := mat.NewVecDense(dim0, data0[k])
@@ -202,34 +208,10 @@ func Project(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64) {
 				x *= -1
 				y *= -1
 			}
-			fmt.Printf("\t%e\t%e", x, y)
+			fmt.Printf("\t%e \t%e ", x, y)
 		}
 		fmt.Printf("\n")
 	}
-}
-
-func runSVD(ccmat multicell.Dmat) (*mat.Dense, []float64, *mat.Dense) {
-	dim0 := len(ccmat)
-	dim1 := len(ccmat[0])
-	C := mat.NewDense(dim0, dim1, nil)
-	for i, ci := range ccmat {
-		for j, v := range ci {
-			C.Set(i, j, v)
-		}
-	}
-
-	var svd mat.SVD
-	ok := svd.Factorize(C, mat.SVDFull)
-	if !ok {
-		log.Fatal("SVD failed.")
-	}
-	U := mat.NewDense(dim0, dim0, nil)
-	V := mat.NewDense(dim1, dim1, nil)
-	svd.UTo(U)
-	svd.VTo(V)
-	vals := svd.Values(nil)
-
-	return U, vals, V
 }
 
 func runEigenSym(cov multicell.Dmat) ([]float64, *mat.Dense) {

@@ -11,7 +11,6 @@ import (
 )
 
 var T_Filename string = "traj.dat"
-var P_Filename string = "pvec"
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
 var jfilename string
@@ -36,7 +35,6 @@ func main() {
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("traj_file", "traj.dat", "filename of trajectories")
-	pfilenamePtr := flag.String("pheno_file", "pvec", "filename of phenotypes")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
@@ -52,7 +50,6 @@ func main() {
 	epochlength := *genPtr
 	denv := *denvPtr
 	T_Filename = *tfilenamePtr
-	P_Filename = fmt.Sprintf("../analysis/%s.dat", *pfilenamePtr) //all phenotypes go to analysis directory
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
@@ -100,14 +97,11 @@ func main() {
 			//Update to environment just before epoch change
 			pop1.AncEnvs = multicell.CopyCues(pop1.NovEnvs)
 			pop1.ToJSON(json_out)
-			pop1.Dump_Phenotypes(P_Filename, epochlength)
 		}
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :", dtevol)
 
 		popstart = pop1 //Update population after evolution.
-		//fmt.Println("Novel environment before :", popstart.NovEnvs)
-		//fmt.Println("Ancestral environment before :", popstart.RefEnvs)
 
 		OldEnvs := multicell.CopyCues(popstart.NovEnvs)
 		popstart.AncEnvs = OldEnvs
@@ -117,8 +111,6 @@ func main() {
 			fmt.Println(err)
 		}
 		novvec = append(novvec, err == nil)
-		//fmt.Println("Novel environment after :", popstart.NovEnvs)
-		//fmt.Println("Ancestral environment after :", popstart.AncEnvs)
 	}
 	err = ftraj.Close()
 	if err != nil {
@@ -127,8 +119,6 @@ func main() {
 
 	fmt.Printf("Trajectory of population written to %s \n", T_Filename)
 	fmt.Printf("JSON encoding of evolved population written to %s \n", jfilename)
-	fmt.Printf("Phenotypes of population written to %s \n ", P_Filename)
-	//fmt.Println("Trajectory of environment :", envtraj)
 
 	fmt.Println("Novelty of environment cue :", novvec)
 	dt := time.Since(t0)
