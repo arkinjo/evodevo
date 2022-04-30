@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/arkinjo/evodevo/multicell"
@@ -31,17 +30,17 @@ func main() {
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	refgenPtr := flag.Int("refgen", 50, "reference generation for evolved genotype")
 
-	tfilenamePtr := flag.String("tfilename", "traj", "Filename of trajectories")
-	pgfilenamePtr := flag.String("pgfilename", "phenogeno", "Filename of projected phenotypes and genotypes") //default to empty string
-	gidfilenamePtr := flag.String("gidfilename", "geneol", "Filename of geneology of ids")                    //default to empty string
-	jsoninPtr := flag.String("jsonin", "", "JSON file of input population")                                   //default to empty string
+	tfilenamePtr := flag.String("traj_file", "traj", "Filename of trajectories")
+	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
+	gidfilenamePtr := flag.String("geneology", "geneol", "Basename of geneology data files")
+	jsoninPtr := flag.String("jsonin", "", "JSON file of input population") //default to empty string
 
 	flag.Parse()
 
 	epochlength := *genPtr
 	fmt.Println("epochlength", epochlength)
 	refgen := *refgenPtr
-	T_Filename = fmt.Sprintf("../analysis/%s.dat", *tfilenamePtr)
+	T_Filename = *tfilenamePtr
 	PG_Filename = *pgfilenamePtr
 	Gid_Filename = *gidfilenamePtr
 
@@ -51,12 +50,12 @@ func main() {
 		log.Fatal("Must specify JSON input file.")
 	}
 	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
-	jfilename := fmt.Sprintf("../pops/%s_001.json", json_in)
+	jfilename := fmt.Sprintf("%s_001.json", json_in)
 	pop0.FromJSON(jfilename)
 	multicell.SetParams(pop0.Params)
 
 	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
-	jfilename = fmt.Sprintf("../pops/%s_%3.3d.json", json_in, refgen)
+	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen)
 	fmt.Println("Reference population :", jfilename)
 	pop1.FromJSON(jfilename)
 
@@ -75,7 +74,7 @@ func main() {
 	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
 
 	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
-		jfilename := fmt.Sprintf("../pops/%s_%3.3d.json", json_in, gen)
+		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 		pop.FromJSON(jfilename)
 		pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
@@ -84,27 +83,10 @@ func main() {
 	fmt.Println("Time taken to dump projections :", dtdump)
 	fmt.Println("Making DOT genealogy file")
 	tdot := time.Now()
-	nanctraj := multicell.DOT_Genealogy(Gid_Filename, json_in, epochlength, multicell.GetMaxPop())
+	multicell.DOT_Genealogy(Gid_Filename, json_in, epochlength, multicell.GetMaxPop())
 	dtdot := time.Since(tdot)
 	fmt.Println("Time taken to make dot file :", dtdot)
-	fmt.Println("Dumping number of ancestors")
-	nancfilename = fmt.Sprintf("../analysis/%s_nanc.dat", Gid_Filename)
-	fout, err := os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create file for recording trajectory
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Fprintln(fout, "Generation \t Ancestors")
-	for i, n := range nanctraj {
-		fmt.Fprintf(fout, "%d\t%d\n", i+1, n)
-	}
-	err = fout.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	fmt.Printf("Projections written to %s_*.dat \n", PG_Filename)
-	fmt.Printf("Genealogy of final generation written to %s.dot\n", Gid_Filename)
-	fmt.Printf("Number of ancestors of final generation written to %s\n", nancfilename)
 	fmt.Printf("JSON encoding of populations written to %s_*.json \n", json_in)
 
 	dt := time.Since(t0)

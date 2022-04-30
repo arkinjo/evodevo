@@ -205,8 +205,9 @@ func (pop *Population) ClearGenome() {
 func (pop *Population) Copy() Population {
 	npop := len(pop.Indivs)
 	ncell := len(pop.Indivs[0].Bodies[INovEnv].Cells) //number of cells
-	//fmt.Println("Copying ",ncell,"-cell individuals")
+
 	pop1 := NewPopulation(ncell, npop)
+	pop1.Params = pop.Params
 	pop1.Gen = pop.Gen
 	pop1.NovEnvs = CopyCues(pop.NovEnvs)
 	pop1.AncEnvs = CopyCues(pop.AncEnvs)
@@ -526,7 +527,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	defcphen := make(Vec, nenv+ncells)
 
 	mu := pop.Get_Mid_Env()
-	Projfilename := fmt.Sprintf("../analysis/%s_%3.3d.dat", Filename, gen)
+	Projfilename := fmt.Sprintf("%s_%3.3d.dat", Filename, gen)
 
 	fout, err := os.OpenFile(Projfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {

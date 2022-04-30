@@ -36,7 +36,7 @@ func main() {
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
-	tfilenamePtr := flag.String("tfilename", "traj", "name of file of trajectories")
+	tfilenamePtr := flag.String("traj_file", "traj", "name of file of trajectories")
 	pcafilenamePtr := flag.String("pcafilename", "", "name of file of principal trait vector concatanation")
 	pgfilenamePtr := flag.String("pgfilename", "", "name of file of projected phenotypes and genotypes") //default to empty string
 	gidfilenamePtr := flag.String("gidfilename", "", "name of file of geneology of ids")                 //default to empty string

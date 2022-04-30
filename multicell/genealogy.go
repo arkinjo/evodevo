@@ -7,12 +7,12 @@ import (
 )
 
 //Dumps genealogy of population for an epoch into a dot file, going backwards in time. Returns number of reproducing population
-func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int {
+func DOT_Genealogy(genfilename, popfilename string, ngen, npop int) {
 	var id, dadid, momid string
 	nanctraj := []int{}
 	rnanctraj := []int{}
 	pop := NewPopulation(ncells, npop)
-	genfile := fmt.Sprintf("../analysis/%s.dot", dotfilename)
+	genfile := fmt.Sprintf("%s.dot", genfilename)
 
 	fdot, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -21,7 +21,7 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int {
 	fmt.Fprintln(fdot, "digraph G {")
 	pars := make(map[int]bool)
 	for gen := ngen; gen > 0; gen-- {
-		jfilename := fmt.Sprintf("../pops/%s_%3.3d.json", popfilename, gen)
+		jfilename := fmt.Sprintf("%s_%3.3d.json", popfilename, gen)
 		pop.FromJSON(jfilename)
 
 		ids := make([]string, 0)
@@ -54,6 +54,18 @@ func DOT_Genealogy(dotfilename, popfilename string, ngen, npop int) []int {
 	for i := 0; i < ngen; i++ {
 		nanctraj = append(nanctraj, rnanctraj[ngen-1-i])
 	}
-
-	return nanctraj
+	fmt.Println("Dumping number of ancestors")
+	nancfilename := fmt.Sprintf("%s_nanc.dat", genfilename)
+	fout, err := os.OpenFile(nancfilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintln(fout, "Generation \t Ancestors")
+	for i, n := range nanctraj {
+		fmt.Fprintf(fout, "%d\t%d\n", i+1, n)
+	}
+	err = fout.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
