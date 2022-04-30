@@ -34,11 +34,11 @@ func DOT_Genealogy(genfilename, popfilename string, ngen, npop int) {
 			momid = fmt.Sprintf("g%d:id%d", pop.Gen-1, indiv.MomId)
 			fmt.Fprintf(fdot, "\t \"%s\"-> {\"%s\", \"%s\"}\n", id, dadid, momid)
 		}
-		fmt.Fprintf(fdot, "subgraph {\n rank = same\n")
+		fmt.Fprintf(fdot, "\tsubgraph {\n\trank = same\n\t")
 		for _, id := range ids {
 			fmt.Fprintf(fdot, "\"%s\"; ", id)
 		}
-		fmt.Fprintf(fdot, "\n}\n")
+		fmt.Fprintf(fdot, "\n\t}\n")
 
 		rnanctraj = append(rnanctraj, len(pars))
 		pars = make(map[int]bool) //re-initialize

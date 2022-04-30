@@ -20,15 +20,21 @@ func SetSeedCue(seed int64) {
 	rand_cue.Seed(seed)
 }
 
-func NewCue(nenv, id int) Cue { //Initialize a new cue type object
-	tv := NewVec(nenv)         //trait part of vector
-	idv := UnitVec(ncells, id) //id part of vector
-	for j, u := range idv {
-		if u != 1 {
-			idv[j] = -1 //pm 1 representation for id as well
+func NewIDVec(n, id int) Vec {
+	v := NewVec(n)
+	for i := range v {
+		if i == id {
+			v[i] = 1
+		} else {
+			v[i] = -1
 		}
 	}
-	v := append(tv, idv...) //format: cue|id
+	return v
+}
+func NewCue(nenv, id int) Cue { //Initialize a new cue type object
+	tv := NewVec(nenv)          //trait part of vector
+	idv := NewIDVec(ncells, id) //id part of vector
+	v := append(tv, idv...)     //format: cue|id
 	return v
 }
 
@@ -68,12 +74,7 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 			tv[i] = -1
 		}
 	}
-	idv := UnitVec(ncells, id)
-	for j, u := range idv {
-		if u != 1 {
-			idv[j] = -1 //pm 1 representation for id as well
-		}
-	}
+	idv := NewVec(ncells, id)
 	v := append(tv, idv...)
 
 	return v
