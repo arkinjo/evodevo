@@ -10,7 +10,7 @@ import (
 	"github.com/arkinjo/evodevo/multicell"
 )
 
-var T_Filename string = "traj"
+var T_Filename string = "traj.dat"
 var P_Filename string = "pvec"
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
@@ -35,7 +35,7 @@ func main() {
 
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
-	tfilenamePtr := flag.String("traj_file", "traj", "filename of trajectories")
+	tfilenamePtr := flag.String("traj_file", "traj.dat", "filename of trajectories")
 	pfilenamePtr := flag.String("pheno_file", "pvec", "filename of phenotypes")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
@@ -93,7 +93,7 @@ func main() {
 			fmt.Println("Epoch ", epoch, "has environments", popstart.NovEnvs)
 		}
 
-		pop1 := popstart.Evolve(false, ftraj, json_out, "", epochlength, epoch)
+		pop1 := popstart.Evolve(false, ftraj, json_out, epochlength, epoch)
 		fmt.Println("End of epoch", epoch)
 
 		if epoch == maxepochs { //Export output population; just before epoch change

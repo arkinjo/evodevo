@@ -74,7 +74,7 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 			tv[i] = -1
 		}
 	}
-	idv := NewVec(ncells, id)
+	idv := NewIDVec(ncells, id)
 	v := append(tv, idv...)
 
 	return v
@@ -195,7 +195,8 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	return sigma2
 }
 
-func PCAtoCue(pcafilename string) ([]Cues, [][][]float64) { //Converts PCA vectors containing only trait part into environment cue vectors
+//Converts PCA vectors containing only trait part into environment cue vectors
+func PCAtoCue(pcafilename string) ([]Cues, [][][]float64) {
 	var prdir, cell, trait, r int
 	var x, y float64
 	var str string

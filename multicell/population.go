@@ -426,42 +426,15 @@ func (pop *Population) DevPop(gen int) Population {
 	return *pop
 }
 
-func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout, gidfilename string, nstep, epoch int) Population { //Records population trajectory and writes files
-	var id_filename, id, dadid, momid string
-	var popsize int
-
+//Records population trajectory and writes files
+func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep, epoch int) Population {
 	pop := *pop0
-
-	if test && gidfilename != "" { //write genealogy in test mode
-		id_filename = fmt.Sprintf("../analysis/%s.dot", gidfilename)
-		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Fprintln(fout, "digraph G {")
-		err = fout.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
 
 	fmt.Fprintln(ftraj, "#Epoch\tGen\tNpop\tPhenoEnvDot \tMeanErr1 \tMeanErr0 \tMeanDp1e0 \tMeanDp0e1 \tFitness \tWag_Fit \tObs_Plas \tDiversity \tNdev") //header
 
 	for istep := 1; istep <= nstep; istep++ {
 		pop.DevPop(istep)
 		if test {
-			if gidfilename != "" && istep > 1 { //Genealogy not defined for first generation
-				fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-				if err != nil {
-					log.Fatal(err)
-				}
-				for _, indiv := range pop.Indivs {
-					id = fmt.Sprintf("g%d:id%d", pop.Gen, indiv.Id)
-					dadid = fmt.Sprintf("g%d:id%d", pop.Gen-1, indiv.DadId) //Dad and mom from previous generation
-					momid = fmt.Sprintf("g%d:id%d", pop.Gen-1, indiv.MomId)
-					fmt.Fprintf(fout, "\t%s -> {%s, %s}\n", id, dadid, momid) //Use child -> parent convention
-				}
-			}
 			if jsonout != "" { //Export JSON population of each generation in test mode
 				filename := fmt.Sprintf("%s_%3.3d.json", jsonout, pop.Gen)
 				pop.ToJSON(filename)
@@ -471,7 +444,7 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout, gidfilename s
 		pop.SetWagnerFitness()
 
 		pstat := pop.GetStats()
-		popsize = len(pop.Indivs)
+		popsize := len(pop.Indivs)
 
 		fmt.Fprintf(ftraj, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.PEDot, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
@@ -480,17 +453,6 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout, gidfilename s
 		pop = pop.PairReproduce(maxPop)
 	}
 
-	if test && gidfilename != "" {
-		fout, err := os.OpenFile(id_filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Fprintln(fout, "}")
-		err = fout.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
 	return pop
 }
 
