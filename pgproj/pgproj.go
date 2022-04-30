@@ -9,7 +9,6 @@ import (
 	"github.com/arkinjo/evodevo/multicell"
 )
 
-var T_Filename string = "traj"
 var PG_Filename string  //Dump for phenotypes and genotypes
 var Gid_Filename string //Genealogy of ID's
 var nancfilename string
@@ -30,7 +29,6 @@ func main() {
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	refgenPtr := flag.Int("refgen", 50, "reference generation for evolved genotype")
 
-	tfilenamePtr := flag.String("traj_file", "traj", "Filename of trajectories")
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
 	gidfilenamePtr := flag.String("geneology", "geneol", "Basename of geneology data files")
 	jsoninPtr := flag.String("jsonin", "", "JSON file of input population") //default to empty string
@@ -40,7 +38,6 @@ func main() {
 	epochlength := *genPtr
 	fmt.Println("epochlength", epochlength)
 	refgen := *refgenPtr
-	T_Filename = *tfilenamePtr
 	PG_Filename = *pgfilenamePtr
 	Gid_Filename = *gidfilenamePtr
 
@@ -74,11 +71,14 @@ func main() {
 	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
 
 	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
-		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
-		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
-		pop.FromJSON(jfilename)
-		pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
+		go func(igen int) {
+			jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, igen)
+			pop := multicell.NewPopulation(*ncellsP, *maxpopP)
+			pop.FromJSON(jfilename)
+			pop.Dump_Projections(PG_Filename, igen, Gaxis, Paxis)
+		}(gen)
 	}
+
 	dtdump := time.Since(tdump)
 	fmt.Println("Time taken to dump projections :", dtdump)
 	fmt.Println("Making DOT genealogy file")
