@@ -210,6 +210,7 @@ func PCA2Cue(pop0 *Population, ipca int) Cues {
 	dim := u.Len()
 	fcues := NewVec(dim)
 	for i := 0; i < dim; i++ {
+		// I'm not sure if this is the indented behavior
 		if math.Signbit(u.AtVec(i)) { //if negative
 			fcues[i] = -1
 		} else {
