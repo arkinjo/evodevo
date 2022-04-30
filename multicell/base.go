@@ -69,11 +69,6 @@ var sdP float64
 
 //Remark: defaults to full model!
 
-type Spmat struct {
-	Ncol int                 // number of columns
-	Mat  [](map[int]float64) // Sparse matrix is an array of maps.
-}
-
 type Vec = []float64 //Vector is a slice
 type Dmat = []Vec
 
@@ -219,55 +214,6 @@ func CopyDmat(mat1, mat0 Dmat) {
 	}
 }
 
-func NewSpmat(nrow, ncol int) Spmat { //Initialize new sparse matrix
-	mat := make([](map[int]float64), nrow)
-	for i := range mat {
-		mat[i] = make(map[int]float64)
-	}
-	return Spmat{ncol, mat}
-}
-
-func (sp *Spmat) Copy() Spmat {
-	nsp := NewSpmat(len(sp.Mat), sp.Ncol)
-	for i, m := range sp.Mat {
-		for j, d := range m {
-			nsp.Mat[i][j] = d
-		}
-	}
-	return nsp
-}
-
-func (sp *Spmat) Randomize(density, sd float64) { //Randomize entries of sparse matrix
-	for i := range sp.Mat {
-		for j := 0; j < sp.Ncol; j++ {
-			r := rand.Float64()
-			if r < density {
-				sp.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry
-			}
-		}
-	}
-}
-
-func DiffSpmat(m1, m2 *Spmat) Spmat { //This function works fine
-	d := NewSpmat(len(m1.Mat), m1.Ncol) //initialization
-	ncol := m1.Ncol
-	for i := range m1.Mat {
-		for j := 0; j < ncol; j++ {
-			d.Mat[i][j] = m1.Mat[i][j] - m2.Mat[i][j]
-		}
-	}
-
-	return d
-}
-
-func (sp *Spmat) Scale(c float64) {
-	for i, mi := range sp.Mat {
-		for j := range mi {
-			sp.Mat[i][j] *= c
-		}
-	}
-}
-
 func NewVec(len int) Vec { //Generate a new (zero) vector of length len
 	v := make([]float64, len)
 	return v
@@ -294,37 +240,10 @@ func multVecVec(vout, v0, v1 Vec) { //element-wise vector multiplication
 	return
 }
 
-func MultMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
-	for i := range vout {
-		vout[i] = 0.0
-	}
-
-	for i, m := range mat.Mat {
-		for j, d := range m {
-			vout[i] += d * vin[j]
-		}
-	}
-	return
-}
-
 func ScaleVec(vout Vec, s float64, vin Vec) {
 	for i, v := range vin {
 		vout[i] = s * v
 	}
-}
-
-func MultMatVec_T(vout Vec, mat Spmat, vin Vec) { //Matrix transposition and then multiplication
-	for i := range vout {
-		vout[i] = 0.0
-	}
-	for i, m := range mat.Mat {
-		vi := vin[i]
-		for j, d := range m {
-			vout[j] += d * vi
-		}
-	}
-
-	return
 }
 
 func AddVecs(vout, v0, v1 Vec) { //Sum of vectors
@@ -393,22 +312,6 @@ func applyFnVec(f func(float64) float64, vec Vec) { //Apply function f to a vect
 	for i, x := range vec {
 		vec[i] = f(x)
 	}
-	return
-}
-
-func (mat *Spmat) mutateSpmat(density, sd float64) { //mutating a sparse matrix
-	nrow := len(mat.Mat)
-	nmut := int(mutRate * float64(nrow*mat.Ncol))
-	for n := 0; n < nmut; n++ {
-		i := rand.Intn(nrow)
-		j := rand.Intn(mat.Ncol)
-		r := rand.Float64()
-		delete(mat.Mat[i], j)
-		if r < density {
-			mat.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry.
-		}
-	}
-	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.
 	return
 }
 
