@@ -106,7 +106,7 @@ func (pop *Population) GetStats() PopStats {
 	DiffVecs(dirP, mp1, mp0)
 	ScaleVec(dirP, 1.0/Norm2(dirP), dirP)
 
-	stats.PEDot = Innerproduct(dirP, dirE)
+	stats.PEDot = DotVecs(dirP, dirE)
 	stats.PErr1 = merr1 / fn
 	stats.PErr0 = merr0 / fn
 	stats.PED10 = md10 / fn
@@ -539,64 +539,35 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 
 		for i, env := range mu { //For each environment cue
 			DiffVecs(defcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
-			defpproj += Innerproduct(defcphen, Paxis[i])
+			defpproj += DotVecs(defcphen, Paxis[i])
 		}
 
 		for i, env := range mu { //For each environment cue
 			DiffVecs(anccphen, indiv.Bodies[IAncEnv].Cells[i].P, env) //centralize
-			ancpproj += Innerproduct(anccphen, Paxis[i])              //Plot phenotype when pulled back into ancestral environment at this stage on same axis
+			ancpproj += DotVecs(anccphen, Paxis[i])                   //Plot phenotype when pulled back into ancestral environment at this stage on same axis
 		}
 
 		for i, env := range mu { //For each environment cue
 			DiffVecs(novcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
-			novpproj += Innerproduct(novcphen, Paxis[i])
+			novpproj += DotVecs(novcphen, Paxis[i])
 		}
 
 		if withCue {
-			for i, m := range indiv.Genome.E.Mat {
-				for j, d := range m { //range over keys
-					gproj += d * Gaxis.E.Mat[i][j]
-				}
-			}
+			gproj += DotSpmats(indiv.Genome.E, Gaxis.E)
 		}
 		if epig {
-			for i, m := range indiv.Genome.F.Mat {
-				for j, d := range m { //range over keys
-					gproj += d * Gaxis.F.Mat[i][j]
-				}
-			}
+			gproj += DotSpmats(indiv.Genome.F, Gaxis.F)
 		}
-		for i, m := range indiv.Genome.G.Mat {
-			for j, d := range m { //range over keys
-				gproj += d * Gaxis.G.Mat[i][j]
-			}
-		}
+		gproj += DotSpmats(indiv.Genome.G, Gaxis.G)
 		if hoc {
-			for i, m := range indiv.Genome.H.Mat {
-				for j, d := range m { //range over keys
-					gproj += d * Gaxis.H.Mat[i][j]
-				}
-			}
+			gproj += DotSpmats(indiv.Genome.H, Gaxis.H)
 			if hoi {
-				for i, m := range indiv.Genome.J.Mat {
-					for j, d := range m { //range over keys
-						gproj += d * Gaxis.H.Mat[i][j]
-					}
-				}
+				gproj += DotSpmats(indiv.Genome.J, Gaxis.J)
 			}
 		}
 		for i, m := range indiv.Genome.P.Mat {
-			for j, d := range m { //range over keys
-				gproj += d * Gaxis.P.Mat[i][j]
-			}
+			gproj += DotSpmats(indiv.Genome.P, Gaxis.P)
 		}
-		/*
-			for i, m := range indiv.Genome.Z.Mat {
-				for j, d := range m { //range over keys
-					gproj += d * Gaxis.Z.Mat[i][j]
-				}
-			}
-		*/
 		fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", defpproj, ancpproj, novpproj, gproj)
 	}
 	err = fout.Close()

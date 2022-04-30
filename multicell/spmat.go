@@ -101,3 +101,14 @@ func (mat *Spmat) mutateSpmat(density, sd float64) { //mutating a sparse matrix
 	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.
 	return
 }
+
+func DotSpmats(mat0, mat1 Spmat) float64 {
+	dot := 0.0
+	for i, m := range mat0.Mat {
+		for j, d := range m {
+			dot += d * mat1.Mat[i][j]
+		}
+	}
+
+	return dot
+}
