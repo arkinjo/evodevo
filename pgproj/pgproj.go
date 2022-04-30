@@ -71,12 +71,12 @@ func main() {
 	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
 
 	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
-		go func(igen int) {
-			jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, igen)
-			pop := multicell.NewPopulation(*ncellsP, *maxpopP)
-			pop.FromJSON(jfilename)
-			pop.Dump_Projections(PG_Filename, igen, Gaxis, Paxis)
-		}(gen)
+		//		go func(gen int) { // probabily this is not a good idea...x
+		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
+		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
+		pop.FromJSON(jfilename)
+		pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
+		//		}(gen)
 	}
 
 	dtdump := time.Since(tdump)
