@@ -11,7 +11,6 @@ import (
 )
 
 var T_Filename string = "traj"
-var PCA_Filename string
 var nancfilename string
 var json_in string //JSON encoding of initial population; default to empty string
 var json_out string = "popout"
@@ -30,12 +29,11 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
 
-	pcindexPtr := flag.Int("pcindex", 0, "index of principal component of environment")
+	pcindexPtr := flag.Int("pcindex", -1, "index of principal component of environment")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("traj_file", "traj.dat", "Filename of trajectories")
-	pcafilenamePtr := flag.String("pcafilename", "", "Filename of principal trait vector concatanation")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "Basenome of json output file")
 	flag.Parse()
@@ -45,14 +43,14 @@ func main() {
 	epochlength := *genPtr
 	denv := *denvPtr
 	T_Filename = *tfilenamePtr
-	PCA_Filename = *pcafilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
 	multicell.Omega = *omegaPtr
 
-	pcindex := multicell.MinInt(*pcindexPtr, multicell.GetNcells()*multicell.GetNenv()-1)
-
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
+	ncells := *ncellsP
+	pop0 := multicell.NewPopulation(ncells, *maxpopP) //with randomized genome to start
+	maxpcindex := ncells*(multicell.GetNenv()+ncells) - 1
+	pcindex := multicell.MinInt(*pcindexPtr, maxpcindex)
 
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)
@@ -75,12 +73,12 @@ func main() {
 	OldEnvs := multicell.CopyCues(pop0.NovEnvs)
 	popstart.AncEnvs = AncEnvs
 	NovEnvs := multicell.NewCues(multicell.GetNcells(), multicell.GetNenv()) //Declaration
-	if PCA_Filename == "" {                                                  //If no directions given
+
+	if pcindex < 0 { //If no directions given
 		NovEnvs = multicell.ChangeEnvs(OldEnvs, denv) //Randomize
 	} else { //If directions are given
-		pcacues, pcavecs := multicell.PCAtoCue(PCA_Filename)
-		NovEnvs = multicell.CopyCues(pcacues[pcindex]) //copy
-		fmt.Println(pcavecs)
+		NovEnvs = multicell.PCA2Cue(&pop0, pcindex)
+		fmt.Println("NovEnv(PCA)", pcindex, ":", NovEnvs)
 	}
 
 	popstart.NovEnvs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.

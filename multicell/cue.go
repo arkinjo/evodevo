@@ -31,6 +31,7 @@ func NewIDVec(n, id int) Vec {
 	}
 	return v
 }
+
 func NewCue(nenv, id int) Cue { //Initialize a new cue type object
 	tv := NewVec(nenv)          //trait part of vector
 	idv := NewIDVec(ncells, id) //id part of vector
@@ -195,59 +196,34 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	return sigma2
 }
 
-//Converts PCA vectors containing only trait part into environment cue vectors
-func PCAtoCue(pcafilename string) ([]Cues, [][][]float64) {
-	var prdir, cell, trait, r int
-	var x, y float64
-	var str string
+func PCA2Cue(pop0 *Population, ipca int) Cues {
+	pop := pop0.Copy()
+	pop.DevPop(0)
 
-	PCAenvs := make([]Cues, nenv*ncells) //Number of PCAs = Length of trait concatenation
-	for i := range PCAenvs {
-		PCAenvs[i] = NewCues(ncells, nenv)
-	}
+	//phenotype in the ancestral environment
+	s0 := pop.GetFlatStateVec("P", 0)
 
-	PCAvecs := make([][][]float64, nenv*ncells*ncells)
-	for i := range PCAvecs {
-		PCAvecs[i] = make([][]float64, nenv*ncells)
-		for j := range PCAvecs[i] {
-			PCAvecs[i][j] = make([]float64, nenv)
+	_, _, ccmat := GetCrossCov(s0, s0)
+	U, _, _ := GetSVD(ccmat)
+	u := U.ColView(ipca)
+
+	dim := u.Len()
+	fcues := NewVec(dim)
+	for i := 0; i < dim; i++ {
+		if math.Signbit(u.AtVec(i)) { //if negative
+			fcues[i] = -1
+		} else {
+			fcues[i] = 1
 		}
 	}
 
-	traits := make([]float64, 0) //nenv and ncells are fixed and given; this is the concatenation of trait parts of cue
-	values := make([]float64, 0)
-
-	filename := fmt.Sprintf("../analysis/%s.dat", pcafilename)
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() { //error in scanner?!
-		str = scanner.Text()
-		if x, err = strconv.ParseFloat(str, 64); err == nil {
-			values = append(values, x)
-			if math.Signbit(x) { //if negative
-				y = -1.0
-			} else {
-				y = 1.0
-			}
-			traits = append(traits, y)
-		}
-	}
-	fmt.Println(len(traits) == len(values))
-	for i, t := range traits {
-		prdir = i / (nenv * ncells) //take advantage of integer division
-		r = i % (nenv * ncells)     //remainder
-		cell = r / nenv
-		trait = r % nenv
-		//fmt.Printf("index:%d\tprdir:%d\tr:%d\tcindex:%d\ttindex:%d\ttrait:%f\n", i, prdir, r, cell, trait, t)
-		PCAenvs[prdir][cell][trait] = t
-		PCAvecs[prdir][cell][trait] = values[i]
+	cues := NewCues(ncells, nenv)
+	clen := ncells + nenv
+	for i := 0; i < ncells; i++ {
+		copy(cues[i], fcues[i*clen:(i+1)*clen])
 	}
 
-	return PCAenvs, PCAvecs //, nil
+	return cues
 }
 
 func FlattenEnvs(cues Cues) Vec {
