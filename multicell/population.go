@@ -444,7 +444,7 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout, gidfilename s
 		}
 	}
 
-	fmt.Fprintln(ftraj, "#Epoch\tGen\tNpop\tCPEnvDist1 \tCPEnvDist0 \tMeanErr1 \tMeanErr0 \tMeanDp1e0 \tMeanDp0e1 \tFitness \tWag_Fit \tObs_Plas \tDiversity \tNdev") //header
+	fmt.Fprintln(ftraj, "#Epoch\tGen\tNpop\tPhenoEnvDot \tMeanErr1 \tMeanErr0 \tMeanDp1e0 \tMeanDp0e1 \tFitness \tWag_Fit \tObs_Plas \tDiversity \tNdev") //header
 
 	for istep := 1; istep <= nstep; istep++ {
 		pop.DevPop(istep)
@@ -462,7 +462,7 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout, gidfilename s
 				}
 			}
 			if jsonout != "" { //Export JSON population of each generation in test mode
-				filename := fmt.Sprintf("../pops/%s_%3.3d.json", jsonout, pop.Gen)
+				filename := fmt.Sprintf("%s_%3.3d.json", jsonout, pop.Gen)
 				pop.ToJSON(filename)
 			}
 		}
@@ -552,22 +552,22 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 			novpproj += DotVecs(novcphen, Paxis[i])
 		}
 
+		gproj = DotSpmats(indiv.Genome.G, Gaxis.G)
+		gproj += DotSpmats(indiv.Genome.P, Gaxis.P)
 		if withCue {
 			gproj += DotSpmats(indiv.Genome.E, Gaxis.E)
 		}
 		if epig {
 			gproj += DotSpmats(indiv.Genome.F, Gaxis.F)
 		}
-		gproj += DotSpmats(indiv.Genome.G, Gaxis.G)
+
 		if hoc {
 			gproj += DotSpmats(indiv.Genome.H, Gaxis.H)
 			if hoi {
 				gproj += DotSpmats(indiv.Genome.J, Gaxis.J)
 			}
 		}
-		for i, m := range indiv.Genome.P.Mat {
-			gproj += DotSpmats(indiv.Genome.P, Gaxis.P)
-		}
+
 		fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", defpproj, ancpproj, novpproj, gproj)
 	}
 	err = fout.Close()

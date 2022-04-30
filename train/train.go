@@ -51,7 +51,7 @@ func main() {
 	maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
-	T_Filename = fmt.Sprintf("../analysis/%s.dat", *tfilenamePtr) //all trajectories go to analysis directory
+	T_Filename = *tfilenamePtr
 	P_Filename = fmt.Sprintf("../analysis/%s.dat", *pfilenamePtr) //all phenotypes go to analysis directory
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr

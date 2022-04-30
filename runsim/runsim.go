@@ -41,7 +41,7 @@ func main() {
 	pgfilenamePtr := flag.String("pgfilename", "", "name of file of projected phenotypes and genotypes") //default to empty string
 	gidfilenamePtr := flag.String("gidfilename", "", "name of file of geneology of ids")                 //default to empty string
 	jsoninPtr := flag.String("jsonin", "", "json file of input population")                              //default to empty string
-	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
+	jsonoutPtr := flag.String("jsonout", "popout", "Basenome of json output file")
 	//testPtr := flag.Bool("test",false,"test mode if true, defaults to train mode")
 	flag.Parse()
 
@@ -50,7 +50,7 @@ func main() {
 	//maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
-	T_Filename = fmt.Sprintf("../analysis/%s.dat", *tfilenamePtr)
+	T_Filename = *tfilenamePtr
 	PG_Filename = *pgfilenamePtr
 	Gid_Filename = *gidfilenamePtr
 	PCA_Filename = *pcafilenamePtr

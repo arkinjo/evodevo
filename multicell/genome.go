@@ -25,15 +25,12 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 	H := NewSpmat(ngenes, ngenes)
 	J := NewSpmat(ngenes, ngenes)
 	P := NewSpmat(ngenes, nenv+ncells)
-	//Z := NewSpmat(ngenes, ngenes)
-
 	genome := Genome{E, F, G, H, J, P}
 
 	return genome
 }
 
 func (G *Genome) Randomize() {
-
 	if withCue {
 		G.E.Randomize(CueResponseDensity, sdE)
 	}
@@ -83,13 +80,6 @@ func (G *Genome) Clear() { //Sets all entries of genome to zero
 			delete(r, j)
 		}
 	}
-	/*
-		for _, r := range G.Z.Mat {
-			for j := range r { //range over keys
-				delete(r, j)
-			}
-		}
-	*/
 }
 
 func (parent *Genome) Copy() Genome { //creates copy of genome
@@ -203,8 +193,6 @@ func (G *Genome) NormalizeGenome() Genome {
 func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 	ng0 := dadg.Copy()
 	ng1 := momg.Copy()
-	//nz0 := dadz
-	//nz1 := momz
 
 	for i := 0; i < ngenes; i++ {
 		r := rand.Float64()
@@ -212,8 +200,8 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 			e := ng0.E.Mat[i]
 			f := ng0.F.Mat[i]
 			g := ng0.G.Mat[i]
-			hg := ng0.H.Mat[i]
-			hh := ng0.J.Mat[i]
+			h := ng0.H.Mat[i]
+			j := ng0.J.Mat[i]
 			p := ng0.P.Mat[i]
 
 			ng0.E.Mat[i] = ng1.E.Mat[i]
@@ -226,8 +214,8 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 			ng1.E.Mat[i] = e
 			ng1.F.Mat[i] = f
 			ng1.G.Mat[i] = g
-			ng1.H.Mat[i] = hg
-			ng1.J.Mat[i] = hh
+			ng1.H.Mat[i] = h
+			ng1.J.Mat[i] = j
 			ng1.P.Mat[i] = p
 		}
 	}
