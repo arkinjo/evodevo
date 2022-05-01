@@ -10,4 +10,9 @@ dDX = DX1 - DX0 = dX - <dX> = DdX
 <dDXdDY> = <DdXDdY> = <dXdY> - <dX><dY>: cross-covariance between dX and dY.
 Thus, <dXdY> = <dX><dY> + <dDXdDY>
 
+_FN2,Tr: Squared Frobenius norm and trace of a matrix.
+_val: Singular values
+_prj: Projection of data onto the first three principal axes
+      order: u0 v0 u1 v1 u2 v2
+
 
