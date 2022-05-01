@@ -1,13 +1,8 @@
 package multicell
 
 import (
-	"bufio"
-	"fmt"
-	"log"
 	"math"
 	"math/rand"
-	"os"
-	"strconv"
 )
 
 var rand_cue = rand.New(rand.NewSource(99))
