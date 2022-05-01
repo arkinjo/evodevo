@@ -1,7 +1,7 @@
 package multicell
 
 import (
-	"math"
+	//	"math"
 	"math/rand"
 )
 
@@ -191,9 +191,11 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	return sigma2
 }
 
-func PCA2Cue(pop0 *Population, ipca int) Cues {
+func PCA2Cues(pop0 *Population, ipca int) Cues {
 	pop := pop0.Copy()
 	pop.DevPop(0)
+
+	fenv0 := FlattenEnvs(pop.AncEnvs)
 
 	//phenotype in the ancestral environment
 	s0 := pop.GetFlatStateVec("P", 0)
@@ -203,20 +205,19 @@ func PCA2Cue(pop0 *Population, ipca int) Cues {
 	u := U.ColView(ipca)
 
 	dim := u.Len()
-	fcues := NewVec(dim)
+	fenv1 := NewVec(dim)
 	for i := 0; i < dim; i++ {
-		// I'm not sure if this is the indented behavior
-		if math.Signbit(u.AtVec(i)) { //if negative
-			fcues[i] = -1
-		} else {
-			fcues[i] = 1
+		if (fenv0[i] < 0) && (u.AtVec(i) > 0) {
+			fenv1[i] = 2
+		} else if (fenv0[i] > 0) && (u.AtVec(i) < 0) {
+			fenv1[i] = -2
 		}
 	}
 
 	cues := NewCues(ncells, nenv)
 	clen := ncells + nenv
 	for i := 0; i < ncells; i++ {
-		copy(cues[i], fcues[i*clen:(i+1)*clen])
+		AddVecs(cues[i], fenv1[i*clen:(i+1)*clen], pop.AncEnvs[i])
 	}
 
 	return cues

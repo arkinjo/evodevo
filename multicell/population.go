@@ -154,7 +154,7 @@ func (pop *Population) FromJSON(filename string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Successfully imported population")
+	log.Println("Successfully imported population from", filename)
 }
 
 func (pop *Population) ToJSON(filename string) {
@@ -175,7 +175,7 @@ func (pop *Population) ToJSON(filename string) {
 		log.Fatal(err)
 	}
 
-	log.Println("Successfuly exported population to ", filename)
+	log.Println("Successfuly exported population to", filename)
 }
 
 func (pop *Population) SetWagnerFitness() { //compute normalized fitness value similar to Wagner (1996).

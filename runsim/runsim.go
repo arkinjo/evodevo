@@ -77,7 +77,7 @@ func main() {
 	if pcindex < 0 { //If no directions given
 		NovEnvs = multicell.ChangeEnvs(OldEnvs, denv) //Randomize
 	} else { //If directions are given
-		NovEnvs = multicell.PCA2Cue(&pop0, pcindex)
+		NovEnvs = multicell.PCA2Cues(&pop0, pcindex)
 		fmt.Println("NovEnv(PCA)", pcindex, ":", NovEnvs)
 	}
 

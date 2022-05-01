@@ -84,7 +84,7 @@ func main() {
 
 	deltaXX("<dp_dp>", dirE, deltaP, deltaP)
 	fmt.Printf("<dp><dp>_FN2,Tr\t%e\t%e\n", ppfn2, dotPP)
-	Project("<dDp_dDp>", dirE, dirP, deltaP, deltaP)
+	Project("<Ddp_Ddp>", dirE, dirP, deltaP, deltaP)
 	Project("<Dp0_Dp0>", dirE, dirP, p0, p0)
 	Project("<Dp0_Dp1>", dirE, dirP, p0, p1)
 	Project("<Dp1_Dp0>", dirE, dirP, p1, p0)
@@ -92,7 +92,7 @@ func main() {
 
 	deltaXX("<dp_de>", dirE, deltaP, deltaE)
 	fmt.Printf("<dp><de>FN2,Tr\t%e\t%e\n", pefn2, dotPE)
-	Project("<dDp_dDe>", dirE, dirP, deltaP, deltaE)
+	Project("<Ddp_Dde>", dirE, dirP, deltaP, deltaE)
 	Project("<Dp0_De0>", dirE, dirP, p0, e0)
 	Project("<Dp0_De1>", dirE, dirP, p0, e1)
 	Project("<Dp1_De0>", dirE, dirP, p1, e0)
@@ -100,7 +100,7 @@ func main() {
 
 	deltaXX("<de_de>", dirE, deltaE, deltaE)
 	fmt.Printf("<de><de>FN2,Tr\t%e\t%e\n", eefn2, dotEE)
-	Project("<dDe_dDE>", dirE, dirP, deltaE, deltaE)
+	Project("<Dde_Dde>", dirE, dirP, deltaE, deltaE)
 	Project("<De0_De0>", dirE, dirP, e0, e0)
 	Project("<De0_De1>", dirE, dirP, e0, e1)
 	Project("<De1_De0>", dirE, dirP, e1, e0)
