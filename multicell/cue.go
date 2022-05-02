@@ -202,7 +202,7 @@ func PCA2Cues(pop0 *Population, ipca int) Cues {
 	//phenotype in the ancestral environment
 	s0 := pop.GetFlatStateVec("P", 0)
 
-	_, _, ccmat := GetCrossCov(s0, s0)
+	_, _, ccmat := GetCrossCov(s0, s0, true, true)
 	U, _, _ := GetSVD(ccmat)
 	u := U.ColView(ipca)
 

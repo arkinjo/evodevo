@@ -567,7 +567,7 @@ func (pop *Population) GetPCA(state0 string, ienv0 int, state1 string, ienv1 int
 	s0 := pop.GetFlatStateVec(state0, ienv0)
 	s1 := pop.GetFlatStateVec(state1, ienv1)
 
-	_, _, ccmat := GetCrossCov(s0, s1)
+	_, _, ccmat := GetCrossCov(s0, s1, true, true)
 
 	U, vals, V := GetSVD(ccmat)
 	return U, vals, V

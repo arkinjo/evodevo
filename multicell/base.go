@@ -346,16 +346,25 @@ func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	return cv
 }
 
-func GetCrossCov(vecs0, vecs1 []Vec) (Vec, Vec, Dmat) {
+func GetCrossCov(vecs0, vecs1 []Vec, submean0, submean1 bool) (Vec, Vec, Dmat) {
 	cv0 := GetMeanVec(vecs0)
 	cv1 := GetMeanVec(vecs1)
 	ccmat := NewDmat(len(cv0), len(cv1))
+	var d0, d1 float64
 
 	for k := range vecs0 {
 		for i, c0 := range cv0 {
-			d0 := vecs0[k][i] - c0
+			if submean0 {
+				d0 = vecs0[k][i] - c0
+			} else {
+				d0 = vecs0[k][i]
+			}
 			for j, c1 := range cv1 {
-				d1 := vecs1[k][j] - c1
+				if submean1 {
+					d1 = vecs1[k][j] - c1
+				} else {
+					d1 = vecs1[k][j]
+				}
 				ccmat[i][j] += d0 * d1
 			}
 		}
