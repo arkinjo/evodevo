@@ -222,3 +222,51 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 
 	return ng0, ng1
 }
+
+func (genome *Genome) FlatVec() Vec {
+	vec := make([]float64, 0)
+
+	if withE {
+		for _, v := range genome.E.Mat {
+			for j := 0; j < ngenes; j++ {
+				vec = append(vec, v[j])
+			}
+		}
+	}
+
+	if withF {
+		for _, v := range genome.F.Mat {
+			for j := 0; j < ngenes; j++ {
+				vec = append(vec, v[j])
+			}
+		}
+	}
+
+	for _, v := range genome.G.Mat {
+		for j := 0; j < ngenes; j++ {
+			vec = append(vec, v[j])
+		}
+	}
+
+	if withH {
+		for _, v := range genome.H.Mat {
+			for j := 0; j < ngenes; j++ {
+				vec = append(vec, v[j])
+			}
+		}
+		if withJ {
+			for _, v := range genome.J.Mat {
+				for j := 0; j < ngenes; j++ {
+					vec = append(vec, v[j])
+				}
+			}
+		}
+	}
+	for _, v := range genome.P.Mat {
+		for j := 0; j < nenv+ncells; j++ {
+			vec = append(vec, v[j])
+		}
+	}
+
+	return vec
+}

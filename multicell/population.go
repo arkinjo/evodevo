@@ -554,6 +554,15 @@ func (pop *Population) GetFlatStateVec(istate string, ienv int) Dmat {
 	return vs0
 }
 
+func (pop *Population) GetFlatGenome() Dmat {
+	vs := make([]Vec, 0)
+	for _, indiv := range pop.Indivs {
+		tv := indiv.Genome.FlatVec()
+		vs = append(vs, tv)
+	}
+	return vs
+}
+
 func (pop *Population) GetPCA(state0 string, ienv0 int, state1 string, ienv1 int) (*mat.Dense, Vec, *mat.Dense) {
 	s0 := pop.GetFlatStateVec(state0, ienv0)
 	s1 := pop.GetFlatStateVec(state1, ienv1)

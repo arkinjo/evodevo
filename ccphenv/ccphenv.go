@@ -16,7 +16,8 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 
-	jsoninP := flag.String("jsonin", "", "json file of input population") //default to empty string
+	jsoninP := flag.String("jsonin", "", "json file of input population")
+	jsonrfP := flag.String("jsonref", "", "json file of reference population")
 
 	flag.Parse()
 
@@ -27,6 +28,13 @@ func main() {
 	} else {
 		flag.PrintDefaults()
 		log.Fatal("Specify the input JSON file with -jsonin=filename.")
+	}
+	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	if *jsonrfP != "" {
+		pop.FromJSON(*jsonrfP)
+	} else {
+		flag.PrintDefaults()
+		log.Fatal("Specify the reference JSON file with -jsonref=filename.")
 	}
 
 	env0 := multicell.FlattenEnvs(pop.AncEnvs)
@@ -44,6 +52,13 @@ func main() {
 	mp1 := multicell.GetMeanVec(p1)
 	dp := multicell.NewVec(dim)
 	multicell.DiffVecs(dp, mp1, mp0)
+
+	genomes0 := pop.GetFlatGenome()
+	genomes1 := pop1.GetFlatGenome()
+	mg0 := multicell.GetMeanVec(genomes0)
+	mg1 := multicell.GetMeanVec(genomes1)
+	dg := multicell.NewVec(len(mg0))
+	multicell.DiffVecs(dg, mg1, mg0)
 
 	deltaP := make([]multicell.Vec, 0)
 	deltaE := make([]multicell.Vec, 0)
@@ -82,6 +97,9 @@ func main() {
 	dirP := mat.NewVecDense(dim, dp)
 	dirP.ScaleVec(1.0/dirP.Norm(2), dirP)
 
+	dirG := mat.NewVecDense(len(mg0), dg)
+	dirG.ScaleVec(1.0/dirG.Norm(2), dirG)
+
 	deltaXX("<dp_dp>", dirE, deltaP, deltaP)
 	fmt.Printf("<dp><dp>_FN2,Tr\t\t%e\t%e\n", ppfn2, dotPP)
 	Project("<Ddp_Ddp>", dirE, dirP, deltaP, deltaP)
@@ -119,6 +137,9 @@ func main() {
 	Project("mixPP", dirE, dirP, mixp, mixp)
 	Project("mixPE", dirE, dirP, mixp, mixe)
 
+	Project(" <Dp0_Dg0>", dirE, dirG, p0, genomes0)
+	Project(" <Dp1_Dg0>", dirE, dirG, p1, genomes0)
+
 	LinearResponse(&pop)
 }
 
@@ -141,8 +162,10 @@ func deltaXX(label string, dir *mat.VecDense, data0, data1 [][]float64) {
 	}
 
 	trace := 0.0
-	for i, v := range cov {
-		trace += v[i]
+	if dim0 == dim1 {
+		for i, v := range cov {
+			trace += v[i]
+		}
 	}
 
 	U, vals, V := multicell.GetSVD(cov)
@@ -203,15 +226,13 @@ func Project(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64) {
 		fmt.Printf("%s_vals\t%d\t%e\n", label, i, v)
 	}
 
-	fmt.Println("#       _ali \tcomp\tu.<de>     \tu.<dp>     \tv.<de>     \tv.<dp>")
+	fmt.Println("#       _ali \tcomp\tu.<dY>     \tv.<dX>")
 	for i := 0; i < dim0; i++ {
 		u := U.ColView(i)
 		v := V.ColView(i)
 		ue := math.Abs(mat.Dot(dirE, u))
-		up := math.Abs(mat.Dot(dirP, u))
-		ve := math.Abs(mat.Dot(dirE, v))
 		vp := math.Abs(mat.Dot(dirP, v))
-		fmt.Printf("%s_ali\t%d\t%e\t%e\t%e\t%e\n", label, i, ue, up, ve, vp)
+		fmt.Printf("%s_ali\t%d\t%e\t%e\n", label, i, ue, vp)
 	}
 
 	fmt.Printf("#<YX>   \tcomp")

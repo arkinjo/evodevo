@@ -374,6 +374,11 @@ func GetCrossCov(vecs0, vecs1 []Vec) (Vec, Vec, Dmat) {
 func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
 	dim0 := len(ccmat)
 	dim1 := len(ccmat[0])
+	dim := dim0
+	if dim0 > dim1 {
+		dim = dim1
+	}
+
 	C := mat.NewDense(dim0, dim1, nil)
 	for i, ci := range ccmat {
 		for j, v := range ci {
@@ -382,12 +387,12 @@ func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
 	}
 
 	var svd mat.SVD
-	ok := svd.Factorize(C, mat.SVDFull)
+	ok := svd.Factorize(C, mat.SVDThin)
 	if !ok {
 		log.Fatal("SVD failed.")
 	}
-	U := mat.NewDense(dim0, dim0, nil)
-	V := mat.NewDense(dim1, dim1, nil)
+	U := mat.NewDense(dim0, dim, nil)
+	V := mat.NewDense(dim1, dim, nil)
 	svd.UTo(U)
 	svd.VTo(V)
 	vals := svd.Values(nil)
