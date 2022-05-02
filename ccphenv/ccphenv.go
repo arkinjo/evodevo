@@ -137,8 +137,10 @@ func main() {
 	Project("mixPP", dirE, dirP, mixp, mixp)
 	Project("mixPE", dirE, dirP, mixp, mixe)
 
-	Project(" <Dp0_Dg0>", dirE, dirG, p0, genomes0)
-	Project(" <Dp1_Dg0>", dirE, dirG, p1, genomes0)
+	Project(" <Dp0_DG0>", dirE, dirG, p0, genomes0)
+	Project(" <Dp1_DG0>", dirE, dirG, p1, genomes0)
+	Project(" <Ddp_DG0>", dirE, dirG, deltaP, genomes0)
+	Project(" <Dde_DG0>", dirE, dirG, deltaE, genomes0)
 
 	LinearResponse(&pop)
 }
@@ -203,8 +205,10 @@ func Project(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64) {
 	mean0, mean1, ccmat := multicell.GetCrossCov(data0, data1)
 
 	trace := 0.0
-	for i, v := range ccmat {
-		trace += v[i]
+	if len(mean0) == len(mean1) {
+		for i, v := range ccmat {
+			trace += v[i]
+		}
 	}
 
 	U, vals, V := multicell.GetSVD(ccmat)
