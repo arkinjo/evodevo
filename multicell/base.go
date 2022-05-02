@@ -1,6 +1,7 @@
 package multicell
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -407,4 +408,69 @@ func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
 	vals := svd.Values(nil)
 
 	return U, vals, V
+}
+
+func ProjectSVD(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64, sub0, sub1 bool) {
+
+	mean0, mean1, ccmat := GetCrossCov(data0, data1, sub0, sub1)
+
+	trace := 0.0
+	if len(mean0) == len(mean1) {
+		for i, v := range ccmat {
+			trace += v[i]
+		}
+	}
+
+	U, vals, V := GetSVD(ccmat)
+
+	fnorm2 := 0.0
+	for _, v := range vals {
+		fnorm2 += v * v
+	}
+	fmt.Printf("%s_FN2,Tr\t%e\t%e\n", label, fnorm2, trace)
+	dim0, _ := U.Dims()
+	dim1, _ := V.Dims()
+
+	m0 := mat.NewVecDense(dim0, mean0)
+	m1 := mat.NewVecDense(dim1, mean1)
+
+	t0 := mat.NewVecDense(dim0, nil)
+	t1 := mat.NewVecDense(dim1, nil)
+	for i, v := range vals {
+		fmt.Printf("%s_vals\t%d\t%e\n", label, i, v)
+	}
+
+	fmt.Println("#       _ali \tcomp\tu.<dY>     \tv.<dX>")
+	for i := 0; i < dim0; i++ {
+		u := U.ColView(i)
+		v := V.ColView(i)
+		ue := math.Abs(mat.Dot(dirE, u))
+		vp := math.Abs(mat.Dot(dirP, v))
+		fmt.Printf("%s_ali\t%d\t%e\t%e\n", label, i, ue, vp)
+	}
+
+	fmt.Printf("#<YX>   \tcomp")
+	for i := 0; i < 3; i++ {
+		fmt.Printf("\tX.u%-5d\tY.v%-5d", i, i)
+	}
+	fmt.Printf("\n")
+	for k := range data0 {
+		fmt.Printf("%s_prj\t%3d", label, k)
+		p0 := mat.NewVecDense(dim0, data0[k])
+		p1 := mat.NewVecDense(dim1, data1[k])
+		for i := 0; i < 3; i++ {
+			t0.SubVec(p0, m0)
+			u := U.ColView(i)
+			y := mat.Dot(t0, u)
+			t1.SubVec(p1, m1)
+			v := V.ColView(i)
+			x := mat.Dot(t1, v)
+			if mat.Dot(dirE, u) < 0.0 {
+				x *= -1
+				y *= -1
+			}
+			fmt.Printf("\t%e \t%e ", x, y)
+		}
+		fmt.Printf("\n")
+	}
 }
