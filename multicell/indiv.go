@@ -145,18 +145,18 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 }
 
 func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
-	r := rand.Intn(genelength) //Randomly choose one of the genome matrices to mutate; with prob proportional to no. of columns
+	r := rand.Intn(geneLength) //Randomly choose one of the genome matrices to mutate; with prob proportional to no. of columns
 	t := 0
 
 	//This version is specialized for current definition of full model.
 
-	if withCue {
+	if withE {
 		t += nenv + ncells
 		if r < t {
 			indiv.Genome.E.mutateSpmat(CueResponseDensity, sdE)
 		}
 	}
-	if epig {
+	if withF {
 		t += ngenes
 		if r < t {
 			indiv.Genome.F.mutateSpmat(GenomeDensity, sdF)
@@ -166,12 +166,12 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if r < t {
 		indiv.Genome.G.mutateSpmat(GenomeDensity, sdG)
 	}
-	if hoc {
+	if withH {
 		t += ngenes
 		if r < t {
 			indiv.Genome.H.mutateSpmat(GenomeDensity, sdH)
 		}
-		if hoi {
+		if withJ {
 			t += ngenes
 			if r < t {
 				indiv.Genome.J.mutateSpmat(GenomeDensity, sdJ)
@@ -289,7 +289,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 
 	for nstep := 1; nstep <= maxDevStep; nstep++ {
 		MultMatVec(vf, G.G, g0)
-		if withCue { //Model with or without cues
+		if withE { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
 
 				DiffVecs(e_p, cell.E, cell.P)
@@ -307,16 +307,16 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 			copy(f1, vf)
 		}
 		applyFnVec(sigmaf, f1)
-		if epig { //Allow or disallow epigenetic layer
+		if withF { //Allow or disallow epigenetic layer
 			MultMatVec(g1, G.F, f1)
 			applyFnVec(sigmag, g1)
 		} else { //Remove epigenetic layer if false
 			copy(g1, f1)
 		}
-		if hoc { //If layer for higher order complexes is present
+		if withH { //If layer for higher order complexes is present
 			MultMatVec(vg, G.H, g1)
 
-			if hoi { //If interactions between higher order complexes is present
+			if withJ { //If interactions between higher order complexes is present
 				MultMatVec(vh, G.J, h0)
 				AddVecs(h1, vg, vh)
 			} else {

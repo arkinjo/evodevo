@@ -2,6 +2,7 @@ package multicell
 
 import (
 	//	"math"
+	"log"
 	"math/rand"
 )
 
@@ -191,6 +192,7 @@ func GetCueVar(cues Cues) float64 { //Sum of elementwise variance in environment
 	return sigma2
 }
 
+// Find a new Novel Environment based on a Principal Axis.
 func PCA2Cues(pop0 *Population, ipca int) Cues {
 	pop := pop0.Copy()
 	pop.DevPop(0)
@@ -206,20 +208,30 @@ func PCA2Cues(pop0 *Population, ipca int) Cues {
 
 	dim := u.Len()
 	fenv1 := NewVec(dim)
+	// 1. e1 - e0 should be parallel to u (as much as possible).
+	// 2. Elements of e1 - e0 must be 2 or -2 or 0.
+	//    e1 - e0 =  2 => e0 = -1
+	//    e1 - e0 = -2 => e0 =  1
+	// In this way, (e1 - e0).u > 0 always holds.
+	dbit := 0
 	for i := 0; i < dim; i++ {
-		if (fenv0[i] < 0) && (u.AtVec(i) > 0) {
-			fenv1[i] = 2
-		} else if (fenv0[i] > 0) && (u.AtVec(i) < 0) {
-			fenv1[i] = -2
+		if fenv0[i] < 0 && u.AtVec(i) > 0 {
+			fenv1[i] = 1
+			dbit++
+		} else if fenv0[i] > 0 && u.AtVec(i) < 0 {
+			fenv1[i] = -1
+			dbit++
+		} else {
+			fenv1[i] = fenv0[i]
 		}
 	}
 
 	cues := NewCues(ncells, nenv)
 	clen := ncells + nenv
 	for i := 0; i < ncells; i++ {
-		AddVecs(cues[i], fenv1[i*clen:(i+1)*clen], pop.AncEnvs[i])
+		copy(cues[i], fenv1[i*clen:(i+1)*clen])
 	}
-
+	log.Println("PCA2Cues: diff=", dbit)
 	return cues
 }
 

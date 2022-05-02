@@ -77,15 +77,15 @@ func main() {
 	if pcindex < 0 { //If no directions given
 		NovEnvs = multicell.ChangeEnvs(OldEnvs, denv) //Randomize
 	} else { //If directions are given
+		fmt.Println("NewEnvs based on PCA", pcindex)
 		NovEnvs = multicell.PCA2Cues(&pop0, pcindex)
-		fmt.Println("NovEnv(PCA)", pcindex, ":", NovEnvs)
 	}
 
 	popstart.NovEnvs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
 
 	tevol := time.Now()
 
-	fmt.Println("Evolving in novel environment :", popstart.NovEnvs)
+	fmt.Println("Novel environment     :", popstart.NovEnvs)
 	fmt.Println("Ancestral environment :", popstart.AncEnvs)
 
 	pop1 := popstart.Evolve(true, ftraj, json_out, epochlength, 1)

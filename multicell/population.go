@@ -245,14 +245,14 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 
 	for _, indiv := range pop.Indivs {
 		Gtilde = indiv.Genome
-		if withCue {
+		if withE {
 			for i, m := range Gtilde.E.Mat {
 				for j, v := range m {
 					MeanGenome.E.Mat[i][j] += v * fnpop
 				}
 			}
 		}
-		if epig {
+		if withF {
 			for i, m := range Gtilde.F.Mat {
 				for j, v := range m {
 					MeanGenome.F.Mat[i][j] += v * fnpop
@@ -264,13 +264,13 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 				MeanGenome.G.Mat[i][j] += v * fnpop
 			}
 		}
-		if hoc {
+		if withH {
 			for i, m := range Gtilde.H.Mat {
 				for j, v := range m {
 					MeanGenome.H.Mat[i][j] += v * fnpop
 				}
 			}
-			if hoi {
+			if withJ {
 				for i, m := range Gtilde.J.Mat {
 					for j, v := range m {
 						MeanGenome.J.Mat[i][j] += v * fnpop
@@ -295,7 +295,7 @@ func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of 
 	return MeanGenome
 }
 
-func (pop *Population) Get_Environment_Axis() Cues { //Choice of axis defined using difference of environment cues
+func (pop *Population) Get_Environment_Axis() Cues { //CwithJce of axis defined using difference of environment cues
 	axlength2 := 0.0
 
 	e := pop.NovEnvs  //Cue in novel (present) environment
@@ -519,16 +519,16 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 
 		gproj = DotSpmats(indiv.Genome.G, Gaxis.G)
 		gproj += DotSpmats(indiv.Genome.P, Gaxis.P)
-		if withCue {
+		if withE {
 			gproj += DotSpmats(indiv.Genome.E, Gaxis.E)
 		}
-		if epig {
+		if withF {
 			gproj += DotSpmats(indiv.Genome.F, Gaxis.F)
 		}
 
-		if hoc {
+		if withH {
 			gproj += DotSpmats(indiv.Genome.H, Gaxis.H)
-			if hoi {
+			if withJ {
 				gproj += DotSpmats(indiv.Genome.J, Gaxis.J)
 			}
 		}

@@ -36,7 +36,7 @@ const eps float64 = 1.0e-50
 const alphaEMA = 2.0 / (1.0 + 5.0) // exponential moving average/variance
 
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
-var genelength int                                //calculated from layers present or absent.
+var geneLength int                                //calculated from layers present or absent.
 
 const funcspergene float64 = 1.0 //average number of functions per gene
 var GenomeDensity float64 = funcspergene / float64(ngenes)
@@ -55,11 +55,11 @@ const minWagnerFitness float64 = 0.01
 
 var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
-var withCue bool = false // with or without environmental cues.
-var cuestrength float64  // cue strength
-var epig bool = true     // Epigenetic marker layer
-var hoc bool = true      // Higher order complexes layer
-var hoi bool = false
+var withE bool = false  // with or without environmental cues.
+var cuestrength float64 // cue strength
+var withF bool = true   // Epigenetic marker layer
+var withH bool = true   // Higher order complexes layer
+var withJ bool = false
 var jstrength float64 //declaration
 
 // theoretical standard deviation of matrix elements
@@ -83,7 +83,7 @@ func SetSeed(seed int64) {
 
 func SetParams(s Settings) { //Define whether each layer or interaction is present in model
 	maxPop = s.MaxPop
-	withCue = s.ELayer
+	withE = s.ELayer
 	if s.ELayer {
 		cuestrength = 1.0
 	} else {
@@ -96,29 +96,29 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 		jstrength = 0.0
 	}
 
-	epig = s.FLayer
-	hoc = s.HLayer
-	hoi = s.JLayer
+	withF = s.FLayer
+	withH = s.HLayer
+	withJ = s.JLayer
 	pheno_feedback = s.Pfback
 	ncells = s.NCells
 	devNoise = s.SDNoise
 
-	genelength = ngenes + (nenv + ncells) //G and P layers present by default
+	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
 	if s.ELayer {
-		genelength += nenv + ncells
+		geneLength += nenv + ncells
 	}
 
 	if s.FLayer {
-		genelength += ngenes
+		geneLength += ngenes
 	}
 	if s.HLayer {
-		genelength += ngenes
+		geneLength += ngenes
 		if s.JLayer {
-			genelength += ngenes
+			geneLength += ngenes
 		}
 	}
 
-	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
+	mutRate = baseMutationRate * float64(fullGeneLength) / float64(geneLength) //to compensate for layer removal.
 
 	//initializing theoretical standard deviations for entries of each matrix
 	sdE = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))

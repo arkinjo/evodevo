@@ -31,18 +31,18 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 }
 
 func (G *Genome) Randomize() {
-	if withCue {
+	if withE {
 		G.E.Randomize(CueResponseDensity, sdE)
 	}
 
-	if epig {
+	if withF {
 		G.F.Randomize(GenomeDensity, sdF)
 	}
 	G.G.Randomize(GenomeDensity, sdG)
 
-	if hoc {
+	if withH {
 		G.H.Randomize(GenomeDensity, sdH)
-		if hoi {
+		if withJ {
 			G.J.Randomize(GenomeDensity, sdJ)
 		}
 	}
@@ -96,18 +96,18 @@ func (parent *Genome) Copy() Genome { //creates copy of genome
 }
 
 func DiffGenomes(Gout, G1, G0 *Genome) { //Elementwise difference between two genomes
-	if withCue {
+	if withE {
 		Gout.E = DiffSpmat(&G1.E, &G0.E)
 	}
-	if epig {
+	if withF {
 		Gout.F = DiffSpmat(&G1.F, &G0.F)
 	}
 
 	Gout.G = DiffSpmat(&G1.G, &G0.G)
 
-	if hoc {
+	if withH {
 		Gout.H = DiffSpmat(&G1.H, &G0.H)
-		if hoi {
+		if withJ {
 			Gout.J = DiffSpmat(&G1.J, &G0.J)
 		}
 	}
@@ -119,7 +119,7 @@ func (G *Genome) NormalizeGenome() Genome {
 	lambda2 := 0.0
 	eG := G.Copy()
 
-	if withCue {
+	if withE {
 		for _, m := range G.E.Mat {
 			for _, v := range m {
 				lambda2 += v * v
@@ -127,7 +127,7 @@ func (G *Genome) NormalizeGenome() Genome {
 		}
 	}
 
-	if epig {
+	if withF {
 		for _, m := range G.F.Mat {
 			for _, v := range m {
 				lambda2 += v * v
@@ -141,14 +141,14 @@ func (G *Genome) NormalizeGenome() Genome {
 		}
 	}
 
-	if hoc {
+	if withH {
 		for _, m := range G.H.Mat {
 			for _, v := range m {
 				lambda2 += v * v
 			}
 		}
 
-		if hoi {
+		if withJ {
 			for _, m := range G.J.Mat {
 				for _, v := range m {
 					lambda2 += v * v
@@ -169,18 +169,18 @@ func (G *Genome) NormalizeGenome() Genome {
 
 	lambda := math.Sqrt(lambda2)
 	sca := 1.0 / lambda
-	if withCue {
+	if withE {
 		eG.E.Scale(sca)
 	}
 
-	if epig {
+	if withF {
 		eG.F.Scale(sca)
 	}
 
 	eG.G.Scale(sca)
-	if hoc {
+	if withH {
 		eG.H.Scale(sca)
-		if hoi {
+		if withJ {
 			eG.J.Scale(sca)
 		}
 	}
