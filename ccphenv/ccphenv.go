@@ -48,9 +48,6 @@ func main() {
 	dp := multicell.NewVec(dim)
 	multicell.DiffVecs(dp, mp1, mp0)
 
-	genomes0 := pop.GetFlatGenome()
-	mg0 := multicell.GetMeanVec(genomes0)
-
 	deltaP := make([]multicell.Vec, 0)
 	deltaE := make([]multicell.Vec, 0)
 	for k, p := range p1 {
@@ -88,31 +85,29 @@ func main() {
 	dirP := mat.NewVecDense(dim, multicell.CopyVec(dp))
 	dirP.ScaleVec(1.0/dirP.Norm(2), dirP)
 
-	dirG := mat.NewVecDense(len(mg0), multicell.NewVec(len(mg0)))
-
-	multicell.ProjectSVD("<dp_dp>", dirE, dirP, deltaP, deltaP, false, false)
+	Project("<dp_dp>", dirE, dirP, deltaP, deltaP, false, false)
 	fmt.Printf("<dp><dp>_FN2,Tr\t\t%e\t%e\n", ppfn2, dotPP)
-	multicell.ProjectSVD("<Ddp_Ddp>", dirE, dirP, deltaP, deltaP, true, true)
-	multicell.ProjectSVD(" <Dp1_Dp1>", dirE, dirP, p1, p1, true, true)
-	multicell.ProjectSVD(" <Dp0_Dp0>", dirE, dirP, p0, p0, true, true)
-	multicell.ProjectSVD(" <Dp1_Dp0>", dirE, dirP, p1, p0, true, true)
-	multicell.ProjectSVD(" <Dp0_Dp1>", dirE, dirP, p0, p1, true, true)
+	Project("<Ddp_Ddp>", dirE, dirP, deltaP, deltaP, true, true)
+	Project(" <Dp1_Dp1>", dirE, dirP, p1, p1, true, true)
+	Project(" <Dp0_Dp0>", dirE, dirP, p0, p0, true, true)
+	Project(" <Dp1_Dp0>", dirE, dirP, p1, p0, true, true)
+	Project(" <Dp0_Dp1>", dirE, dirP, p0, p1, true, true)
 
-	multicell.ProjectSVD("<dp_de>", dirE, dirP, deltaP, deltaE, false, false)
+	Project("<dp_de>", dirE, dirP, deltaP, deltaE, false, false)
 	fmt.Printf("<dp><de>FN2,Tr\t\t%e\t%e\n", pefn2, dotPE)
-	multicell.ProjectSVD("<Ddp_Dde>", dirE, dirP, deltaP, deltaE, true, true)
-	multicell.ProjectSVD(" <Dp1_De1>", dirE, dirP, p1, e1, true, true)
-	multicell.ProjectSVD(" <Dp0_De0>", dirE, dirP, p0, e0, true, true)
-	multicell.ProjectSVD(" <Dp1_De0>", dirE, dirP, p1, e0, true, true)
-	multicell.ProjectSVD(" <Dp0_De1>", dirE, dirP, p0, e1, true, true)
+	Project("<Ddp_Dde>", dirE, dirP, deltaP, deltaE, true, true)
+	Project(" <Dp1_De1>", dirE, dirP, p1, e1, true, true)
+	Project(" <Dp0_De0>", dirE, dirP, p0, e0, true, true)
+	Project(" <Dp1_De0>", dirE, dirP, p1, e0, true, true)
+	Project(" <Dp0_De1>", dirE, dirP, p0, e1, true, true)
 
-	multicell.ProjectSVD("<de_de>", dirE, dirE, deltaE, deltaE, false, false)
+	Project("<de_de>", dirE, dirE, deltaE, deltaE, false, false)
 	fmt.Printf("<de><de>FN2,Tr\t\t%e\t%e\n", eefn2, dotEE)
-	multicell.ProjectSVD("<Dde_Dde>", dirE, dirP, deltaE, deltaE, true, true)
-	multicell.ProjectSVD(" <De1_De1>", dirE, dirP, e1, e1, true, true)
-	multicell.ProjectSVD(" <De0_De0>", dirE, dirP, e0, e0, true, true)
-	multicell.ProjectSVD(" <De1_De0>", dirE, dirP, e1, e0, true, true)
-	multicell.ProjectSVD(" <De0_De1>", dirE, dirP, e0, e1, true, true)
+	Project("<Dde_Dde>", dirE, dirP, deltaE, deltaE, true, true)
+	Project(" <De1_De1>", dirE, dirP, e1, e1, true, true)
+	Project(" <De0_De0>", dirE, dirP, e0, e0, true, true)
+	Project(" <De1_De0>", dirE, dirP, e1, e0, true, true)
+	Project(" <De0_De1>", dirE, dirP, e0, e1, true, true)
 
 	mixp := make([]multicell.Vec, 0)
 	mixe := make([]multicell.Vec, 0)
@@ -124,18 +119,16 @@ func main() {
 		mixp = append(mixp, p1[k])
 		mixe = append(mixe, e1[k])
 	}
-	multicell.ProjectSVD("mixPP", dirE, dirP, mixp, mixp, true, true)
-	multicell.ProjectSVD("mixPE", dirE, dirP, mixp, mixe, true, true)
-
-	multicell.ProjectSVD("<Ddp_DG>", dirE, dirG, deltaP, genomes0, true, true)
-	multicell.ProjectSVD("  <Dp1_DG>", dirE, dirG, p1, genomes0, true, true)
-	multicell.ProjectSVD("  <Dp0_DG>", dirE, dirG, p0, genomes0, true, true)
-
-	multicell.ProjectSVD("<Dde_DG>", dirE, dirG, deltaE, genomes0, true, true)
-	multicell.ProjectSVD("  <De1_DG>", dirE, dirG, e1, genomes0, true, true)
-	multicell.ProjectSVD("  <De0_DG>", dirE, dirG, e0, genomes0, true, true)
+	Project("mixPP", dirE, dirP, mixp, mixp, true, true)
+	Project("mixPE", dirE, dirP, mixp, mixe, true, true)
 
 	LinearResponse(&pop)
+}
+
+func Project(label string, dir0, dir1 *mat.VecDense, data0, data1 [][]float64, sub0, sub1 bool) {
+	mean0, mean1, ccmat := multicell.GetCrossCov(data0, data1, sub0, sub1)
+	U, vals, V := multicell.GetSVD(ccmat)
+	multicell.ProjectSVD(label, dir0, dir1, data0, data1, mean0, mean1, ccmat, vals, U, V)
 }
 
 func LinearResponse(pop *multicell.Population) {
