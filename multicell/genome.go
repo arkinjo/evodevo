@@ -226,9 +226,10 @@ func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
 func (genome *Genome) FlatVec() Vec {
 	vec := make([]float64, 0)
 
+	nenvcell := nenv + ncells
 	if withE {
 		for _, v := range genome.E.Mat {
-			for j := 0; j < ngenes; j++ {
+			for j := 0; j < nenvcell; j++ {
 				vec = append(vec, v[j])
 			}
 		}
@@ -263,7 +264,7 @@ func (genome *Genome) FlatVec() Vec {
 		}
 	}
 	for _, v := range genome.P.Mat {
-		for j := 0; j < nenv+ncells; j++ {
+		for j := 0; j < nenvcell; j++ {
 			vec = append(vec, v[j])
 		}
 	}
