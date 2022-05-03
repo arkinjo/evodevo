@@ -14,108 +14,78 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 
-	json0P := flag.String("json0", "", "json file of initial population")
-	json1P := flag.String("json1", "", "json file of final population")
+	jsonP := flag.String("jsonin", "", "json file of population")
 
 	flag.Parse()
 
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	if *json0P != "" {
-		pop0.FromJSON(*json0P)
-		multicell.SetParams(pop0.Params)
+	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
+	if *jsonP != "" {
+		pop.FromJSON(*jsonP)
+		multicell.SetParams(pop.Params)
 	} else {
 		flag.PrintDefaults()
-		log.Fatal("Specify the input JSON file with -json0=filename.")
-	}
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	if *json1P != "" {
-		pop1.FromJSON(*json1P)
-	} else {
-		flag.PrintDefaults()
-		log.Fatal("Specify the reference JSON file with -json1=filename.")
+		log.Fatal("Specify the input JSON file with -jsonin=filename.")
 	}
 
-	env0 := multicell.FlattenEnvs(pop0.AncEnvs)
-	env1 := multicell.FlattenEnvs(pop1.NovEnvs)
-	dim := len(env0)
-	denv := multicell.NewVec(dim)
+	env0 := multicell.FlattenEnvs(pop.AncEnvs)
+	env1 := multicell.FlattenEnvs(pop.NovEnvs)
+	lenE := len(env0)
+	denv := multicell.NewVec(lenE)
 	multicell.DiffVecs(denv, env1, env0)
 
-	e0 := pop0.GetFlatStateVec("E", 0)
-	e1 := pop1.GetFlatStateVec("E", 1)
-	me0 := multicell.GetMeanVec(e0)
-	me1 := multicell.GetMeanVec(e1)
-	de := multicell.NewVec(dim)
-	multicell.DiffVecs(de, me1, me0)
+	p0 := pop.GetFlatStateVec("P", 0)
+	p1 := pop.GetFlatStateVec("P", 1)
 
-	p0 := pop0.GetFlatStateVec("P", 0)
-	p1 := pop1.GetFlatStateVec("P", 1)
-	mp0 := multicell.GetMeanVec(p0)
-	mp1 := multicell.GetMeanVec(p1)
-	dp := multicell.NewVec(dim)
+	genome := pop.GetFlatGenome()
+
+	mp0, mg, covp0G := multicell.GetCrossCov(p0, genome, true, true)
+	mp1, _, covp1G := multicell.GetCrossCov(p1, genome, true, true)
+	dp := multicell.NewVec(lenE)
 	multicell.DiffVecs(dp, mp1, mp0)
+	lenG := len(mg)
 
-	G0 := pop0.GetFlatGenome()
-	G1 := pop1.GetFlatGenome()
-	mg0 := multicell.GetMeanVec(G0)
-	mg1 := multicell.GetMeanVec(G1)
-	lenG := len(mg0)
-	dg := multicell.NewVec(lenG)
-	multicell.DiffVecs(dg, mg1, mg0)
-
-	deltaP := make([]multicell.Vec, 0)
-	deltaE := make([]multicell.Vec, 0)
-	deltaG := make([]multicell.Vec, 0)
-	for k, p := range p1 {
-		d := multicell.NewVec(dim)
-		multicell.DiffVecs(d, p, p0[k])
-		deltaP = append(deltaP, d)
-
-		e := multicell.NewVec(dim)
-		multicell.DiffVecs(e, e1[k], e0[k])
-		deltaE = append(deltaE, e)
-
-		G := multicell.NewVec(lenG)
-		multicell.DiffVecs(G, G1[k], G0[k])
-		deltaG = append(deltaG, G)
-	}
-
-	dirE := mat.NewVecDense(dim, multicell.CopyVec(denv))
+	dirE := mat.NewVecDense(lenE, multicell.CopyVec(denv))
 	dirE.ScaleVec(1.0/dirE.Norm(2), dirE)
 
-	dirP := mat.NewVecDense(dim, multicell.CopyVec(dp))
+	dirP := mat.NewVecDense(lenE, multicell.CopyVec(dp))
 	dirP.ScaleVec(1.0/dirP.Norm(2), dirP)
 
-	dirG := mat.NewVecDense(len(mg0), dg)
+	dirG := mat.NewVecDense(lenG, multicell.NewVec(lenG))
 	dirG.ScaleVec(1.0/dirG.Norm(2), dirG)
 
-	pgfn2 := 0.0
-	for _, p := range dp {
-		for _, g := range dg {
-			pgfn2 += (p * g) * (p * g)
+	U0, val0, V0 := multicell.GetSVD(covp0G)
+	U1, val1, V1 := multicell.GetSVD(covp1G)
+
+	multicell.ProjectSVD("<Dp0DG>", dirP, dirG, p0, genome, mp0, mg, covp0G, val0, U0, V0)
+	multicell.ProjectSVD("<Dp1DG>", dirP, dirG, p1, genome, mp1, mg, covp1G, val1, U1, V1)
+
+	fmt.Println("#V0.V1")
+	for i := range val0 {
+		u0 := U0.ColView(i)
+		v0 := V0.ColView(i)
+		for j := range val1 {
+			u1 := U1.ColView(j)
+			v1 := V1.ColView(j)
+			dotu := mat.Dot(u0, u1)
+			dotv := mat.Dot(v0, v1)
+			fmt.Printf("DotUV\t%d\t%d\t%f\t%f\n", i, j, dotu, dotv)
 		}
 	}
-	egfn2 := 0.0
-	for _, e := range de {
-		for _, g := range dg {
-			egfn2 += (e * g) * (e * g)
+	fmt.Println("#Uvec")
+	for i := 0; i < lenE; i++ {
+		fmt.Printf("Uvec01\t%d", i)
+		for j := 0; j < 5; j++ {
+			fmt.Printf("\t%e\t%e", U0.At(i, j), U1.At(i, j))
 		}
+		fmt.Println("")
 	}
-
-	multicell.ProjectSVD("<dp_dG>", dirE, dirG, deltaP, deltaG, false, false)
-	fmt.Printf("<dp><dG>_FN2,Tr\t\t%e\t%e\n", pgfn2, 0)
-	multicell.ProjectSVD("<Ddp_DdG>", dirE, dirG, deltaP, deltaG, true, true)
-	multicell.ProjectSVD("  <Dp1_DG1>", dirE, dirG, p1, G1, true, true)
-	multicell.ProjectSVD("  <Dp0_DG0>", dirE, dirG, p0, G0, true, true)
-	multicell.ProjectSVD("  <Dp0_DG1>", dirE, dirG, p0, G1, true, true)
-	multicell.ProjectSVD("  <Dp1_DG0>", dirE, dirG, p1, G0, true, true)
-
-	multicell.ProjectSVD("<de_dG>", dirE, dirG, deltaE, deltaG, false, false)
-	fmt.Printf("<de><dG>_FN2,Tr\t\t%e\t%e\n", egfn2, 0)
-	multicell.ProjectSVD("<Dde_DdG>", dirE, dirG, deltaE, deltaG, true, true)
-	multicell.ProjectSVD("  <De1_DG1>", dirE, dirG, e1, G1, true, true)
-	multicell.ProjectSVD("  <De0_DG0>", dirE, dirG, e0, G0, true, true)
-	multicell.ProjectSVD("  <De0_DG1>", dirE, dirG, e0, G1, true, true)
-	multicell.ProjectSVD("  <De1_DG0>", dirE, dirG, e1, G0, true, true)
+	fmt.Println("#Vvec")
+	for i := 0; i < lenG; i++ {
+		fmt.Printf("Vvec01\t%d", i)
+		for j := 0; j < 5; j++ {
+			fmt.Printf("\t%e\t%e", V0.At(i, j), V1.At(i, j))
+		}
+		fmt.Println("")
+	}
 
 }
