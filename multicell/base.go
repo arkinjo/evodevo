@@ -410,18 +410,14 @@ func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
 	return U, vals, V
 }
 
-func ProjectSVD(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64, sub0, sub1 bool) {
-
-	mean0, mean1, ccmat := GetCrossCov(data0, data1, sub0, sub1)
-
+func ProjectSVD(label string, dirE, dirP *mat.VecDense, data0, data1 Dmat, mean0, mean1 Vec, ccmat Dmat, vals Vec, U, V *mat.Dense) {
+	traceP := len(mean0) == len(mean1)
 	trace := 0.0
-	if len(mean0) == len(mean1) {
+	if traceP {
 		for i, v := range ccmat {
 			trace += v[i]
 		}
 	}
-
-	U, vals, V := GetSVD(ccmat)
 
 	fnorm2 := 0.0
 	for _, v := range vals {
@@ -440,7 +436,7 @@ func ProjectSVD(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64
 		fmt.Printf("%s_vals\t%d\t%e\n", label, i, v)
 	}
 
-	fmt.Println("#       _ali \tcomp\tu.<dY>     \tv.<dX>")
+	fmt.Println("#<YX>=UsV_ali \tcomp\tu.<dY>     \tv.<dX>")
 	for i := 0; i < dim0; i++ {
 		u := U.ColView(i)
 		v := V.ColView(i)
@@ -449,9 +445,9 @@ func ProjectSVD(label string, dirE, dirP *mat.VecDense, data0, data1 [][]float64
 		fmt.Printf("%s_ali\t%d\t%e\t%e\n", label, i, ue, vp)
 	}
 
-	fmt.Printf("#<YX>   \tcomp")
+	fmt.Printf("#<YX>=UsV  \tcomp")
 	for i := 0; i < 3; i++ {
-		fmt.Printf("\tX.u%-5d\tY.v%-5d", i, i)
+		fmt.Printf("\tX.v%-5d\tY.u%-5d", i, i)
 	}
 	fmt.Printf("\n")
 	for k := range data0 {
