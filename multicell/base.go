@@ -75,6 +75,7 @@ var sdP float64
 
 type Vec = []float64 //Vector is a slice
 type Dmat = []Vec
+type Tensor3 []Dmat
 
 //var genrand = rand.New(rand.NewSource(99)) //This is bad for concurrency. DO NOT USE!
 
