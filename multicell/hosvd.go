@@ -1,8 +1,19 @@
 package multicell
 
 import (
+	"log"
+	"math"
+	"sort"
+
 	"gonum.org/v1/gonum/mat"
 )
+
+type elem_tensor3 struct {
+	I, J, K int
+	V       float64
+}
+
+type CoreTensor3 []elem_tensor3
 
 func NewTensor3(n0, n1, n2 int) Tensor3 {
 	ten := make([]Dmat, n0)
@@ -80,6 +91,7 @@ func FlattenTensor3(ten Tensor3, ind int) Dmat {
 	}
 }
 
+// Returns a compact core tensor and orthonormal basis.
 func GetHOSVD(ten Tensor3) (Tensor3, *mat.Dense, *mat.Dense, *mat.Dense) {
 	len0 := len(ten)
 	len1 := len(ten[0])
@@ -96,15 +108,19 @@ func GetHOSVD(ten Tensor3) (Tensor3, *mat.Dense, *mat.Dense, *mat.Dense) {
 	rank1 := len(s1)
 	rank2 := len(s2)
 
-	score := NewTensor3(len0, len1, len2)
-	for i := 0; i < len0; i++ {
-		for j := 0; j < len1; j++ {
-			for k := 0; k < len2; k++ {
+	score := NewTensor3(rank0, rank1, rank2)
+	for i := 0; i < rank0; i++ {
+
+		for j := 0; j < rank1; j++ {
+			for k := 0; k < rank2; k++ {
 				go func(i, j, k int) {
-					for i1 := 0; i1 < rank0; i1++ {
-						for j1 := 0; j1 < rank1; j1++ {
-							for k1 := 0; k1 < rank2; k1++ {
-								score[i][j][k] += ten[i][j][k] * u0.At(i, i1) * u1.At(j, j1) * u2.At(k, k1)
+					ui := u0.ColView(i)
+					uj := u1.ColView(j)
+					uk := u2.ColView(k)
+					for i1 := 0; i1 < len0; i1++ {
+						for j1 := 0; j1 < len1; j1++ {
+							for k1 := 0; k1 < len2; k1++ {
+								score[i][j][k] += ten[i1][j1][k1] * ui.AtVec(i1) * uj.AtVec(j1) * uk.AtVec(k1)
 							}
 						}
 					}
@@ -115,62 +131,98 @@ func GetHOSVD(ten Tensor3) (Tensor3, *mat.Dense, *mat.Dense, *mat.Dense) {
 	return score, u0, u1, u2
 }
 
-// Interlaced Computation (Sequentially Truncated HOSVD); supposed to be significantly faster.
-func GetST_HOSVD(ten Tensor3) (Tensor3, *mat.Dense, *mat.Dense, *mat.Dense) {
+// Interlaced Computation; supposed to be significantly faster.
+// Should be len0 <= len1 <= len2
+func GetFastHOSVD(ten Tensor3) (CoreTensor3, *mat.Dense, *mat.Dense, *mat.Dense) {
 
 	len0 := len(ten)
 	len1 := len(ten[0])
 	len2 := len(ten[0][0])
 
 	mat0 := flatten0(ten)
-	u0, s0, _ := GetSVD(mat0)
+	u0, s0, _ := GetSVD_opt(mat0, mat.SVDThinU)
 	rank0 := len(s0)
-	A0 := NewTensor3(len0, len1, len2)
-	for n := 0; n < rank0; n++ {
-		u := u0.ColView(n)
-		for i := 0; i < len0; i++ {
-			ui := u.AtVec(i)
-			for j := 0; j < len1; j++ {
-				for k := 0; k < len2; k++ {
-					A0[i][j][k] += ten[i][j][k] * ui
-				}
+	log.Println("GetFastHOSVD rank0=", rank0)
+
+	A0 := NewTensor3(rank0, len1, len2)
+
+	for i := 0; i < rank0; i++ {
+		log.Println("step 1", i)
+		ui := u0.ColView(i)
+		for j := 0; j < len1; j++ {
+			for k := 0; k < len2; k++ {
+				go func(i, j, k int) {
+					for l := 0; l < len0; l++ {
+						A0[i][j][k] += ten[l][j][k] * ui.AtVec(l)
+					}
+				}(i, j, k)
 			}
 		}
 	}
 
 	mat1 := flatten1(A0)
-	u1, s1, _ := GetSVD(mat1)
+	u1, s1, _ := GetSVD_opt(mat1, mat.SVDThinU)
 	rank1 := len(s1)
-	A1 := NewTensor3(len0, len1, len2)
-	for n := 0; n < rank1; n++ {
-		u := u1.ColView(n)
-		for j := 0; j < len1; j++ {
-			uj := u.AtVec(j)
-			for i := 0; i < len0; i++ {
-				for k := 0; k < len2; k++ {
-					A1[i][j][k] += A0[i][j][k] * uj
-				}
+	log.Println("GetFastHOSVD rank1=", rank1)
+
+	if rank1 > rank0 {
+		rank1 = rank0
+		log.Println("GetFastHOSVD rank1 truncated to", rank1)
+	}
+	A1 := NewTensor3(rank0, rank1, len2)
+
+	for i := 0; i < rank0; i++ {
+		log.Println("step 2", i)
+		for j := 0; j < rank1; j++ {
+			uj := u1.ColView(j)
+			for k := 0; k < len2; k++ {
+				go func(i, j, k int) {
+					for l := 0; l < len1; l++ {
+						A1[i][j][k] += A0[i][l][k] * uj.AtVec(l)
+					}
+				}(i, j, k)
 			}
 		}
 	}
 
 	mat2 := flatten2(A1)
-	u2, s2, _ := GetSVD(mat2)
+	u2, s2, _ := GetSVD_opt(mat2, mat.SVDThinU)
 	rank2 := len(s2)
-	A2 := NewTensor3(len0, len1, len2)
-	for n := 0; n < rank2; n++ {
-		u := u2.ColView(n)
-		for k := 0; k < len1; k++ {
-			uk := u.AtVec(k)
-			for i := 0; i < len0; i++ {
-				for j := 0; j < len1; j++ {
-					A2[i][j][k] += A1[i][j][k] * uk
-				}
+	log.Println("GetFastHOSVD rank2=", rank2)
+	if rank2 > rank1 {
+		rank2 = rank1
+		log.Println("GetFastHOSVD rank2 truncated to", rank2)
+	}
+
+	A2 := NewTensor3(rank0, rank1, rank2)
+
+	for i := 0; i < rank0; i++ {
+		log.Println("step 3", i)
+		for j := 0; j < rank1; j++ {
+			for k := 0; k < rank2; k++ {
+				uk := u2.ColView(k)
+				go func(i, j, k int) {
+					for l := 0; l < len2; l++ {
+						A2[i][j][k] += A1[i][j][l] * uk.AtVec(l)
+					}
+				}(i, j, k)
 			}
 		}
 	}
 
-	return A2, u0, u1, u2
+	vals := make([]elem_tensor3, 0)
+	for i := 0; i < rank0; i++ {
+		for j := 0; j < rank1; j++ {
+			for k := 0; k < rank2; k++ {
+				vals = append(vals, elem_tensor3{i, j, k, A2[i][j][k]})
+			}
+		}
+	}
+	sort.Slice(vals, func(i, j int) bool {
+		return math.Abs(vals[i].V) > math.Abs(vals[j].V)
+	})
+
+	return vals, u0, u1, u2
 }
 
 func GetCrossCov3(vecs0, vecs1, vecs2 []Vec, submean0, submean1, submean2 bool) (Vec, Vec, Vec, Tensor3) {

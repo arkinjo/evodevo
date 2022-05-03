@@ -382,7 +382,8 @@ func GetCrossCov(vecs0, vecs1 []Vec, submean0, submean1 bool) (Vec, Vec, Dmat) {
 	return cv0, cv1, ccmat
 }
 
-func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
+// expect flag = mat.SVDThin or mat.SVDThinU
+func GetSVD_opt(ccmat Dmat, flag mat.SVDKind) (*mat.Dense, []float64, *mat.Dense) {
 	dim0 := len(ccmat)
 	dim1 := len(ccmat[0])
 	dim := dim0
@@ -398,17 +399,26 @@ func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
 	}
 
 	var svd mat.SVD
-	ok := svd.Factorize(C, mat.SVDThin)
+	ok := svd.Factorize(C, flag)
 	if !ok {
 		log.Fatal("SVD failed.")
 	}
 	U := mat.NewDense(dim0, dim, nil)
 	V := mat.NewDense(dim1, dim, nil)
-	svd.UTo(U)
-	svd.VTo(V)
+	if flag&mat.SVDThinU == mat.SVDThinU {
+		svd.UTo(U)
+	}
+	if flag&mat.SVDThinV == mat.SVDThinV {
+		svd.VTo(V)
+	}
+
 	vals := svd.Values(nil)
 
 	return U, vals, V
+}
+
+func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
+	return GetSVD_opt(ccmat, mat.SVDThin)
 }
 
 func ProjectSVD(label string, dirE, dirP *mat.VecDense, data0, data1 Dmat, mean0, mean1 Vec, ccmat Dmat, vals Vec, U, V *mat.Dense) {

@@ -5,7 +5,9 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"log"
+	//	"math"
 
 	"github.com/arkinjo/evodevo/multicell"
 	//	"gonum.org/v1/gonum/mat"
@@ -36,39 +38,27 @@ func main() {
 
 	e0 := pop.GetFlatStateVec("E", 0)
 	e1 := pop.GetFlatStateVec("E", 1)
+	dele := make([][]float64, 0)
+	for i, e := range e0 {
+		d := multicell.NewVec(lenE)
+		multicell.DiffVecs(d, e1[i], e)
+		dele = append(dele, d)
+	}
 
 	p0 := pop.GetFlatStateVec("P", 0)
 	p1 := pop.GetFlatStateVec("P", 1)
+	delp := make([][]float64, 0)
+	for i, p := range p0 {
+		d := multicell.NewVec(lenE)
+		multicell.DiffVecs(d, p1[i], p)
+		delp = append(delp, d)
+	}
 
 	genome := pop.GetFlatGenome()
 
-	//	mp0, me0, mg, cov0 := multicell.GetCrossCov3(p0, e0, genome, true, true, true)
-	//	mp1, me1, _, cov1 := multicell.GetCrossCov3(p1, e1, genome, true, true, true)
-	log.Println("GetCrossCov3 .. 0")
-	_, _, _, cov0 := multicell.GetCrossCov3(p0, e0, genome, true, true, true)
-	log.Println("GetCrossCov3 .. 1")
-	/* _, _, _, cov1 := */ multicell.GetCrossCov3(p1, e1, genome, true, true, true)
-
-	s0, _, _, _ := multicell.GetST_HOSVD(cov0)
-	for i, s0i := range s0 {
-		for j, s0ij := range s0i {
-			for k, s0ijk := range s0ij {
-				fmt.Println("HOSVD0", i, j, k, s0ijk)
-			}
-		}
+	_, _, _, cov := multicell.GetCrossCov3(delp, dele, genome, true, true, true)
+	svals, _, _, _ := multicell.GetFastHOSVD(cov)
+	for _, e := range svals {
+		fmt.Printf("HOSVD1 %d %d %d %e\n", e.I, e.J, e.K, e.V)
 	}
-
-	// dp := multicell.NewVec(lenE)
-	// multicell.DiffVecs(dp, mp1, mp0)
-	// lenG := len(mg)
-
-	// dirE := mat.NewVecDense(lenE, multicell.CopyVec(denv))
-	// dirE.ScaleVec(1.0/dirE.Norm(2), dirE)
-
-	// dirP := mat.NewVecDense(lenE, multicell.CopyVec(dp))
-	// dirP.ScaleVec(1.0/dirP.Norm(2), dirP)
-
-	// dirG := mat.NewVecDense(lenG, multicell.NewVec(lenG))
-	// dirG.ScaleVec(1.0/dirG.Norm(2), dirG)
-
 }
