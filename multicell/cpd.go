@@ -146,14 +146,38 @@ func checkDiffDmats(m0, m1 Dmat) float64 {
 	return dev / mag
 }
 
+func CheckCPD(ten Tensor3, cpd []ElemsCPD) (float64, float64) {
+	dev := 0.0
+	mag0 := 0.0
+	mag1 := 0.0
+	for i, ti := range ten {
+		for j, tij := range ti {
+			for k, t := range tij {
+				mag0 += t * t
+				v := 0.0
+				for _, c := range cpd {
+					v += c.SVal * c.Axes[0][i] * c.Axes[1][j] * c.Axes[2][k]
+				}
+				d := t - v
+				dev += d * d
+				mag1 += v * v
+			}
+		}
+	}
+
+	return dev / mag0, mag1 / mag0
+}
+
 // Canonical Polyadic Decomposition
 // X = S*(A1 x A2 x A3) where A3 is orthogonal.
-func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter int) []ElemsCPD {
+func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter, rank int) []ElemsCPD {
 	len0 := len(ten)
 	len1 := len(ten[0])
 	len2 := len(ten[0][0])
 
-	rank := len0
+	if len0 < rank {
+		rank = len0
+	}
 	if len1 < rank {
 		rank = len1
 	}
@@ -167,10 +191,9 @@ func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter int) []ElemsCPD {
 	ta2 := NewDmat(len2, rank)
 
 	// Initialize
-	maxcol := rank
-	RandomInit(a0, maxcol)
-	RandomInit(a1, maxcol)
-	RandomInit(a2, maxcol)
+	RandomInit(a0, rank)
+	RandomInit(a1, rank)
+	RandomInit(a2, rank)
 
 	xt0 := tflatten0(ten) // len2 x (len0*len1)
 	xt1 := tflatten1(ten) // len0 x (len1*len2)
@@ -186,8 +209,8 @@ func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter int) []ElemsCPD {
 		// Step 2: update a2.
 		ResetDmat(ta2)
 		for i := 0; i < len2; i++ {
-			for j := 0; j < maxcol; j++ {
-				for k := 0; k < maxcol; k++ {
+			for j := 0; j < rank; j++ {
+				for k := 0; k < rank; k++ {
 					ta2[i][k] += U.At(i, j) * V.At(k, j)
 				}
 			}
@@ -202,7 +225,7 @@ func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter int) []ElemsCPD {
 		ta0 := MultDmats(xt1, pa12) // len0 x rank
 		d1 := NormDiag2(a1)         // rank
 		for i := 0; i < len0; i++ {
-			for j := 0; j < maxcol; j++ {
+			for j := 0; j < rank; j++ {
 				a0[i][j] = ta0[i][j] * d1[j]
 			}
 		}
@@ -210,7 +233,7 @@ func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter int) []ElemsCPD {
 		// Step 4: Normalize a0.
 		d0 := NormDiag2(a0)
 		for i := 0; i < len0; i++ {
-			for j := 0; j < maxcol; j++ {
+			for j := 0; j < rank; j++ {
 				a0[i][j] *= math.Sqrt(d0[j])
 			}
 		}
@@ -287,5 +310,6 @@ func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter int) []ElemsCPD {
 		}
 
 	}
+
 	return lst
 }
