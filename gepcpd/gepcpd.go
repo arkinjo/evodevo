@@ -15,10 +15,8 @@ import (
 func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
-	maxiterP := flag.Int("maxiter", 100, "Maximum number of CPD iterations")
-
 	jsonP := flag.String("jsonin", "", "json file of population")
-
+	maxiterP := flag.Int("maxiter", 100, "Maximum number of CPD iterations")
 	flag.Parse()
 
 	maxiter := *maxiterP
