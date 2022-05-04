@@ -219,6 +219,30 @@ func CopyDmat(mat1, mat0 Dmat) {
 	}
 }
 
+func ResetDmat(mat Dmat) {
+	for i, mi := range mat {
+		for j := range mi {
+			mat[i][j] = 0
+		}
+	}
+}
+func MultDmats(mat0, mat1 Dmat) Dmat {
+	dimi := len(mat0)
+	dimj := len(mat0[0])
+	dimk := len(mat1[0])
+
+	mat := NewDmat(dimi, dimk)
+	for i := 0; i < dimi; i++ {
+		for j := 0; j < dimj; j++ {
+			for k := 0; k < dimk; k++ {
+				mat[i][k] += mat0[i][j] * mat1[j][k]
+			}
+		}
+	}
+
+	return mat
+}
+
 func NewVec(len int) Vec { //Generate a new (zero) vector of length len
 	v := make([]float64, len)
 	return v

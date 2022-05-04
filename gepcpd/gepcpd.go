@@ -5,9 +5,8 @@ package main
 import (
 	"flag"
 	"fmt"
-
 	"log"
-	"math"
+	//	"math"
 
 	"github.com/arkinjo/evodevo/multicell"
 	//	"gonum.org/v1/gonum/mat"
@@ -56,11 +55,9 @@ func main() {
 
 	genome := pop.GetFlatGenome()
 
-	_, _, _, cov := multicell.GetCrossCov3(delp, dele, genome, true, true, true)
-	svals, _, _, _ := multicell.GetFastHOSVD(cov)
-	for _, e := range svals {
-		if math.Abs(e.V) > 0 {
-			fmt.Printf("HOSVD %d %d %d %e\n", e.I, e.J, e.K, e.V)
-		}
+	_, _, _, cov := multicell.GetCrossCov3(genome, dele, delp, true, true, true)
+	svals, _, _, _ := multicell.GetCPDO(cov)
+	for i, e := range svals {
+		fmt.Printf("CPD %d %e\n", i, e)
 	}
 }
