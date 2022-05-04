@@ -10,11 +10,21 @@ package multicell
 */
 
 import (
-	"fmt"
+	//	"fmt"
 	"log"
 	"math"
+	"math/rand"
+	"sort"
 	//	"gonum.org/v1/gonum/mat"
 )
+
+type ElemsCPD struct {
+	I    int
+	SVal float64
+	Axes []Vec
+}
+
+type CPDArray []ElemsCPD
 
 // X_{(1)}^T
 func tflatten0(ten Tensor3) Dmat {
@@ -110,9 +120,36 @@ func NormDiag2(a Dmat) Vec {
 	return dvec
 }
 
+func RandomInit(a Dmat, maxcol int) {
+	ncol := len(a[0])
+	if ncol > maxcol {
+		ncol = maxcol
+	}
+
+	sd := 1.0 / math.Sqrt(float64(len(a)))
+	for i := range a {
+		for j := 0; j < ncol; j++ {
+			a[i][j] = sd * rand.NormFloat64()
+		}
+	}
+}
+
+func checkDiffDmats(m0, m1 Dmat) float64 {
+	dev := 0.0
+	mag := 0.0
+	for i, mi := range m1 {
+		for j, mij := range mi {
+			d := mij - m0[i][j]
+			dev += d * d
+			mag += mij * mij
+		}
+	}
+	return dev / mag
+}
+
 // Canonical Polyadic Decomposition
 // X = S*(A1 x A2 x A3) where A3 is orthogonal.
-func GetCPDO(ten Tensor3) (Vec, Dmat, Dmat, Dmat) {
+func GetCPDO(ten Tensor3, maxiter int) []ElemsCPD {
 	len0 := len(ten)
 	len1 := len(ten[0])
 	len2 := len(ten[0][0])
@@ -130,46 +167,35 @@ func GetCPDO(ten Tensor3) (Vec, Dmat, Dmat, Dmat) {
 	a2 := NewDmat(len2, rank)
 	ta2 := NewDmat(len2, rank)
 
-	// initialize to the "Identity" matrix.
-	for i := 0; i < rank; i++ {
-		a0[i][i] = 1.0
-		a1[i][i] = 1.0
-		a2[i][i] = 1.0
-	}
+	// Initialize
+	maxcol := rank
+	RandomInit(a0, maxcol)
+	RandomInit(a1, maxcol)
+	RandomInit(a2, maxcol)
+
 	xt0 := tflatten0(ten) // len2 x (len0*len1)
 	xt1 := tflatten1(ten) // len0 x (len1*len2)
 	tx2 := tflatten2(ten) // len1 x (len2*len0)
-	dev := 1000.0
 
-	for istep := 0; istep < 100; istep++ {
+	for istep := 1; istep <= maxiter; istep++ {
 		pa01 := KR_Product(a0, a1)   // (len0*len1) x rank
 		tmat := MultDmats(xt0, pa01) // len2 x rank
 
 		// Step 1: Update a0.
-		U, sval, V := GetSVD(tmat) // U: len2 x rank; V: rank x rank
-		log.Println("GetCPDO Step 1", istep)
+		U, _, V := GetSVD(tmat) // U: len2 x rank; V: rank x rank
 
 		// Step 2: update a2.
 		ResetDmat(ta2)
 		for i := 0; i < len2; i++ {
-			for j := range sval {
-				for k := range sval {
+			for j := 0; j < maxcol; j++ {
+				for k := 0; k < maxcol; k++ {
 					ta2[i][k] += U.At(i, j) * V.At(k, j)
 				}
 			}
 		}
-		log.Println("GetCPDO Step 2", istep)
 		// check convergence
-		dev = 0.0
-		mag := 0.0
-		for i := 0; i < len2; i++ {
-			for j := range sval {
-				d := ta2[i][j] - a2[i][j]
-				mag += ta2[i][j] * ta2[i][j]
-				dev += d * d
-			}
-		}
-		dev /= mag
+		dev2 := checkDiffDmats(ta2, a2)
+
 		CopyDmat(a2, ta2)
 
 		// Step 3: Update a0.
@@ -177,44 +203,64 @@ func GetCPDO(ten Tensor3) (Vec, Dmat, Dmat, Dmat) {
 		ta0 := MultDmats(xt1, pa12) // len0 x rank
 		d1 := NormDiag2(a1)         // rank
 		for i := 0; i < len0; i++ {
-			for j := 0; j < rank; j++ {
+			for j := 0; j < maxcol; j++ {
 				a0[i][j] = ta0[i][j] * d1[j]
 			}
 		}
-		log.Println("GetCPDO Step 3", istep)
 
 		// Step 4: Normalize a0.
 		d0 := NormDiag2(a0)
 		for i := 0; i < len0; i++ {
-			for j := 0; j < rank; j++ {
+			for j := 0; j < maxcol; j++ {
 				a0[i][j] *= math.Sqrt(d0[j])
 			}
 		}
-		log.Println("GetCPDO Step 4", istep)
 
 		// Step 5: Update a1.
 		pa20 := KR_Product(a2, a0)  // (len2*len0) x rank
 		ta1 := MultDmats(tx2, pa20) // len1 x rank
 		CopyDmat(a1, ta1)
 
-		log.Println("GetCPDO Step 5", istep)
-		log.Println("GetCPDO:", istep, dev)
-		fmt.Println("A0", a0)
-		fmt.Println("A1", a1)
-		fmt.Println("A2", a2)
-
-	}
-
-	sigma := NewVec(rank)
-	for _, ai := range a1 {
-		for j, aij := range ai {
-			sigma[j] += aij * aij
+		log.Println("GetCPDO:", istep, dev2)
+		if dev2 < 1e-6 {
+			log.Println("GetCPDO: Converged!")
+			break
 		}
 	}
 
-	for i, s := range sigma {
-		sigma[i] = math.Sqrt(s)
+	sigma := NewVec(rank)
+	for r := 0; r < rank; r++ {
+		s := 0.0
+		for i := 0; i < len1; i++ {
+			s += a1[i][r] * a1[i][r]
+		}
+		sigma[r] = math.Sqrt(s)
+		for i := 0; i < len1; i++ {
+			a1[i][r] /= sigma[r]
+		}
+
 	}
 
-	return sigma, a0, a1, a2
+	lst := make([]ElemsCPD, rank)
+	for r := 0; r < rank; r++ {
+		lst[r].I = r
+		lst[r].SVal = sigma[r]
+		lst[r].Axes = make([]Vec, 3)
+
+		for i := 0; i < len0; i++ {
+			lst[r].Axes[0] = append(lst[r].Axes[0], a0[i][r])
+		}
+		for i := 0; i < len1; i++ {
+			lst[r].Axes[1] = append(lst[r].Axes[1], a1[i][r])
+		}
+		for i := 0; i < len2; i++ {
+			lst[r].Axes[2] = append(lst[r].Axes[2], a2[i][r])
+		}
+	}
+
+	sort.Slice(lst, func(i, j int) bool {
+		return lst[i].SVal > lst[j].SVal
+	})
+
+	return lst
 }

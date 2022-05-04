@@ -55,9 +55,40 @@ func main() {
 
 	genome := pop.GetFlatGenome()
 
-	_, _, _, cov := multicell.GetCrossCov3(genome, dele, delp, true, true, true)
-	svals, _, _, _ := multicell.GetCPDO(cov)
-	for i, e := range svals {
-		fmt.Printf("CPD %d %e\n", i, e)
+	mg, me, mp, cov := multicell.GetCrossCov3(genome, dele, delp, true, true, true)
+	dirg := multicell.CopyVec(mg)
+	dire := multicell.CopyVec(me)
+	dirp := multicell.CopyVec(mp)
+	multicell.ScaleVec(dirg, 1.0/multicell.Norm2(dirg), dirg)
+	multicell.ScaleVec(dire, 1.0/multicell.Norm2(dire), dire)
+	multicell.ScaleVec(dirp, 1.0/multicell.Norm2(dirp), dirp)
+
+	cpd := multicell.GetCPDO(cov, 100)
+
+	for i, p := range cpd {
+		fmt.Printf("CPD_vals %d %d %e\n", i, p.I, p.SVal)
+	}
+
+	for a := range cpd {
+		dotg := multicell.DotVecs(dirg, cpd[a].Axes[0])
+		dote := multicell.DotVecs(dire, cpd[a].Axes[1])
+		dotp := multicell.DotVecs(dirp, cpd[a].Axes[2])
+		fmt.Printf("CPD_ali\t%d\t%e\t%e\t%e\n", a, dotg, dote, dotp)
+	}
+
+	for k, g := range genome {
+		fmt.Printf("CPD_prj\t%d", k)
+		e := dele[k]
+		p := delp[k]
+		multicell.DiffVecs(g, g, mg)
+		multicell.DiffVecs(e, e, me)
+		multicell.DiffVecs(p, p, mp)
+		for a := 0; a < 3; a++ {
+			dg := multicell.DotVecs(g, cpd[a].Axes[0])
+			de := multicell.DotVecs(e, cpd[a].Axes[1])
+			dp := multicell.DotVecs(p, cpd[a].Axes[2])
+			fmt.Printf("\t%e\t%e\t%e", dg, de, dp)
+		}
+		fmt.Println("")
 	}
 }
