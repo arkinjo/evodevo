@@ -19,7 +19,6 @@ import (
 )
 
 type ElemsCPD struct {
-	I    int
 	SVal float64
 	Axes []Vec
 }
@@ -149,7 +148,7 @@ func checkDiffDmats(m0, m1 Dmat) float64 {
 
 // Canonical Polyadic Decomposition
 // X = S*(A1 x A2 x A3) where A3 is orthogonal.
-func GetCPDO(ten Tensor3, maxiter int) []ElemsCPD {
+func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter int) []ElemsCPD {
 	len0 := len(ten)
 	len1 := len(ten[0])
 	len2 := len(ten[0][0])
@@ -243,7 +242,6 @@ func GetCPDO(ten Tensor3, maxiter int) []ElemsCPD {
 
 	lst := make([]ElemsCPD, rank)
 	for r := 0; r < rank; r++ {
-		lst[r].I = r
 		lst[r].SVal = sigma[r]
 		lst[r].Axes = make([]Vec, 3)
 
@@ -262,5 +260,32 @@ func GetCPDO(ten Tensor3, maxiter int) []ElemsCPD {
 		return lst[i].SVal > lst[j].SVal
 	})
 
+	// Fix the sign of singular vectors.
+	for r := 0; r < rank; r++ {
+		d1 := DotVecs(dir1, lst[r].Axes[1])
+		d2 := DotVecs(dir2, lst[r].Axes[2])
+		if d1 < 0.0 {
+			for i := range lst[r].Axes[1] {
+				lst[r].Axes[1][i] *= -1.0
+			}
+			if d2 < 0.0 {
+				for i := range lst[r].Axes[2] {
+					lst[r].Axes[2][i] *= -1.0
+				}
+			} else {
+				for i := range lst[r].Axes[0] {
+					lst[r].Axes[0][i] *= -1.0
+				}
+			}
+		} else if d2 < 0.0 {
+			for i := range lst[r].Axes[2] {
+				lst[r].Axes[2][i] *= -1.0
+			}
+			for i := range lst[r].Axes[0] {
+				lst[r].Axes[0][i] *= -1.0
+			}
+		}
+
+	}
 	return lst
 }

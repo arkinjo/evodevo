@@ -64,10 +64,10 @@ func main() {
 	multicell.ScaleVec(dire, 1.0/multicell.Norm2(dire), dire)
 	multicell.ScaleVec(dirp, 1.0/multicell.Norm2(dirp), dirp)
 
-	cpd := multicell.GetCPDO(cov, maxiter)
+	cpd := multicell.GetCPDO(cov, denv, denv, maxiter)
 
-	for i, p := range cpd {
-		fmt.Printf("CPD_vals %d %d %e\n", i, p.I, p.SVal)
+	for r, p := range cpd {
+		fmt.Printf("CPD_vals %d %e\n", r, p.SVal)
 	}
 
 	for a := range cpd {
@@ -89,11 +89,6 @@ func main() {
 			dg := multicell.DotVecs(g, cpd[a].Axes[0])
 			de := multicell.DotVecs(e, cpd[a].Axes[1])
 			dp := multicell.DotVecs(p, cpd[a].Axes[2])
-			neg := multicell.DotVecs(denv, cpd[a].Axes[1])
-			if neg < 0.0 {
-				de *= -1.0
-				dp *= -1.0
-			}
 			fmt.Printf("\t%e\t%e\t%e", dg, de, dp)
 
 		}
