@@ -15,10 +15,13 @@ import (
 func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
+	maxiterP := flag.Int("maxiter", 100, "Maximum number of CPD iterations")
 
 	jsonP := flag.String("jsonin", "", "json file of population")
 
 	flag.Parse()
+
+	maxiter := *maxiterP
 
 	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 	if *jsonP != "" {
@@ -63,7 +66,7 @@ func main() {
 	multicell.ScaleVec(dire, 1.0/multicell.Norm2(dire), dire)
 	multicell.ScaleVec(dirp, 1.0/multicell.Norm2(dirp), dirp)
 
-	cpd := multicell.GetCPDO(cov, 100)
+	cpd := multicell.GetCPDO(cov, maxiter)
 
 	for i, p := range cpd {
 		fmt.Printf("CPD_vals %d %d %e\n", i, p.I, p.SVal)
@@ -83,11 +86,18 @@ func main() {
 		multicell.DiffVecs(g, g, mg)
 		multicell.DiffVecs(e, e, me)
 		multicell.DiffVecs(p, p, mp)
+
 		for a := 0; a < 3; a++ {
 			dg := multicell.DotVecs(g, cpd[a].Axes[0])
 			de := multicell.DotVecs(e, cpd[a].Axes[1])
 			dp := multicell.DotVecs(p, cpd[a].Axes[2])
+			neg := multicell.DotVecs(denv, cpd[a].Axes[1])
+			if neg < 0.0 {
+				de *= -1.0
+				dp *= -1.0
+			}
 			fmt.Printf("\t%e\t%e\t%e", dg, de, dp)
+
 		}
 		fmt.Println("")
 	}
