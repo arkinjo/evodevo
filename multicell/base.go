@@ -33,7 +33,7 @@ const maxDevStep int = 200    // Maximum steps for development.
 const ccStep int = 5          // Number of steady steps for convergence
 const epsDev float64 = 1.0e-5 // Convergence criterion of development.
 const eps float64 = 1.0e-50
-
+const sqrt3 float64 = 1.7320508075688772935274463415058723669428052538103806280558069794519330169088000370811461867572485756756261414154
 const alphaEMA = 2.0 / (1.0 + 5.0) // exponential moving average/variance
 
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
@@ -129,7 +129,6 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	}
 
 	sdG = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
-
 	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
 	sdH = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+jstrength))
 	sdJ = math.Sqrt(jstrength / (GenomeDensity * float64(ngenes) * (1 + jstrength)))
@@ -169,14 +168,8 @@ func arctan(x, omega float64) float64 {
 }
 
 func lecunatan(x float64) float64 { //Rescaled arctan under same treatment of Le'Cun's hyperbolic tangent.
-	return 6.0 * math.Atan(x/1.73205080756887729352744634150587236694) / math.Pi
+	return 6.0 * math.Atan(x/sqrt3) / math.Pi
 }
-
-/*
-func scaledatan(x, omega float64) float64 {
-	return 2.0 * math.Atan(omega*x) / math.Pi
-}
-*/
 
 func relu(x, omega float64) float64 {
 	if x < 0 {
