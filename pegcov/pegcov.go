@@ -58,8 +58,6 @@ func main() {
 		multicell.DiffVecs(d, g, gref)
 		delg = append(delg, d)
 	}
-	tmp := multicell.GetMeanVec(delg)
-	fmt.Println(tmp[0:100])
 	e0 := pop.GetFlatStateVec("E", 0)
 	e1 := pop.GetFlatStateVec("E", 1)
 	dele := make([][]float64, 0)

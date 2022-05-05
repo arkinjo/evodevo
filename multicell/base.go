@@ -71,6 +71,12 @@ var sdH float64
 var sdJ float64
 var sdP float64
 
+// slope of activation functions
+var omega_f float64 = 1.0
+var omega_g float64 = 1.0
+var omega_h float64 = 1.0
+var omega_p float64 = 1.0
+
 //Remark: defaults to full model!
 
 type Vec = []float64 //Vector is a slice
@@ -86,18 +92,6 @@ func SetSeed(seed int64) {
 func SetParams(s Settings) { //Define whether each layer or interaction is present in model
 	maxPop = s.MaxPop
 	withE = s.ELayer
-	if s.ELayer {
-		cuestrength = 1.0
-	} else {
-		cuestrength = 0.0
-	}
-
-	if s.JLayer {
-		jstrength = 1.0
-	} else {
-		jstrength = 0.0
-	}
-
 	withF = s.FLayer
 	withH = s.HLayer
 	withJ = s.JLayer
@@ -106,18 +100,40 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	devNoise = s.SDNoise
 
 	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
-	if s.ELayer {
+	from_g := GenomeDensity * float64(ngenes)
+	if withE {
 		geneLength += nenv + ncells
+		cuestrength = 1.0
+		from_e := CueResponseDensity * float64(nenv+ncells)
+		if pheno_feedback {
+			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
+		} else {
+			omega_f = 1.0 / math.Sqrt(from_e+from_g)
+		}
+	} else {
+		cuestrength = 0.0
+		omega_f = 1.0 / math.Sqrt(from_g)
 	}
 
-	if s.FLayer {
+	if withF {
 		geneLength += ngenes
 	}
-	if s.HLayer {
+
+	omega_g = 1.0 / math.Sqrt(GenomeDensity*float64(ngenes))
+	omega_p = 1.0 / math.Sqrt(GenomeDensity*float64(ngenes))
+
+	if withH {
 		geneLength += ngenes
-		if s.JLayer {
+		if withJ {
 			geneLength += ngenes
+			jstrength = 1.0
+			omega_h = 1.0 / math.Sqrt(from_g*2)
+		} else {
+			jstrength = 0.0
+			omega_h = 1.0 / math.Sqrt(from_g)
 		}
+	} else {
+		omega_h = 0.0
 	}
 
 	mutRate = baseMutationRate * float64(fullGeneLength) / float64(geneLength) //to compensate for layer removal.
@@ -127,12 +143,20 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	if s.Pfback {
 		sdE *= math.Sqrt(0.5) // rescale to account for feedback
 	}
-
 	sdG = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
 	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
 	sdH = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+jstrength))
 	sdJ = math.Sqrt(jstrength / (GenomeDensity * float64(ngenes) * (1 + jstrength)))
 	sdP = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
+
+	/// set all sd* to 1
+	sdE = 1.0
+	sdF = 1.0
+	sdG = 1.0
+	sdH = 1.0
+	sdJ = 1.0
+	sdP = 1.0
+
 }
 
 func GetMaxPop() int {
@@ -180,19 +204,19 @@ func relu(x, omega float64) float64 {
 }
 
 func sigmaf(x float64) float64 { //Activation function for epigenetic markers
-	return lecunatan(x)
+	return lecunatan(x * omega_f)
 }
 
 func sigmag(x float64) float64 { //Activation function for gene expression levels
-	return lecunatan(x)
+	return lecunatan(x * omega_g)
 }
 
 func sigmah(x float64) float64 { //Activation function for higher order complexes
-	return lecunatan(x) //abstract level of amount of higher order complexes
+	return lecunatan(x * omega_h) //abstract level of amount of higher order complexes
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
-	return lecunatan(x)
+	return lecunatan(x * omega_p)
 }
 
 func NewDmat(nrow, ncol int) Dmat {
@@ -219,6 +243,7 @@ func ResetDmat(mat Dmat) {
 		}
 	}
 }
+
 func MultDmats(mat0, mat1 Dmat) Dmat {
 	dimi := len(mat0)
 	dimj := len(mat0[0])
