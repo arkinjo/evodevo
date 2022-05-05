@@ -120,22 +120,15 @@ func main() {
 			k++
 		}
 		weightE[a] = mage
-		// scae := 1.0 / math.Sqrt(mage)
-		// scag := 1.0 / math.Sqrt(magg)
-		// multicell.ScaleVec(Ve[a], scae, Ve[a])
-		// multicell.ScaleVec(Vg[a], scag, Vg[a])
+		multicell.NormalizeVec(Ve[a])
+		multicell.NormalizeVec(Vg[a])
 
 		neg := multicell.DotVecs(Up[a], denv)
 		if neg < 0.0 {
-			for i := 0; i < lenE; i++ {
-				Up[a][i] *= -1.0
-				Ve[a][i] *= -1.0
-				Veg[a][i] *= -1.0
-			}
-			for i := 0; i < lenG; i++ {
-				Vg[a][i] *= -1.0
-				Veg[a][lenE+i] *= -1.0
-			}
+			multicell.ScaleVec(Up[a], -1, Up[a])
+			multicell.ScaleVec(Ve[a], -1, Ve[a])
+			multicell.ScaleVec(Vg[a], -1, Vg[a])
+			multicell.ScaleVec(Veg[a], -1, Veg[a])
 		}
 	}
 
