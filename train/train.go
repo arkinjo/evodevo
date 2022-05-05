@@ -19,10 +19,10 @@ func main() {
 	t0 := time.Now()
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 
-	elayerP := flag.Bool("elayer", true, "Environmental cue layer")
-	flayerP := flag.Bool("flayer", true, "Epigenetic layer")
-	hlayerP := flag.Bool("hlayer", true, "Higher order complexes")
-	jlayerP := flag.Bool("jlayer", true, "Interactions in higher order interactions")
+	elayerP := flag.Bool("layerE", true, "Environmental cue layer")
+	flayerP := flag.Bool("layerF", true, "Epigenetic layer")
+	hlayerP := flag.Bool("layerH", true, "Higher order complexes")
+	jlayerP := flag.Bool("layerJ", true, "Interactions in higher order interactions")
 	pfbackP := flag.Bool("pfback", true, "Phenotype feedback to input")
 	ncellsP := flag.Int("ncells", 1, "Number of cell types")
 	sdNoiseP := flag.Float64("sdNoise", 0.05, "Std.Dev. of environmental noise")
@@ -32,7 +32,6 @@ func main() {
 	epochPtr := flag.Int("nepoch", 20, "number of epochs")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 
-	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("traj_file", "traj.dat", "filename of trajectories")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
@@ -52,7 +51,6 @@ func main() {
 	T_Filename = *tfilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
-	multicell.Omega = *omegaPtr
 
 	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
 	pop0.Params = settings
