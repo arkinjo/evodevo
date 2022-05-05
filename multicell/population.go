@@ -137,7 +137,7 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 }
 
 func (pop *Population) FromJSON(filename string) {
-	fmt.Printf("Importing initial population from %s \n", filename)
+	log.Printf("Importing initial population from %s \n", filename)
 	pop.ClearGenome()
 	fin, err := os.Open(filename)
 	if err != nil {
@@ -183,12 +183,10 @@ func (pop *Population) SetWagnerFitness() { //compute normalized fitness value s
 	for _, indiv := range pop.Indivs {
 		if mf < indiv.Fit {
 			mf = indiv.Fit
-			//fmt.Println("Id:", indiv.Id, "Fitness:", indiv.Fit, "Current Maximum fitness value:", mf)
 		}
 	}
 	for i, indiv := range pop.Indivs {
 		pop.Indivs[i].WagFit = math.Max(indiv.Fit/mf, minWagnerFitness) //Zero fitness individuals that don't converge can still reproduce
-		//fmt.Println("Id:", indiv.Id, "Fitness:", indiv.Fit, "Wagner Fitness:", indiv.WagFit)
 	}
 }
 
@@ -360,10 +358,6 @@ func (pop *Population) Reproduce(nNewPop int) Population { //Crossover
 	nindivs := make([]Indiv, 0)
 	npop := len(parents)
 
-	//fmt.Println("Number of individuals that survived selection :", npop)
-
-	//ipop := 0
-	//cnt := 0
 	for len(nindivs) < nNewPop { //Randomly reproduce among survivors
 		k := rand.Intn(npop)
 		l := rand.Intn(npop)
