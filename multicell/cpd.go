@@ -18,6 +18,8 @@ import (
 	//	"gonum.org/v1/gonum/mat"
 )
 
+const epsconv = 1e-6
+
 type ElemsCPD struct {
 	SVal float64
 	Axes []Vec
@@ -244,7 +246,7 @@ func GetCPDO(ten Tensor3, dir1, dir2 Vec, maxiter, rank int) []ElemsCPD {
 		CopyDmat(a1, ta1)
 
 		log.Println("GetCPDO:", istep, dev2)
-		if dev2 < 1e-6 {
+		if dev2 < epsconv {
 			log.Println("GetCPDO: Converged!")
 			break
 		}
