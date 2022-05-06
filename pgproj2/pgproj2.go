@@ -17,8 +17,8 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	ref1Ptr := flag.Int("ref1", 50, "reference generation for evolved genotype")
-	ref2Ptr := flag.Int("ref2", 200, "reference generation for evolved genotype")
+	ref1Ptr := flag.Int("ref1", 200, "reference generation for evolved genotype")
+	ref2Ptr := flag.Int("ref2", -1, "reference generation for evolved genotype")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
 	jsoninPtr := flag.String("jsonin", "", "JSON file of input population") //default to empty string
@@ -40,16 +40,6 @@ func main() {
 	jfilename := fmt.Sprintf("%s_001.json", json_in)
 	pop0.FromJSON(jfilename)
 	multicell.SetParams(pop0.Params)
-
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen1)
-	fmt.Println("Reference population :", jfilename)
-	pop1.FromJSON(jfilename)
-
-	pop2 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen2)
-	fmt.Println("Reference population :", jfilename)
-	pop2.FromJSON(jfilename)
 
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
@@ -84,6 +74,11 @@ func main() {
 	gmix = append(gmix, e01...)
 	pmix = append(pmix, p01...)
 
+	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen1)
+	fmt.Println("Reference population :", jfilename)
+	pop1.FromJSON(jfilename)
+
 	g1 := pop1.GetFlatGenome()
 	e10 := pop1.GetFlatStateVec("E", 0)
 	e11 := pop1.GetFlatStateVec("E", 1)
@@ -98,20 +93,26 @@ func main() {
 	gmix = append(gmix, e11...)
 	pmix = append(pmix, p11...)
 
-	g2 := pop2.GetFlatGenome()
-	e20 := pop2.GetFlatStateVec("E", 0)
-	e21 := pop2.GetFlatStateVec("E", 1)
-	for k, g := range g2 {
-		e20[k] = append(e20[k], g...)
-		e21[k] = append(e21[k], g...)
-	}
-	p20 := pop2.GetFlatStateVec("P", 0)
-	p21 := pop2.GetFlatStateVec("P", 1)
-	gmix = append(gmix, e20...)
-	pmix = append(pmix, p20...)
-	gmix = append(gmix, e21...)
-	pmix = append(pmix, p21...)
+	if refgen2 > 0 {
+		pop2 := multicell.NewPopulation(*ncellsP, *maxpopP)
+		jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen2)
+		fmt.Println("Reference population :", jfilename)
+		pop2.FromJSON(jfilename)
 
+		g2 := pop2.GetFlatGenome()
+		e20 := pop2.GetFlatStateVec("E", 0)
+		e21 := pop2.GetFlatStateVec("E", 1)
+		for k, g := range g2 {
+			e20[k] = append(e20[k], g...)
+			e21[k] = append(e21[k], g...)
+		}
+		p20 := pop2.GetFlatStateVec("P", 0)
+		p21 := pop2.GetFlatStateVec("P", 1)
+		gmix = append(gmix, e20...)
+		pmix = append(pmix, p20...)
+		gmix = append(gmix, e21...)
+		pmix = append(pmix, p21...)
+	}
 	mp, mg, cov := multicell.GetCrossCov(pmix, gmix, true, true)
 	U, _, V := multicell.GetSVD(cov)
 	paxis := make([]float64, len(mp))
