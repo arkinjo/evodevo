@@ -115,20 +115,23 @@ func main() {
 	}
 	mp, mg, cov := multicell.GetCrossCov(pmix, gmix, true, true)
 	U, _, V := multicell.GetSVD(cov)
-	paxis := make([]float64, len(mp))
-	gaxis := make([]float64, len(mg))
+	paxis := multicell.NewDmat(2, len(mp))
+	gaxis := multicell.NewDmat(2, len(mg))
 	for i := range paxis {
-		paxis[i] = U.At(i, 0)
+		paxis[0][i] = U.At(i, 0)
+		paxis[1][i] = U.At(i, 1)
 	}
 	for i := range gaxis {
-		gaxis[i] = V.At(i, 0)
+		gaxis[0][i] = V.At(i, 0)
+		gaxis[1][i] = V.At(i, 1)
 	}
-	neg := multicell.DotVecs(paxis, denv)
-	if neg < 0.0 {
-		multicell.ScaleVec(paxis, -1.0, paxis)
-		multicell.ScaleVec(gaxis, -1.0, gaxis)
+	for a, pa := range paxis {
+		neg := multicell.DotVecs(pa, denv)
+		if neg < 0.0 {
+			multicell.ScaleVec(paxis[a], -1.0, pa)
+			multicell.ScaleVec(gaxis[a], -1.0, gaxis[a])
+		}
 	}
-
 	log.Printf("Dumping start")
 	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
 		ofilename := fmt.Sprintf("%s_%3.3d.dat", PG_Filename, gen)
@@ -136,7 +139,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Fprintln(fout, "#Geno0 \t Pheno0 \t Geno1 \t Pheno1")
+		fmt.Fprintf(fout, "#Geno+e0(0)\t Pheno0(0)\tGeno+e1(0)\tPheno1(0)")
+		fmt.Fprintf(fout, "\tGeno+e0(1)\t Pheno0(1)\tGeno+e1(1)\tPheno1(1)\n")
+
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 		pop.FromJSON(jfilename)
@@ -157,12 +162,15 @@ func main() {
 			multicell.DiffVecs(pt0[k], pt0[k], mp)
 			multicell.DiffVecs(pt1[k], pt1[k], mp)
 
-			x0 := multicell.DotVecs(et0[k], gaxis)
-			y0 := multicell.DotVecs(pt0[k], paxis)
-			x1 := multicell.DotVecs(et1[k], gaxis)
-			y1 := multicell.DotVecs(pt1[k], paxis)
+			for a, pa := range paxis {
+				x0 := multicell.DotVecs(et0[k], gaxis[a])
+				y0 := multicell.DotVecs(pt0[k], pa)
+				x1 := multicell.DotVecs(et1[k], gaxis[a])
+				y1 := multicell.DotVecs(pt1[k], pa)
+				fmt.Fprintf(fout, "\t%f\t%f\t%f\t%f", x0, y0, x1, y1)
+			}
+			fmt.Println()
 
-			fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", x0, y0, x1, y1)
 		}
 		err = fout.Close()
 		if err != nil {
