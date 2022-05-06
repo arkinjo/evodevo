@@ -32,6 +32,7 @@ train/train
 runsim/runsim
 ccphenv/ccphenv
 pgproj/pgproj
+pgproj2/pgproj2
 geneal/geneal
 pgcov/pgcov
 pegcov/pegcov
