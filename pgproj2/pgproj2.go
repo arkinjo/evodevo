@@ -17,7 +17,8 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	refgenPtr := flag.Int("refgen", 50, "reference generation for evolved genotype")
+	ref1Ptr := flag.Int("ref1", 50, "reference generation for evolved genotype")
+	ref2Ptr := flag.Int("ref2", 200, "reference generation for evolved genotype")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
 	jsoninPtr := flag.String("jsonin", "", "JSON file of input population") //default to empty string
@@ -26,7 +27,8 @@ func main() {
 
 	epochlength := *genPtr
 	fmt.Println("epochlength", epochlength)
-	refgen := *refgenPtr
+	refgen1 := *ref1Ptr
+	refgen2 := *ref2Ptr
 	PG_Filename = *pgfilenamePtr
 
 	json_in = *jsoninPtr
@@ -34,21 +36,25 @@ func main() {
 	if json_in == "" {
 		log.Fatal("Must specify JSON input file.")
 	}
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
+	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
 	jfilename := fmt.Sprintf("%s_001.json", json_in)
 	pop0.FromJSON(jfilename)
 	multicell.SetParams(pop0.Params)
 
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
-	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen)
+	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen1)
 	fmt.Println("Reference population :", jfilename)
 	pop1.FromJSON(jfilename)
+
+	pop2 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen2)
+	fmt.Println("Reference population :", jfilename)
+	pop2.FromJSON(jfilename)
 
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
 
-	fmt.Println("Dumping projections")
 	tdump := time.Now()
 
 	// Reference direction
@@ -61,14 +67,50 @@ func main() {
 
 	// Get Principal Axis of <phenotype-genotype> cross-covariance
 	log.Println("Finding Principal Axes")
-	gmix := pop0.GetFlatGenome()
-	pmix := pop0.GetFlatStateVec("P", 0)
+	gmix := make([][]float64, 0)
+	pmix := make([][]float64, 0)
+
+	g0 := pop0.GetFlatGenome()
+	e00 := pop0.GetFlatStateVec("E", 0)
+	e01 := pop0.GetFlatStateVec("E", 1)
+	for k, g := range g0 {
+		e00[k] = append(e00[k], g...)
+		e01[k] = append(e01[k], g...)
+	}
+	p00 := pop0.GetFlatStateVec("P", 0)
+	p01 := pop0.GetFlatStateVec("P", 1)
+	gmix = append(gmix, e00...)
+	pmix = append(pmix, p00...)
+	gmix = append(gmix, e01...)
+	pmix = append(pmix, p01...)
 
 	g1 := pop1.GetFlatGenome()
-	p1 := pop1.GetFlatStateVec("P", 1)
+	e10 := pop1.GetFlatStateVec("E", 0)
+	e11 := pop1.GetFlatStateVec("E", 1)
+	for k, g := range g1 {
+		e10[k] = append(e10[k], g...)
+		e11[k] = append(e11[k], g...)
+	}
+	p10 := pop1.GetFlatStateVec("P", 1)
+	p11 := pop1.GetFlatStateVec("P", 1)
+	gmix = append(gmix, e10...)
+	pmix = append(pmix, p10...)
+	gmix = append(gmix, e11...)
+	pmix = append(pmix, p11...)
 
-	gmix = append(gmix, g1...)
-	pmix = append(pmix, p1...)
+	g2 := pop2.GetFlatGenome()
+	e20 := pop2.GetFlatStateVec("E", 0)
+	e21 := pop2.GetFlatStateVec("E", 1)
+	for k, g := range g2 {
+		e20[k] = append(e20[k], g...)
+		e21[k] = append(e21[k], g...)
+	}
+	p20 := pop2.GetFlatStateVec("P", 0)
+	p21 := pop2.GetFlatStateVec("P", 1)
+	gmix = append(gmix, e20...)
+	pmix = append(pmix, p20...)
+	gmix = append(gmix, e21...)
+	pmix = append(pmix, p21...)
 
 	mp, mg, cov := multicell.GetCrossCov(pmix, gmix, true, true)
 	U, _, V := multicell.GetSVD(cov)
@@ -93,22 +135,33 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Fprintln(fout, "#AncPhen \t NovPhen \t Genotype")
+		fmt.Fprintln(fout, "#Geno0 \t Pheno0 \t Geno1 \t Pheno1")
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 		pop.FromJSON(jfilename)
+		gt := pop.GetFlatGenome()
+		et0 := pop.GetFlatStateVec("E", 0)
+		et1 := pop.GetFlatStateVec("E", 1)
+		for k, g := range gt {
+			et0[k] = append(et0[k], g...)
+			et1[k] = append(et1[k], g...)
+		}
+
 		pt0 := pop.GetFlatStateVec("P", 0)
 		pt1 := pop.GetFlatStateVec("P", 1)
-		gt := pop.GetFlatGenome()
-		for k, g := range gt {
-			multicell.DiffVecs(gt[k], g, mg)
+
+		for k := range et0 {
+			multicell.DiffVecs(et0[k], et0[k], mg)
+			multicell.DiffVecs(et1[k], et1[k], mg)
 			multicell.DiffVecs(pt0[k], pt0[k], mp)
 			multicell.DiffVecs(pt1[k], pt1[k], mp)
 
-			x0 := multicell.DotVecs(pt0[k], paxis)
-			x1 := multicell.DotVecs(pt1[k], paxis)
-			y := multicell.DotVecs(gt[k], gaxis)
-			fmt.Fprintf(fout, "%f\t %f\t %f\n", x0, x1, y)
+			x0 := multicell.DotVecs(et0[k], gaxis)
+			y0 := multicell.DotVecs(pt0[k], paxis)
+			x1 := multicell.DotVecs(et1[k], gaxis)
+			y1 := multicell.DotVecs(pt1[k], paxis)
+
+			fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", x0, y0, x1, y1)
 		}
 		err = fout.Close()
 		if err != nil {
