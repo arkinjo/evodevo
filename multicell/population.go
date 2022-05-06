@@ -134,7 +134,6 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 }
 
 func (pop *Population) FromJSON(filename string) {
-	log.Printf("Importing initial population from %s \n", filename)
 	pop.ClearGenome()
 	fin, err := os.Open(filename)
 	if err != nil {

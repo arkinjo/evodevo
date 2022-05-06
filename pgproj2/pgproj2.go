@@ -13,6 +13,7 @@ var PG_Filename string //Dump for phenotypes and genotypes
 var json_in string     //JSON encoding of initial population; default to empty string
 
 func main() {
+	log.Println("Starting...")
 	t0 := time.Now()
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
@@ -26,7 +27,6 @@ func main() {
 	flag.Parse()
 
 	epochlength := *genPtr
-	fmt.Println("epochlength", epochlength)
 	refgen1 := *ref1Ptr
 	refgen2 := *ref2Ptr
 	PG_Filename = *pgfilenamePtr
@@ -36,6 +36,10 @@ func main() {
 	if json_in == "" {
 		log.Fatal("Must specify JSON input file.")
 	}
+
+	log.Println("epochlength", epochlength)
+
+	log.Println("Reading Pop0")
 	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
 	jfilename := fmt.Sprintf("%s_001.json", json_in)
 	pop0.FromJSON(jfilename)
@@ -56,7 +60,6 @@ func main() {
 	multicell.NormalizeVec(denv)
 
 	// Get Principal Axis of <phenotype-genotype> cross-covariance
-	log.Println("Finding Principal Axes")
 	gmix := make([][]float64, 0)
 	pmix := make([][]float64, 0)
 
@@ -73,7 +76,17 @@ func main() {
 	pmix = append(pmix, p00...)
 	gmix = append(gmix, e01...)
 	pmix = append(pmix, p01...)
+	/*
+		for k, g := range gmix {
+			fmt.Printf("GMIX\t%d", k)
+			for _, v := range g {
+				fmt.Printf("\t%e", v)
+			}
+			fmt.Println()
+		}*/
+	log.Println("lenG,lenP=", len(gmix[0]), len(pmix[0]))
 
+	log.Println("Reading Pop1")
 	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
 	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen1)
 	fmt.Println("Reference population :", jfilename)
@@ -94,6 +107,7 @@ func main() {
 	pmix = append(pmix, p11...)
 
 	if refgen2 > 0 {
+		log.Println("Reading Pop2")
 		pop2 := multicell.NewPopulation(*ncellsP, *maxpopP)
 		jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen2)
 		fmt.Println("Reference population :", jfilename)
@@ -113,15 +127,18 @@ func main() {
 		gmix = append(gmix, e21...)
 		pmix = append(pmix, p21...)
 	}
+	log.Println("")
+	log.Println("Finding Principal Axes")
 	mp, mg, cov := multicell.GetCrossCov(pmix, gmix, true, true)
-	U, _, V := multicell.GetSVD(cov)
+	U, sval, V := multicell.GetSVD(cov)
+	log.Println("Svals:", sval)
 	paxis := multicell.NewDmat(2, len(mp))
 	gaxis := multicell.NewDmat(2, len(mg))
-	for i := range paxis {
+	for i := range paxis[0] {
 		paxis[0][i] = U.At(i, 0)
 		paxis[1][i] = U.At(i, 1)
 	}
-	for i := range gaxis {
+	for i := range gaxis[0] {
 		gaxis[0][i] = V.At(i, 0)
 		gaxis[1][i] = V.At(i, 1)
 	}
@@ -139,8 +156,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Fprintf(fout, "#Geno+e0(0)\t Pheno0(0)\tGeno+e1(0)\tPheno1(0)")
-		fmt.Fprintf(fout, "\tGeno+e0(1)\t Pheno0(1)\tGeno+e1(1)\tPheno1(1)\n")
+		fmt.Fprintf(fout, "#Geno+e0(0) \tPheno0(0) \tGeno+e1(0) \tPheno1(0)")
+		fmt.Fprintf(fout, "\t Geno+e0(1) \tPheno0(1) \tGeno+e1(1)\tPheno1(1)\n")
 
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
@@ -167,9 +184,9 @@ func main() {
 				y0 := multicell.DotVecs(pt0[k], pa)
 				x1 := multicell.DotVecs(et1[k], gaxis[a])
 				y1 := multicell.DotVecs(pt1[k], pa)
-				fmt.Fprintf(fout, "\t%f\t%f\t%f\t%f", x0, y0, x1, y1)
+				fmt.Fprintf(fout, "%e\t%e\t%e\t%e\t", x0, y0, x1, y1)
 			}
-			fmt.Println()
+			fmt.Fprintf(fout, "\n")
 
 		}
 		err = fout.Close()
