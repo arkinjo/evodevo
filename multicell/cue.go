@@ -20,9 +20,9 @@ func NewIDVec(n, id int) Vec {
 	v := NewVec(n)
 	for i := range v {
 		if i == id {
-			v[i] = 1
+			v[i] = cueMag
 		} else {
-			v[i] = -1
+			v[i] = -cueMag
 		}
 	}
 	return v
@@ -66,9 +66,9 @@ func RandomEnv(nenv, id int, density float64) Cue { //Fake up a boolean environm
 	for i := range tv {
 		r = rand_cue.Float64()
 		if r < density { //density is probability of 1
-			tv[i] = 1
+			tv[i] = cueMag
 		} else {
-			tv[i] = -1
+			tv[i] = -cueMag
 		}
 	}
 	idv := NewIDVec(ncells, id)
@@ -159,11 +159,7 @@ func ChangeEnvs(cues Cues, n int) Cues { //Mutates precisely n bits in environme
 	//fmt.Println("Cue index:",mutcues)
 	for j, cell := range mutcells {
 		cue = mutcues[j]
-		if envs1[cell][cue] == -1 {
-			envs1[cell][cue] = 1
-		} else {
-			envs1[cell][cue] = -1
-		}
+		envs1[cell][cue] = -envs1[cell][cue]
 	}
 	//envs1.Es = cs
 	//fmt.Println("Update:",envs1)
@@ -216,10 +212,10 @@ func PCA2Cues(pop0 *Population, ipca int) Cues {
 	dbit := 0
 	for i := 0; i < dim; i++ {
 		if fenv0[i] < 0 && u.AtVec(i) > 0 {
-			fenv1[i] = 1
+			fenv1[i] = cueMag
 			dbit++
 		} else if fenv0[i] > 0 && u.AtVec(i) < 0 {
-			fenv1[i] = -1
+			fenv1[i] = -cueMag
 			dbit++
 		} else {
 			fenv1[i] = fenv0[i]

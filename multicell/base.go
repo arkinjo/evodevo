@@ -29,6 +29,7 @@ var ncells int = 1    //number of cell types/phenotypes to be trained simultaneo
 var pheno_feedback bool = false
 var devNoise float64 = 0.05
 
+const cueMag float64 = 10.0   // each trait is +/-cueMag
 const maxDevStep int = 200    // Maximum steps for development.
 const ccStep int = 5          // Number of steady steps for convergence
 const epsDev float64 = 1.0e-5 // Convergence criterion of development.
@@ -53,8 +54,6 @@ const selDevStep float64 = 20.0       // Developmental steps for selection
 //var selStrength float64             //declaration; Selection strength per unit cue
 //var minFitness float64
 const minWagnerFitness float64 = 0.01
-
-var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
 
 var withE bool = false  // with or without environmental cues.
 var cuestrength float64 // cue strength
@@ -216,7 +215,8 @@ func sigmah(x float64) float64 { //Activation function for higher order complexe
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
-	return lecunatan(x * omega_p)
+	//	return lecunatan(x * omega_p)
+	return cueMag * tanh(x, omega_p)
 }
 
 func NewDmat(nrow, ncol int) Dmat {
