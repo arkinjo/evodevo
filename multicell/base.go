@@ -29,7 +29,7 @@ var ncells int = 1    //number of cell types/phenotypes to be trained simultaneo
 var pheno_feedback bool = false
 var devNoise float64 = 0.05
 
-const cueMag float64 = 10.0   // each trait is +/-cueMag
+const cueMag float64 = 1.0    // each trait is +/-cueMag
 const maxDevStep int = 200    // Maximum steps for development.
 const ccStep int = 5          // Number of steady steps for convergence
 const epsDev float64 = 1.0e-5 // Convergence criterion of development.
@@ -48,7 +48,7 @@ var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
 const baseMutationRate float64 = 0.01 // default probability of mutation of genome
 var mutRate float64                   //declaration
-const baseSelStrength float64 = 20    // default selection strength; to be normalized by number of cells
+const baseSelStrength float64 = 20.0  // default selection strength; to be normalized by number of cells
 const selDevStep float64 = 20.0       // Developmental steps for selection
 
 //var selStrength float64             //declaration; Selection strength per unit cue
@@ -204,18 +204,20 @@ func relu(x, omega float64) float64 {
 
 func sigmaf(x float64) float64 { //Activation function for epigenetic markers
 	return lecunatan(x * omega_f)
+	//return tanh(x, omega_f)
 }
 
 func sigmag(x float64) float64 { //Activation function for gene expression levels
 	return lecunatan(x * omega_g)
+	//return tanh(x, omega_g)
 }
 
 func sigmah(x float64) float64 { //Activation function for higher order complexes
 	return lecunatan(x * omega_h) //abstract level of amount of higher order complexes
+	//return tanh(x, omega_h)
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
-	//	return lecunatan(x * omega_p)
 	return cueMag * tanh(x, omega_p)
 }
 

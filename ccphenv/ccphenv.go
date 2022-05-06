@@ -62,23 +62,7 @@ func main() {
 
 	dotPE := multicell.DotVecs(dp, de)
 	dotPP := multicell.DotVecs(dp, dp)
-	pefn2 := 0.0
-	ppfn2 := 0.0
-	for _, p := range dp {
-		for _, p2 := range dp {
-			ppfn2 += (p * p2) * (p * p2)
-		}
-		for _, e := range denv {
-			pefn2 += (p * e) * (p * e)
-		}
-	}
 	dotEE := multicell.DotVecs(de, de)
-	eefn2 := 0.0
-	for _, e := range denv {
-		for _, e2 := range denv {
-			eefn2 += (e * e2) * (e * e2)
-		}
-	}
 
 	dirE := mat.NewVecDense(dim, multicell.CopyVec(denv))
 	dirE.ScaleVec(1.0/dirE.Norm(2), dirE)
@@ -86,7 +70,7 @@ func main() {
 	dirP.ScaleVec(1.0/dirP.Norm(2), dirP)
 
 	Project("<dp_dp>", dirE, dirP, deltaP, deltaP, false, false)
-	fmt.Printf("<dp><dp>_FN2,Tr\t\t%e\t%e\n", ppfn2, dotPP)
+	fmt.Printf("||<dp>||^2\t%e\n", dotPP)
 	Project("<Ddp_Ddp>", dirE, dirP, deltaP, deltaP, true, true)
 	Project(" <Dp1_Dp1>", dirE, dirP, p1, p1, true, true)
 	Project(" <Dp0_Dp0>", dirE, dirP, p0, p0, true, true)
@@ -94,7 +78,7 @@ func main() {
 	Project(" <Dp0_Dp1>", dirE, dirP, p0, p1, true, true)
 
 	Project("<dp_de>", dirE, dirP, deltaP, deltaE, false, false)
-	fmt.Printf("<dp><de>FN2,Tr\t\t%e\t%e\n", pefn2, dotPE)
+	fmt.Printf("<dp><de>FN2,Tr\t\t%e\t%e\n", dotPP*dotEE, dotPE)
 	Project("<Ddp_Dde>", dirE, dirP, deltaP, deltaE, true, true)
 	Project(" <Dp1_De1>", dirE, dirP, p1, e1, true, true)
 	Project(" <Dp0_De0>", dirE, dirP, p0, e0, true, true)
@@ -102,7 +86,7 @@ func main() {
 	Project(" <Dp0_De1>", dirE, dirP, p0, e1, true, true)
 
 	Project("<de_de>", dirE, dirE, deltaE, deltaE, false, false)
-	fmt.Printf("<de><de>FN2,Tr\t\t%e\t%e\n", eefn2, dotEE)
+	fmt.Printf("||<de>||^2\t%e\n", dotEE)
 	Project("<Dde_Dde>", dirE, dirP, deltaE, deltaE, true, true)
 	Project(" <De1_De1>", dirE, dirP, e1, e1, true, true)
 	Project(" <De0_De0>", dirE, dirP, e0, e0, true, true)

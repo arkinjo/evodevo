@@ -31,7 +31,6 @@ func main() {
 
 	pcindexPtr := flag.Int("pcindex", -1, "index of principal component of environment")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	omegaPtr := flag.Float64("omega", 1.0, "parameter of sigmoid")
 	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
 	tfilenamePtr := flag.String("traj_file", "traj.dat", "Filename of trajectories")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
@@ -45,7 +44,6 @@ func main() {
 	T_Filename = *tfilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
-	multicell.Omega = *omegaPtr
 
 	ncells := *ncellsP
 	pop0 := multicell.NewPopulation(ncells, *maxpopP) //with randomized genome to start
@@ -81,12 +79,12 @@ func main() {
 		NovEnvs = multicell.PCA2Cues(&pop0, pcindex)
 	}
 
-	popstart.NovEnvs = NovEnvs //control size of perturbation of environment cue vector at start of epoch.
+	popstart.NovEnvs = NovEnvs
 
 	tevol := time.Now()
 
-	fmt.Println("Novel environment     :", popstart.NovEnvs)
-	fmt.Println("Ancestral environment :", popstart.AncEnvs)
+	log.Println("Novel environment     :", popstart.NovEnvs)
+	log.Println("Ancestral environment :", popstart.AncEnvs)
 
 	pop1 := popstart.Evolve(true, ftraj, json_out, epochlength, 1)
 	fmt.Println("End of epoch")

@@ -27,8 +27,8 @@ func main() {
 	ncellsP := flag.Int("ncells", 1, "Number of cell types")
 	sdNoiseP := flag.Float64("sdNoise", 0.05, "Std.Dev. of environmental noise")
 
-	seedPtr := flag.Int("seed", 1, "random seed")
-	seed_cuePtr := flag.Int("seed_cue", 1, "random seed for environmental cue")
+	seedPtr := flag.Int("seed", 13, "random seed")
+	seed_cuePtr := flag.Int("seed_cue", 7, "random seed for environmental cue")
 	epochPtr := flag.Int("nepoch", 20, "number of epochs")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 

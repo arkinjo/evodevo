@@ -46,7 +46,7 @@ func main() {
 	lenE := len(env0)
 	denv := multicell.NewVec(lenE)
 	multicell.DiffVecs(denv, env1, env0)
-	multicell.ScaleVec(denv, 1.0/multicell.Norm2(denv), denv)
+	multicell.NormalizeVec(denv)
 
 	genome := pop.GetFlatGenome()
 	genome1 := pop1.GetFlatGenome()
@@ -96,54 +96,45 @@ func main() {
 	rank := len(svals)
 	Up := multicell.NewDmat(rank, lenE)
 	Veg := multicell.NewDmat(rank, lenE+lenG)
-	Ve := multicell.NewDmat(rank, lenE)
-	Vg := multicell.NewDmat(rank, lenG)
+	Ve := multicell.NewDmat(rank, 0)
+	Vg := multicell.NewDmat(rank, 0)
 	weightE := multicell.NewVec(rank)
 
 	for a := range svals {
-		k := 0
-		mage := 0.0
-		magg := 0.0
-		for i := 0; i < lenE; i++ {
+		for i := range Up[a] {
 			Up[a][i] = U.At(i, a)
-			v := V.At(i, a)
-			Ve[a][i] = v
-			Veg[a][i] = v
-			mage += v * v
-			k++
 		}
-		for i := 0; i < lenG; i++ {
-			v := V.At(i, a)
-			Vg[a][i] = v
-			Veg[a][lenE+i] = v
-			magg += v * v
-			k++
+		for i := range Veg[a] {
+			Veg[a][i] = V.At(i, a)
 		}
-		weightE[a] = mage
-		multicell.NormalizeVec(Ve[a])
-		multicell.NormalizeVec(Vg[a])
 
 		neg := multicell.DotVecs(Up[a], denv)
 		if neg < 0.0 {
 			multicell.ScaleVec(Up[a], -1, Up[a])
-			multicell.ScaleVec(Ve[a], -1, Ve[a])
-			multicell.ScaleVec(Vg[a], -1, Vg[a])
 			multicell.ScaleVec(Veg[a], -1, Veg[a])
 		}
+		Ve[a] = multicell.CopyVec(Veg[a][0:lenE])
+		Vg[a] = multicell.CopyVec(Veg[a][lenE:])
+		weightE[a] = multicell.Norm2Sq(Ve[a])
+		multicell.NormalizeVec(Ve[a])
+		multicell.NormalizeVec(Vg[a])
 	}
 
 	fne := 0.0
 	fng := 0.0
+	fnp := 0.0
 	for _, p := range mp {
-		for _, e := range me {
-			fne += (p * e) * (p * e)
-		}
-		for _, g := range mg {
-			fng += (p * g) * (p * g)
-		}
+		fnp += p * p
 	}
-	fmt.Printf("<dp><de>_FN2\t%e\n", fne)
-	fmt.Printf("<dp><dG>_FN2\t%e\n", fng)
+	for _, e := range me {
+		fne += e * e
+	}
+	for _, g := range mg {
+		fng += g * g
+	}
+
+	fmt.Printf("<dp><de><dG>_FN2\t%e\t%e\t%e\n", fnp, fne, fng)
+
 	totS := 0.0
 	totSe := 0.0
 	for a, v := range svals {
@@ -163,11 +154,11 @@ func main() {
 	fmt.Printf("Center\t0")
 	for a := 0; a < 3; a++ {
 		doteg := multicell.DotVecs(meg, Veg[a])
-		dotg := multicell.DotVecs(mg, Vg[a])
 		dote := multicell.DotVecs(me, Ve[a])
+		dotg := multicell.DotVecs(mg, Vg[a])
 		dotp := multicell.DotVecs(mp, Up[a])
 
-		fmt.Printf("\t%e\t%e\t%e\t%e", doteg, dotg, dote, dotp)
+		fmt.Printf("\t%e\t%e\t%e\t%e", doteg, dote, dotg, dotp)
 	}
 	fmt.Println()
 

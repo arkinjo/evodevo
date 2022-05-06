@@ -346,7 +346,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	copy(cell.F, f1)
 	copy(cell.G, g1)
 	copy(cell.H, h1)
-	cell.PErr = DistVecs1(cell.P, env)
+	cell.PErr = DistVecs1(cell.P, env) / cueMag
 
 	return *cell
 }

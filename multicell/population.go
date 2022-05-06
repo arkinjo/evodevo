@@ -93,20 +93,19 @@ func (pop *Population) GetStats() PopStats {
 			div += t / fn
 		}
 	}
-
+	env0 := FlattenEnvs(pop.AncEnvs)
 	env1 := FlattenEnvs(pop.NovEnvs)
-	dirE := CopyVec(env1)
+	lenE := len(env1)
+	dirE := NewVec(lenE)
+	DiffVecs(dirE, env1, env0)
 	NormalizeVec(dirE)
 
-	p1 := pop.GetFlatStateVec("P", 1)
-	mdot := 0.0
-	for _, p := range p1 {
-		dirP := CopyVec(p)
-		NormalizeVec(dirP)
-		mdot += DotVecs(dirP, dirE)
-	}
+	mp1 := GetMeanVec(pop.GetFlatStateVec("P", 1))
+	dirP := NewVec(lenE)
+	DiffVecs(dirP, mp1, env0)
+	NormalizeVec(dirP)
 
-	stats.PEDot = mdot / fn
+	stats.PEDot = DotVecs(dirP, dirE)
 	stats.PErr1 = merr1 / fn
 	stats.PErr0 = merr0 / fn
 	stats.PED10 = md10 / fn
@@ -450,6 +449,7 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 	return pop
 }
 
+/*
 func (pop *Population) Dump_Phenotypes(Filename string, gen int) {
 	pop.DevPop(gen)
 
@@ -472,15 +472,15 @@ func (pop *Population) Dump_Phenotypes(Filename string, gen int) {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
+        }
+*/
 
 func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, Paxis Cues) {
-	var defpproj, ancpproj, novpproj, gproj float64
+	var ancpproj, novpproj, gproj float64
 	pop.DevPop(gen) //Not needed for bugfixing
 
 	anccphen := make(Vec, nenv+ncells)
 	novcphen := make(Vec, nenv+ncells)
-	defcphen := make(Vec, nenv+ncells)
 
 	mu := pop.Get_Mid_Env()
 	Projfilename := fmt.Sprintf("%s_%3.3d.dat", Filename, gen)
@@ -489,15 +489,10 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintln(fout, "#DefPhen \t AncPhen \t NovPhen \t Genotype")
+	fmt.Fprintln(fout, "#AncPhen \t NovPhen \t Genotype")
 
 	for _, indiv := range pop.Indivs {
-		defpproj, ancpproj, novpproj, gproj = 0.0, 0.0, 0.0, 0.0
-
-		for i, env := range mu { //For each environment cue
-			DiffVecs(defcphen, indiv.Bodies[INovEnv].Cells[i].P, env) //centralize
-			defpproj += DotVecs(defcphen, Paxis[i])
-		}
+		ancpproj, novpproj, gproj = 0.0, 0.0, 0.0
 
 		for i, env := range mu { //For each environment cue
 			DiffVecs(anccphen, indiv.Bodies[IAncEnv].Cells[i].P, env) //centralize
@@ -525,7 +520,7 @@ func (pop *Population) Dump_Projections(Filename string, gen int, Gaxis Genome, 
 			}
 		}
 
-		fmt.Fprintf(fout, "%f\t %f\t %f\t %f\n", defpproj, ancpproj, novpproj, gproj)
+		fmt.Fprintf(fout, "%f\t %f\t %f\n", ancpproj, novpproj, gproj)
 	}
 	err = fout.Close()
 	if err != nil {
