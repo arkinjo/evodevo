@@ -93,22 +93,20 @@ func (pop *Population) GetStats() PopStats {
 			div += t / fn
 		}
 	}
-	env0 := FlattenEnvs(pop.AncEnvs)
+
 	env1 := FlattenEnvs(pop.NovEnvs)
-	dim := len(env0)
-	dirE := NewVec(dim)
-	DiffVecs(dirE, env1, env0)
-	ScaleVec(dirE, 1.0/Norm2(dirE), dirE)
+	dirE := CopyVec(env1)
+	NormalizeVec(dirE)
 
-	p0 := pop.GetFlatStateVec("P", 0)
 	p1 := pop.GetFlatStateVec("P", 1)
-	mp0 := GetMeanVec(p0)
-	mp1 := GetMeanVec(p1)
-	dirP := NewVec(dim)
-	DiffVecs(dirP, mp1, mp0)
-	ScaleVec(dirP, 1.0/Norm2(dirP), dirP)
+	mdot := 0.0
+	for _, p := range p1 {
+		dirP := CopyVec(p)
+		NormalizeVec(dirP)
+		mdot += DotVecs(dirP, dirE)
+	}
 
-	stats.PEDot = DotVecs(dirP, dirE)
+	stats.PEDot = mdot / fn
 	stats.PErr1 = merr1 / fn
 	stats.PErr0 = merr0 / fn
 	stats.PED10 = md10 / fn
@@ -444,7 +442,7 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 
 		fmt.Fprintf(ftraj, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.PEDot, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
-		fmt.Printf("Evol_step: %d\t <Npop>: %d\t<PEDot>: %e\t<ME1>: %e\t<ME0>: %e\t<MDf10>: %e\t<MDf01>: %e\t<Fit>: %e\t<WFit>: %e\t<Plas>: %e\t<Div>: %e\t<Ndev>: %e\n ", istep, popsize, pstat.PEDot, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
+		fmt.Printf("Evolve: %d\t<ME1>: %e\t<ME0>: %e\n", istep, pstat.PErr1, pstat.PErr0)
 
 		pop = pop.PairReproduce(maxPop)
 	}
