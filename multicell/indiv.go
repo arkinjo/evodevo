@@ -47,6 +47,8 @@ type Indiv struct { //An individual as an unicellular organism
 	Fit        float64 //Fitness with cues
 	WagFit     float64 //Wagner relative fitness
 	Plasticity float64 //Observed Plasticity
+	Dp1e1      float64 // ||p(e1) - e1||
+	Dp0e0      float64 // ||p(e0) - e0||
 	Dp1e0      float64 // ||p(e1) - e0||
 	Dp0e1      float64 // ||p(e0) - e1||
 }
@@ -123,7 +125,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 		bodies[i] = NewBody(ncells)
 	}
 
-	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -138,6 +140,8 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 	}
 	indiv1.Fit = indiv.Fit
 	indiv1.Plasticity = indiv.Plasticity
+	indiv1.Dp1e1 = indiv.Dp1e1
+	indiv1.Dp0e0 = indiv.Dp0e0
 	indiv1.Dp1e0 = indiv.Dp1e0
 	indiv1.Dp0e1 = indiv.Dp0e1
 
@@ -197,8 +201,8 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		bodies1[i] = NewBody(ncells)
 	}
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
@@ -378,8 +382,9 @@ func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare development
 
 	indiv.Fit = indiv.getFitness()
 
-	// Ignoring convergence/divergence for now
 	indiv.Plasticity = getPlasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
+	indiv.Dp1e1 = getPEDiff(indiv.Bodies[INovEnv], novenvs)
+	indiv.Dp0e0 = getPEDiff(indiv.Bodies[IAncEnv], ancenvs)
 	indiv.Dp1e0 = getPEDiff(indiv.Bodies[INovEnv], ancenvs)
 	indiv.Dp0e1 = getPEDiff(indiv.Bodies[IAncEnv], novenvs)
 	return *indiv
