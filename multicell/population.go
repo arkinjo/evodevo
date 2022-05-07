@@ -54,8 +54,8 @@ func (pop *Population) GetStats() PopStats {
 	}
 
 	for _, indiv := range pop.Indivs {
-		merr1 += indiv.getPErr(INovEnv)
-		merr0 += indiv.getPErr(IAncEnv)
+		merr1 += indiv.Dp1e1
+		merr0 += indiv.Dp0e0
 		md10 += indiv.Dp1e0
 		md01 += indiv.Dp0e1
 		mf += indiv.Fit
@@ -211,10 +211,6 @@ func (pop *Population) Copy() Population {
 		pop1.Indivs[i] = indiv.Copy()
 	}
 	return pop1
-}
-
-func (pop *Population) SortPopIndivs() {
-	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id }) //Hopefully this works
 }
 
 func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average phenotype of population; output as slice instead of cue struct
@@ -412,8 +408,9 @@ func (pop *Population) DevPop(gen int) Population {
 		pop.Indivs[i] = <-ch //Update output results
 	}
 
+	pop.SetWagnerFitness()
 	//We might need a sorter here.
-	pop.SortPopIndivs()
+	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id })
 
 	return *pop
 }
@@ -433,8 +430,6 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 			}
 		}
 
-		pop.SetWagnerFitness()
-
 		pstat := pop.GetStats()
 		popsize := len(pop.Indivs)
 
@@ -444,7 +439,6 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 
 		pop = pop.PairReproduce(maxPop)
 	}
-
 	return pop
 }
 
