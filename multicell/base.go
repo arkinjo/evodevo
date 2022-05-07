@@ -31,44 +31,44 @@ var devNoise float64 = 0.05
 
 const cueMag float64 = 1.0    // each trait is +/-cueMag
 const maxDevStep int = 200    // Maximum steps for development.
-const ccStep int = 5          // Number of steady steps for convergence
 const epsDev float64 = 1.0e-5 // Convergence criterion of development.
 const eps float64 = 1.0e-50
 const sqrt3 float64 = 1.7320508075688772935274463415058723669428052538103806280558069794519330169088000370811461867572485756756261414154
-const alphaEMA = 2.0 / (1.0 + 5.0) // exponential moving average/variance
+const ccStep float64 = 5.0            // Number of steady steps for convergence
+const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var geneLength int                                //calculated from layers present or absent.
 
-const funcspergene float64 = 1.0 //average number of functions per gene
-var GenomeDensity float64 = funcspergene / float64(ngenes)
-var CueResponseDensity float64 = -math.Log(eps) / float64(ngenes)
+const funcsPerGene float64 = 1.0 //average number of functions per gene
+var GenomeDensity float64 = funcsPerGene / float64(ngenes)
+
+//var CueResponseDensity float64 = -math.Log(eps) / float64(ngenes) // Why this?
+var CueResponseDensity float64 = funcsPerGene / float64(nenv)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
-const baseMutationRate float64 = 0.001 // default probability of mutation of genome
+const baseMutationRate float64 = 0.005 // default probability of mutation of genome
 var mutRate float64                    //declaration
 const baseSelStrength float64 = 20.0   // default selection strength; to be normalized by number of cells
 const selDevStep float64 = 20.0        // Developmental steps for selection
 
-//var selStrength float64             //declaration; Selection strength per unit cue
-//var minFitness float64
 const minWagnerFitness float64 = 0.01
 
-var withE bool = false  // with or without environmental cues.
-var cuestrength float64 // cue strength
-var withF bool = true   // Epigenetic marker layer
-var withH bool = true   // Higher order complexes layer
+var withE bool = false // with or without environmental cues.
+var withF bool = true  // Epigenetic marker layer
+var withH bool = true  // Higher order complexes layer
 var withJ bool = false
-var jstrength float64 //declaration
 
 // theoretical standard deviation of matrix elements
-var sdE float64
-var sdF float64
-var sdG float64
-var sdH float64
-var sdJ float64
-var sdP float64
+const (
+	sdE float64 = 1.0
+	sdF float64 = 1.0
+	sdG float64 = 1.0
+	sdH float64 = 1.0
+	sdJ float64 = 1.0
+	sdP float64 = 1.0
+)
 
 // slope of activation functions
 var omega_f float64 = 1.0
@@ -102,7 +102,6 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	from_g := GenomeDensity * float64(ngenes)
 	if withE {
 		geneLength += nenv + ncells
-		cuestrength = 1.0
 		from_e := CueResponseDensity * float64(nenv+ncells)
 		if pheno_feedback {
 			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
@@ -110,7 +109,6 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 			omega_f = 1.0 / math.Sqrt(from_e+from_g)
 		}
 	} else {
-		cuestrength = 0.0
 		omega_f = 1.0 / math.Sqrt(from_g)
 	}
 
@@ -125,36 +123,16 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 		geneLength += ngenes
 		if withJ {
 			geneLength += ngenes
-			jstrength = 1.0
 			omega_h = 1.0 / math.Sqrt(from_g*2)
 		} else {
-			jstrength = 0.0
 			omega_h = 1.0 / math.Sqrt(from_g)
 		}
 	} else {
 		omega_h = 0.0
 	}
 
-	mutRate = baseMutationRate * float64(fullGeneLength) / float64(geneLength) //to compensate for layer removal.
-
-	//initializing theoretical standard deviations for entries of each matrix
-	sdE = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
-	if s.Pfback {
-		sdE *= math.Sqrt(0.5) // rescale to account for feedback
-	}
-	sdG = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
-	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
-	sdH = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+jstrength))
-	sdJ = math.Sqrt(jstrength / (GenomeDensity * float64(ngenes) * (1 + jstrength)))
-	sdP = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
-
-	/// set all sd* to 1
-	sdE = 1.0
-	sdF = 1.0
-	sdG = 1.0
-	sdH = 1.0
-	sdJ = 1.0
-	sdP = 1.0
+	//to compensate for layer removal.
+	mutRate = baseMutationRate * float64(fullGeneLength) / float64(geneLength)
 
 }
 
@@ -168,10 +146,6 @@ func GetNcells() int {
 
 func GetNenv() int {
 	return nenv
-}
-
-func scale(x float64) float64 {
-	return cuestrength * x
 }
 
 func sigmoid(x, omega float64) float64 {
