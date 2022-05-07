@@ -65,17 +65,17 @@ func main() {
 
 	g0 := pop0.GetFlatGenome()
 	e00 := pop0.GetFlatStateVec("E", 0)
-	//	e01 := pop0.GetFlatStateVec("E", 1)
+	e01 := pop0.GetFlatStateVec("E", 1)
 	for k, g := range g0 {
 		e00[k] = append(e00[k], g...)
-		//		e01[k] = append(e01[k], g...)
+		e01[k] = append(e01[k], g...)
 	}
 	p00 := pop0.GetFlatStateVec("P", 0)
-	//	p01 := pop0.GetFlatStateVec("P", 1)
+	p01 := pop0.GetFlatStateVec("P", 1)
 	gmix = append(gmix, e00...)
 	pmix = append(pmix, p00...)
-	//	gmix = append(gmix, e01...)
-	//	pmix = append(pmix, p01...)
+	gmix = append(gmix, e01...)
+	pmix = append(pmix, p01...)
 	log.Println("lenG,lenP=", len(gmix[0]), len(pmix[0]))
 
 	log.Println("Reading Pop1")
@@ -85,16 +85,16 @@ func main() {
 	pop1.FromJSON(jfilename)
 
 	g1 := pop1.GetFlatGenome()
-	//	e10 := pop1.GetFlatStateVec("E", 0)
+	e10 := pop1.GetFlatStateVec("E", 0)
 	e11 := pop1.GetFlatStateVec("E", 1)
 	for k, g := range g1 {
-		//		e10[k] = append(e10[k], g...)
+		e10[k] = append(e10[k], g...)
 		e11[k] = append(e11[k], g...)
 	}
-	//	p10 := pop1.GetFlatStateVec("P", 1)
+	p10 := pop1.GetFlatStateVec("P", 1)
 	p11 := pop1.GetFlatStateVec("P", 1)
-	//	gmix = append(gmix, e10...)
-	//	pmix = append(pmix, p10...)
+	gmix = append(gmix, e10...)
+	pmix = append(pmix, p10...)
 	gmix = append(gmix, e11...)
 	pmix = append(pmix, p11...)
 
@@ -153,7 +153,7 @@ func main() {
 		}
 		fmt.Fprintf(fout, "#Geno+e0(0) \tPheno0(0) \tGeno+e1(0) \tPheno1(0)")
 		fmt.Fprintf(fout, "\t Geno+e0(1) \tPheno0(1) \tGeno+e1(1)\tPheno1(1)")
-		fmt.Fprintf(fout, "\t ||p0-e0|| \t||p1-e1||\n")
+		fmt.Fprintf(fout, "\t ||p0-e0|| \t||p1-e1|| \tWagFit\n")
 
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
@@ -174,17 +174,19 @@ func main() {
 			multicell.DiffVecs(et1[k], et1[k], mg)
 			multicell.DiffVecs(pt0[k], pt0[k], mp)
 			multicell.DiffVecs(pt1[k], pt1[k], mp)
-			dp1e1 := pop.Indivs[k].Dp1e1
-			dp0e0 := pop.Indivs[k].Dp0e0
 
 			for a, pa := range paxis {
 				x0 := multicell.DotVecs(et0[k], gaxis[a])
 				y0 := multicell.DotVecs(pt0[k], pa)
 				x1 := multicell.DotVecs(et1[k], gaxis[a])
 				y1 := multicell.DotVecs(pt1[k], pa)
-				fmt.Fprintf(fout, "%e\t%e\t%e\t%e", x0, y0, x1, y1)
+				fmt.Fprintf(fout, "\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
 			}
-			fmt.Fprintf(fout, "\t%e\t%e\n", dp1e1, dp0e0)
+			dp1e1 := pop.Indivs[k].Dp1e1
+			dp0e0 := pop.Indivs[k].Dp0e0
+			wf := pop.Indivs[k].WagFit
+
+			fmt.Fprintf(fout, "\t%e\t%e\t%e\n", dp0e0, dp1e1, wf)
 
 		}
 		err = fout.Close()

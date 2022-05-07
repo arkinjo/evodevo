@@ -48,7 +48,7 @@ var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
 const baseMutationRate float64 = 0.01 // default probability of mutation of genome
 var mutRate float64                   //declaration
-const baseSelStrength float64 = 20.0  // default selection strength; to be normalized by number of cells
+const baseSelStrength float64 = 50.0  // default selection strength; to be normalized by number of cells
 const selDevStep float64 = 20.0       // Developmental steps for selection
 
 //var selStrength float64             //declaration; Selection strength per unit cue
@@ -218,6 +218,7 @@ func sigmah(x float64) float64 { //Activation function for higher order complexe
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
+	//return cueMag * lecunatan(x*omega_p)
 	return cueMag * tanh(x, omega_p)
 }
 
