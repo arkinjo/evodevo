@@ -151,9 +151,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Fprintf(fout, "#Geno+e0(0) \tPheno0(0) \tGeno+e1(0) \tPheno1(0)")
-		fmt.Fprintf(fout, "\t Geno+e0(1) \tPheno0(1) \tGeno+e1(1)\tPheno1(1)")
-		fmt.Fprintf(fout, "\t ||p0-e0|| \t||p1-e1|| \tWagFit\n")
+		fmt.Fprintf(fout, "#Geno+e0(0)  \tPheno0(0)  \tGeno+e1(0)  \tPheno1(0)")
+		fmt.Fprintf(fout, "\tGeno+e0(1)  \tPheno0(1)  \tGeno+e1(1)  \tPheno1(1)")
+		fmt.Fprintf(fout, "\t||p0-e0||  \t||p1-e1||  \tFit     \tWagFit\n")
 
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
@@ -184,9 +184,10 @@ func main() {
 			}
 			dp1e1 := pop.Indivs[k].Dp1e1
 			dp0e0 := pop.Indivs[k].Dp0e0
+			fit := pop.Indivs[k].Fit
 			wf := pop.Indivs[k].WagFit
 
-			fmt.Fprintf(fout, "\t%e\t%e\t%e\n", dp0e0, dp1e1, wf)
+			fmt.Fprintf(fout, "\t%e\t%e\t%e\t%e\n", dp0e0, dp1e1, fit, wf)
 
 		}
 		err = fout.Close()

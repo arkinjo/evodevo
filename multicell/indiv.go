@@ -149,7 +149,9 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 }
 
 func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
-	r := rand.Intn(geneLength) //Randomly choose one of the genome matrices to mutate; with prob proportional to no. of columns
+	r := rand.Intn(geneLength)
+	//Randomly choose one of the genome matrices to mutate;
+	//with prob proportional to no. of columns
 	t := 0
 
 	//This version is specialized for current definition of full model.

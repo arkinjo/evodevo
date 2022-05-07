@@ -46,10 +46,10 @@ var CueResponseDensity float64 = -math.Log(eps) / float64(ngenes)
 
 var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
-const baseMutationRate float64 = 0.01 // default probability of mutation of genome
-var mutRate float64                   //declaration
-const baseSelStrength float64 = 50.0  // default selection strength; to be normalized by number of cells
-const selDevStep float64 = 20.0       // Developmental steps for selection
+const baseMutationRate float64 = 0.001 // default probability of mutation of genome
+var mutRate float64                    //declaration
+const baseSelStrength float64 = 20.0   // default selection strength; to be normalized by number of cells
+const selDevStep float64 = 20.0        // Developmental steps for selection
 
 //var selStrength float64             //declaration; Selection strength per unit cue
 //var minFitness float64

@@ -394,7 +394,9 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 
 	return new_population
 }
-
+func (pop *Population) SortPopIndivs() {
+	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id })
+}
 func (pop *Population) DevPop(gen int) Population {
 	pop.Gen = gen
 
@@ -410,7 +412,7 @@ func (pop *Population) DevPop(gen int) Population {
 
 	pop.SetWagnerFitness()
 	//We might need a sorter here.
-	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id })
+	pop.SortPopIndivs()
 
 	return *pop
 }
