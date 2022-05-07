@@ -127,21 +127,24 @@ func main() {
 		gmix = append(gmix, e21...)
 		pmix = append(pmix, p21...)
 	}
-	log.Println("")
+
 	log.Println("Finding Principal Axes")
 	mp, mg, cov := multicell.GetCrossCov(pmix, gmix, true, true)
 	U, sval, V := multicell.GetSVD(cov)
 	log.Println("Svals:", sval)
 	paxis := multicell.NewDmat(2, len(mp))
 	gaxis := multicell.NewDmat(2, len(mg))
-	for i := range paxis[0] {
-		paxis[0][i] = U.At(i, 0)
-		paxis[1][i] = U.At(i, 1)
+	for a, pa := range paxis {
+		for i := range pa {
+			paxis[a][i] = U.At(i, a)
+		}
 	}
-	for i := range gaxis[0] {
-		gaxis[0][i] = V.At(i, 0)
-		gaxis[1][i] = V.At(i, 1)
+	for a, ga := range gaxis {
+		for i := range ga {
+			gaxis[a][i] = V.At(i, a)
+		}
 	}
+
 	for a, pa := range paxis {
 		neg := multicell.DotVecs(pa, denv)
 		if neg < 0.0 {
