@@ -427,7 +427,7 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 		pop.DevPop(istep)
 		if test {
 			if jsonout != "" { //Export JSON population of each generation in test mode
-				filename := fmt.Sprintf("%s_%3.3d.json", jsonout, pop.Gen)
+				filename := fmt.Sprintf("%s_%2.2d_%3.3d.json", jsonout, epoch, pop.Gen)
 				pop.ToJSON(filename)
 			}
 		}

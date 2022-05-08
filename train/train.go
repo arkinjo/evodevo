@@ -17,8 +17,8 @@ var jfilename string
 
 func main() {
 	t0 := time.Now()
+	testP := flag.Bool("test", false, "Test run or not")
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
-
 	elayerP := flag.Bool("layerE", true, "Environmental cue layer")
 	flayerP := flag.Bool("layerF", true, "Epigenetic layer")
 	hlayerP := flag.Bool("layerH", true, "Higher order complexes")
@@ -42,25 +42,25 @@ func main() {
 
 	multicell.SetSeed(int64(*seedPtr))
 	multicell.SetSeedCue(int64(*seed_cuePtr))
-
-	multicell.SetParams(settings)
-
 	maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
 	T_Filename = *tfilenamePtr
 	json_in = *jsoninPtr
 	json_out = *jsonoutPtr
+	test_flag := *testP
 
 	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	pop0.Params = settings
-
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)
 	} else {
 		fmt.Println("Randomizing initial population")
 		pop0.RandomizeGenome()
 	}
+	if !test_flag {
+		pop0.Params = settings
+	}
+	multicell.SetParams(pop0.Params)
 
 	ftraj, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create file for recording trajectory
 	if err != nil {
@@ -80,18 +80,14 @@ func main() {
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
 		envtraj = append(envtraj, popstart.NovEnvs)
-		//existing envtraj entries should not be updated with each append/update.
-		//Could it be reading popstart.Envs on each append?
-		//This bug resurfaced after implementing in concatenated vector format!
-
 		if epoch != 0 {
 			fmt.Println("Epoch ", epoch, "has environments", popstart.NovEnvs)
 		}
 
-		pop1 := popstart.Evolve(false, ftraj, json_out, epochlength, epoch)
+		pop1 := popstart.Evolve(test_flag, ftraj, json_out, epochlength, epoch)
 		fmt.Println("End of epoch", epoch)
 
-		if epoch == maxepochs { //Export output population; just before epoch change
+		if !test_flag && epoch == maxepochs { //Export output population; just before epoch change
 			//Update to environment just before epoch change
 			pop1.AncEnvs = multicell.CopyCues(pop1.NovEnvs)
 			pop1.ToJSON(json_out)
