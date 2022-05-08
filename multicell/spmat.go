@@ -32,8 +32,11 @@ func (sp *Spmat) Randomize(density, sd float64) { //Randomize entries of sparse 
 	for i := range sp.Mat {
 		for j := 0; j < sp.Ncol; j++ {
 			r := rand.Float64()
-			if r < density {
-				sp.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry
+			if r < density/2 {
+				//sp.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry
+				sp.Mat[i][j] = 1
+			} else if r < density {
+				sp.Mat[i][j] = -1
 			}
 		}
 	}
@@ -89,15 +92,20 @@ func MultMatVec_T(vout Vec, mat Spmat, vin Vec) { //Matrix transposition and the
 func (mat *Spmat) mutateSpmat(density, sd float64) { //mutating a sparse matrix
 	nrow := len(mat.Mat)
 	nmut := int(mutRate * float64(nrow*mat.Ncol))
+
 	for n := 0; n < nmut; n++ {
 		i := rand.Intn(nrow)
 		j := rand.Intn(mat.Ncol)
 		r := rand.Float64()
 		delete(mat.Mat[i], j)
-		if r < density {
-			mat.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry.
+		if r < density*0.5 {
+			//			mat.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry.
+			mat.Mat[i][j] = 1.0
+		} else if r < density {
+			mat.Mat[i][j] = -1.0
 		}
 	}
+
 	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.
 	return
 }
