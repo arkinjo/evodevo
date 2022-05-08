@@ -15,7 +15,6 @@ type Genome struct { //Genome of an individual
 	H Spmat //Contribution of gene expression on higher order complexes
 	J Spmat //Interaction between higher order complexes
 	P Spmat //Resulting expressed phenotype
-	//Z  Spmat //Gene expression of offspring
 }
 
 func NewGenome() Genome { //Generate new genome matrix ensemble
