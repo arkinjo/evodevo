@@ -42,11 +42,7 @@ var geneLength int                                //calculated from layers prese
 
 const funcsPerGene float64 = 1.0 //average number of functions per gene
 var GenomeDensity float64 = funcsPerGene / float64(ngenes)
-
-//var CueResponseDensity float64 = -math.Log(eps) / float64(ngenes) // Why this?
 var CueResponseDensity float64 = funcsPerGene / float64(nenv)
-
-var HalfGenomeDensity float64 = 0.5 * GenomeDensity
 
 const baseMutationRate float64 = 0.005 // default probability of mutation of genome
 var mutRate float64                    //declaration
