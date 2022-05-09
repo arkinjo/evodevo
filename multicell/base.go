@@ -41,8 +41,8 @@ var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicel
 var geneLength int                                //calculated from layers present or absent.
 
 const funcsPerGene float64 = 1.0 //average number of functions per gene
-var GenomeDensity float64 = funcsPerGene / float64(ngenes)
-var CueResponseDensity float64 = funcsPerGene / float64(nenv)
+var GenomeDensity float64
+var CueResponseDensity float64
 
 const baseMutationRate float64 = 0.005 // default probability of mutation of genome
 var mutRate float64                    //declaration
@@ -93,6 +93,9 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	pheno_feedback = s.Pfback
 	ncells = s.NCells
 	devNoise = s.SDNoise
+
+	GenomeDensity = funcsPerGene / float64(ngenes)
+	CueResponseDensity = funcsPerGene / float64(nenv+ncells)
 
 	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
 	from_g := GenomeDensity * float64(ngenes)
