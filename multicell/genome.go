@@ -5,7 +5,7 @@ import (
 	//	"fmt"
 	//	"log"
 	"math"
-	"math/rand"
+	//	"math/rand"
 )
 
 type Genome struct { //Genome of an individual
@@ -23,7 +23,7 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 	G := NewSpmat(ngenes, ngenes)
 	H := NewSpmat(ngenes, ngenes)
 	J := NewSpmat(ngenes, ngenes)
-	P := NewSpmat(ngenes, nenv+ncells)
+	P := NewSpmat(nenv+ncells, ngenes)
 	genome := Genome{E, F, G, H, J, P}
 
 	return genome
@@ -189,38 +189,19 @@ func (G *Genome) NormalizeGenome() Genome {
 	return eG
 }
 
-func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
-	ng0 := dadg.Copy()
-	ng1 := momg.Copy()
+// func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
+// 	ng0 := dadg.Copy()
+// 	ng1 := momg.Copy()
 
-	for i := 0; i < ngenes; i++ {
-		r := rand.Float64()
-		if r < 0.5 {
-			e := ng0.E.Mat[i]
-			f := ng0.F.Mat[i]
-			g := ng0.G.Mat[i]
-			h := ng0.H.Mat[i]
-			j := ng0.J.Mat[i]
-			p := ng0.P.Mat[i]
+// 	CrossoverSpmats(ng0.E, ng1.E)
+// 	CrossoverSpmats(ng0.F, ng1.F)
+// 	CrossoverSpmats(ng0.G, ng1.G)
+// 	CrossoverSpmats(ng0.H, ng1.H)
+// 	CrossoverSpmats(ng0.J, ng1.J)
+// 	CrossoverSpmats(ng0.P, ng1.P)
 
-			ng0.E.Mat[i] = ng1.E.Mat[i]
-			ng0.F.Mat[i] = ng1.F.Mat[i]
-			ng0.G.Mat[i] = ng1.G.Mat[i]
-			ng0.H.Mat[i] = ng1.H.Mat[i]
-			ng0.J.Mat[i] = ng1.J.Mat[i]
-			ng0.P.Mat[i] = ng1.P.Mat[i]
-
-			ng1.E.Mat[i] = e
-			ng1.F.Mat[i] = f
-			ng1.G.Mat[i] = g
-			ng1.H.Mat[i] = h
-			ng1.J.Mat[i] = j
-			ng1.P.Mat[i] = p
-		}
-	}
-
-	return ng0, ng1
-}
+// 	return ng0, ng1
+// }
 
 func (genome *Genome) FlatVec() Vec {
 	vec := make([]float64, 0)

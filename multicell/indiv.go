@@ -192,8 +192,15 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 }
 
 func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
-	genome0, genome1 :=
-		Crossover(&dad.Genome, &mom.Genome)
+	genome0 := dad.Genome.Copy()
+	genome1 := mom.Genome.Copy()
+	CrossoverSpmats(genome0.E, genome1.E)
+	CrossoverSpmats(genome0.F, genome1.F)
+	CrossoverSpmats(genome0.G, genome1.G)
+	CrossoverSpmats(genome0.H, genome1.H)
+	CrossoverSpmats(genome0.J, genome1.J)
+	CrossoverSpmats(genome0.P, genome1.P)
+
 	bodies0 := make([]Body, 3)
 	for i := range bodies0 {
 		bodies0[i] = NewBody(ncells)
@@ -333,7 +340,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 			copy(h1, g1) //identity map
 		}
 
-		MultMatVec_T(p1, G.P, h1)
+		MultMatVec(p1, G.P, h1)
 		applyFnVec(rho, p1)
 		copy(f0, f1)
 		copy(g0, g1)

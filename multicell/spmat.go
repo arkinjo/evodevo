@@ -120,3 +120,14 @@ func DotSpmats(mat0, mat1 Spmat) float64 {
 
 	return dot
 }
+
+func CrossoverSpmats(mat0, mat1 Spmat) {
+	for i, ri := range mat0.Mat {
+		r := rand.Float64()
+		if r < 0.5 {
+			mat0.Mat[i] = mat1.Mat[i]
+			mat1.Mat[i] = ri
+		}
+	}
+
+}
