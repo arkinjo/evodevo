@@ -29,6 +29,9 @@ func (sp *Spmat) Copy() Spmat {
 }
 
 func (sp *Spmat) Randomize(density, sd float64) { //Randomize entries of sparse matrix
+	if density == 0 {
+		return
+	}
 	for i := range sp.Mat {
 		for j := 0; j < sp.Ncol; j++ {
 			r := rand.Float64()
@@ -90,6 +93,10 @@ func MultMatVec_T(vout Vec, mat Spmat, vin Vec) { //Matrix transposition and the
 }
 
 func (mat *Spmat) mutateSpmat(density, sd float64) { //mutating a sparse matrix
+	if density == 0.0 {
+		return
+	}
+
 	nrow := len(mat.Mat)
 	nmut := int(mutRate * float64(nrow*mat.Ncol))
 

@@ -43,8 +43,11 @@ var geneLength int                                //calculated from layers prese
 const funcsPerGene float64 = 2.0 //average number of functions per gene
 const baseDensity float64 = 0.01 // 2/200
 
-var GenomeDensity float64 = baseDensity
 var DensityE float64 // = baseDensity*(ngenes/(nenv+ncells))
+var DensityF float64 = baseDensity
+var DensityG float64 = baseDensity
+var DensityH float64 = baseDensity
+var DensityJ float64 = baseDensity
 var DensityP float64 = baseDensity
 
 const baseMutationRate float64 = 0.005 // default probability of mutation of genome
@@ -100,7 +103,8 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	DensityE = baseDensity * float64(ngenes) / float64(nenv+ncells)
 
 	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
-	from_g := GenomeDensity * float64(ngenes)
+	from_g := DensityG * float64(ngenes)
+
 	if withE {
 		geneLength += nenv + ncells
 		from_e := DensityE * float64(nenv+ncells)
@@ -111,14 +115,17 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 		}
 	} else {
 		omega_f = 1.0 / math.Sqrt(from_g)
+		DensityE = 0.0
 	}
 
 	if withF {
 		geneLength += ngenes
+	} else {
+		DensityF = 0.0
 	}
 
-	omega_g = 1.0 / math.Sqrt(GenomeDensity*float64(ngenes))
-	omega_p = 1.0 / math.Sqrt(GenomeDensity*float64(ngenes))
+	omega_g = 1.0 / math.Sqrt(DensityG*float64(ngenes))
+	omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes))
 
 	if withH {
 		geneLength += ngenes
@@ -127,9 +134,11 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 			omega_h = 1.0 / math.Sqrt(from_g*2)
 		} else {
 			omega_h = 1.0 / math.Sqrt(from_g)
+			DensityJ = 0.0
 		}
 	} else {
 		omega_h = 0.0
+		DensityH = 0.0
 	}
 
 	//to compensate for layer removal.

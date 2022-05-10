@@ -35,14 +35,14 @@ func (G *Genome) Randomize() {
 	}
 
 	if withF {
-		G.F.Randomize(GenomeDensity, sdF)
+		G.F.Randomize(DensityF, sdF)
 	}
-	G.G.Randomize(GenomeDensity, sdG)
+	G.G.Randomize(DensityF, sdG)
 
 	if withH {
-		G.H.Randomize(GenomeDensity, sdH)
+		G.H.Randomize(DensityH, sdH)
 		if withJ {
-			G.J.Randomize(GenomeDensity, sdJ)
+			G.J.Randomize(DensityJ, sdJ)
 		}
 	}
 	G.P.Randomize(DensityP, sdP)
@@ -188,20 +188,6 @@ func (G *Genome) NormalizeGenome() Genome {
 
 	return eG
 }
-
-// func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
-// 	ng0 := dadg.Copy()
-// 	ng1 := momg.Copy()
-
-// 	CrossoverSpmats(ng0.E, ng1.E)
-// 	CrossoverSpmats(ng0.F, ng1.F)
-// 	CrossoverSpmats(ng0.G, ng1.G)
-// 	CrossoverSpmats(ng0.H, ng1.H)
-// 	CrossoverSpmats(ng0.J, ng1.J)
-// 	CrossoverSpmats(ng0.P, ng1.P)
-
-// 	return ng0, ng1
-// }
 
 func (genome *Genome) FlatVec() Vec {
 	vec := make([]float64, 0)
