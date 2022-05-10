@@ -40,9 +40,12 @@ const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
 var geneLength int                                //calculated from layers present or absent.
 
-const funcsPerGene float64 = 1.0 //average number of functions per gene
-var GenomeDensity float64
-var CueResponseDensity float64
+const funcsPerGene float64 = 2.0 //average number of functions per gene
+const baseDensity float64 = 0.01 // 2/200
+
+var GenomeDensity float64 = baseDensity
+var DensityP float64 = baseDensity
+var DensityE float64 // = baseDensity*(ngenes/(nenv+ncells))
 
 const baseMutationRate float64 = 0.005 // default probability of mutation of genome
 var mutRate float64                    //declaration
@@ -94,14 +97,13 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	ncells = s.NCells
 	devNoise = s.SDNoise
 
-	GenomeDensity = funcsPerGene / float64(ngenes)
-	CueResponseDensity = funcsPerGene / float64(nenv+ncells)
+	DensityE = baseDensity * float64(ngenes) / float64(nenv+ncells)
 
 	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
 	from_g := GenomeDensity * float64(ngenes)
 	if withE {
 		geneLength += nenv + ncells
-		from_e := CueResponseDensity * float64(nenv+ncells)
+		from_e := DensityE * float64(nenv+ncells)
 		if pheno_feedback {
 			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
 		} else {

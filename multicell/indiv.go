@@ -159,7 +159,7 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if withE {
 		t += nenv + ncells
 		if r < t {
-			indiv.Genome.E.mutateSpmat(CueResponseDensity, sdE)
+			indiv.Genome.E.mutateSpmat(DensityE, sdE)
 		}
 	}
 	if withF {
@@ -186,7 +186,7 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	}
 	t += nenv + ncells
 	if r < t {
-		indiv.Genome.P.mutateSpmat(CueResponseDensity, sdP)
+		indiv.Genome.P.mutateSpmat(DensityP, sdP)
 	}
 	return
 }

@@ -31,7 +31,7 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 
 func (G *Genome) Randomize() {
 	if withE {
-		G.E.Randomize(CueResponseDensity, sdE)
+		G.E.Randomize(DensityE, sdE)
 	}
 
 	if withF {
@@ -45,7 +45,7 @@ func (G *Genome) Randomize() {
 			G.J.Randomize(GenomeDensity, sdJ)
 		}
 	}
-	G.P.Randomize(CueResponseDensity, sdP)
+	G.P.Randomize(DensityP, sdP)
 }
 
 func (G *Genome) Clear() { //Sets all entries of genome to zero
