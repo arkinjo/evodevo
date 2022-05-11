@@ -78,6 +78,7 @@ func main() {
 
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
+		log.Println("NovEnvs", epoch, ":", popstart.NovEnvs)
 		envtraj = append(envtraj, popstart.NovEnvs)
 		if epoch != 0 {
 			fmt.Println("Epoch ", epoch, "has environments", popstart.NovEnvs)
