@@ -38,9 +38,9 @@ func (sp *Spmat) Randomize(density float64) { //Randomize entries of sparse matr
 		for j := 0; j < sp.Ncol; j++ {
 			r := rand.Float64()
 			if r < density2 {
-				sp.mat.Mat[i][j] = 1
+				sp.Mat[i][j] = 1
 			} else if r < density {
-				sp.mat.Mat[i][j] = -1
+				sp.Mat[i][j] = -1
 			}
 		}
 	}
