@@ -30,22 +30,12 @@ func NewGenome() Genome { //Generate new genome matrix ensemble
 }
 
 func (G *Genome) Randomize() {
-	if withE {
-		G.E.Randomize(DensityE, sdE)
-	}
-
-	if withF {
-		G.F.Randomize(DensityF, sdF)
-	}
-	G.G.Randomize(DensityF, sdG)
-
-	if withH {
-		G.H.Randomize(DensityH, sdH)
-		if withJ {
-			G.J.Randomize(DensityJ, sdJ)
-		}
-	}
-	G.P.Randomize(DensityP, sdP)
+	G.E.Randomize(DensityE)
+	G.F.Randomize(DensityF)
+	G.G.Randomize(DensityF)
+	G.H.Randomize(DensityH)
+	G.J.Randomize(DensityJ)
+	G.P.Randomize(DensityP)
 }
 
 func (G *Genome) Clear() { //Sets all entries of genome to zero

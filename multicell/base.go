@@ -37,13 +37,15 @@ const sqrt3 float64 = 1.73205080756887729352744634150587236694280525381038062805
 const ccStep float64 = 5.0            // Number of steady steps for convergence
 const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 
-var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
-var geneLength int                                //calculated from layers present or absent.
+// Length of a gene for Unicellular organism.
+var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells
 
-const funcsPerGene float64 = 2.0 //average number of functions per gene
-const baseDensity float64 = 0.01 // 2/200
+//calculated from layers present or absent.
+var geneLength int
 
-var DensityE float64 // = baseDensity*(ngenes/(nenv+ncells))
+const baseDensity float64 = 0.01
+
+var DensityE float64 = baseDensity * float64(ngenes) / float64(nenv+ncells)
 var DensityF float64 = baseDensity
 var DensityG float64 = baseDensity
 var DensityH float64 = baseDensity
@@ -61,16 +63,6 @@ var withE bool = false // with or without environmental cues.
 var withF bool = true  // Epigenetic marker layer
 var withH bool = true  // Higher order complexes layer
 var withJ bool = false
-
-// theoretical standard deviation of matrix elements
-const (
-	sdE float64 = 1.0
-	sdF float64 = 1.0
-	sdG float64 = 1.0
-	sdH float64 = 1.0
-	sdJ float64 = 1.0
-	sdP float64 = 1.0
-)
 
 // slope of activation functions
 var omega_f float64 = 1.0

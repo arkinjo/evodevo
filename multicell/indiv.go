@@ -159,34 +159,34 @@ func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
 	if withE {
 		t += nenv + ncells
 		if r < t {
-			indiv.Genome.E.mutateSpmat(DensityE, sdE)
+			indiv.Genome.E.mutateSpmat(DensityE)
 		}
 	}
 	if withF {
 		t += ngenes
 		if r < t {
-			indiv.Genome.F.mutateSpmat(DensityF, sdF)
+			indiv.Genome.F.mutateSpmat(DensityF)
 		}
 	}
 	t += ngenes
 	if r < t {
-		indiv.Genome.G.mutateSpmat(DensityG, sdG)
+		indiv.Genome.G.mutateSpmat(DensityG)
 	}
 	if withH {
 		t += ngenes
 		if r < t {
-			indiv.Genome.H.mutateSpmat(DensityH, sdH)
+			indiv.Genome.H.mutateSpmat(DensityH)
 		}
 		if withJ {
 			t += ngenes
 			if r < t {
-				indiv.Genome.J.mutateSpmat(DensityJ, sdJ)
+				indiv.Genome.J.mutateSpmat(DensityJ)
 			}
 		}
 	}
 	t += nenv + ncells
 	if r < t {
-		indiv.Genome.P.mutateSpmat(DensityP, sdP)
+		indiv.Genome.P.mutateSpmat(DensityP)
 	}
 	return
 }
