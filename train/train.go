@@ -78,6 +78,7 @@ func main() {
 	envtraj[0] = popstart.AncEnvs
 	novvec := make([]bool, 0)
 
+	log.Println("AncEnvs", 0, ":", popstart.AncEnvs)
 	for epoch := 1; epoch <= maxepochs; epoch++ {
 		tevol := time.Now()
 		log.Println("NovEnvs", epoch, ":", popstart.NovEnvs)
