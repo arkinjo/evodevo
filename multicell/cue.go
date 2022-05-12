@@ -1,7 +1,6 @@
 package multicell
 
 import (
-	//	"math"
 	"log"
 	"math/rand"
 )
@@ -87,7 +86,7 @@ func ChangeEnv(cue Cue, n int) Cue { // Mutate precisely n bits of environment c
 	for i := range indices {
 		indices[i] = i
 	}
-	rand.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
+	rand_cue.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
 	mutindices := make([]int, n)
 	for i := range mutindices {
 		mutindices[i] = indices[i]
@@ -109,7 +108,8 @@ func NewCues(ncells, nenv int) Cues {
 	return vs
 }
 
-func RandomEnvs(ncells, nenv int, density float64) Cues { //Randomly generate cue array
+//Randomly generate cue array
+func RandomEnvs(ncells, nenv int, density float64) Cues {
 	vs := make([]Cue, ncells)
 	for id := range vs {
 		vs[id] = RandomEnv(nenv, id, density)
@@ -129,6 +129,7 @@ func CopyCues(cues Cues) Cues {
 func AddNoise2Cue(cue_out, cue Cue, eta float64) {
 	tv := GetTrait(cue)
 	for i, t := range tv {
+		// Don't use rand_cue here. Use the system rand instead.
 		cue_out[i] = t + eta*rand.NormFloat64()
 	}
 
@@ -145,7 +146,7 @@ func ChangeEnvs(cues Cues, n int) Cues { //Mutates precisely n bits in environme
 		indices[i] = i
 	}
 
-	rand.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
+	rand_cue.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
 	mutcells := make([]int, 0)
 	mutcues := make([]int, 0)
 	for i := 0; i < n; i++ {

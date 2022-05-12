@@ -40,8 +40,10 @@ func main() {
 
 	var settings = multicell.Settings{*maxpopP, *ncellsP, *elayerP, *flayerP, *hlayerP, *jlayerP, *pfbackP, *sdNoiseP}
 
+	log.Println("seed=", *seedPtr, "seed_cue=", *seed_cuePtr)
 	multicell.SetSeed(int64(*seedPtr))
 	multicell.SetSeedCue(int64(*seed_cuePtr))
+
 	maxepochs := *epochPtr
 	epochlength := *genPtr
 	denv := *denvPtr
