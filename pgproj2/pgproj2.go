@@ -18,11 +18,11 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	ref1Ptr := flag.Int("ref1", 200, "reference generation for evolved genotype")
-	ref2Ptr := flag.Int("ref2", -1, "reference generation for evolved genotype")
+	ref1Ptr := flag.String("ref1", "", "reference JSON file 1")
+	ref2Ptr := flag.String("ref2", "", "reference JSON file 2")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
-	jsoninPtr := flag.String("jsonin", "", "JSON file of input population") //default to empty string
+	jsoninPtr := flag.String("jsonin", "", "basename of JSON files") //default to empty string
 
 	flag.Parse()
 
@@ -36,53 +36,26 @@ func main() {
 	if json_in == "" {
 		log.Fatal("Must specify JSON input file.")
 	}
+	if refgen1 == "" {
+		log.Fatal("Must specify JSON reference file 1.")
+	}
 
 	log.Println("epochlength", epochlength)
 
-	log.Println("Reading Pop0")
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	jfilename := fmt.Sprintf("%s_001.json", json_in)
-	pop0.FromJSON(jfilename)
-	multicell.SetParams(pop0.Params)
-
-	fmt.Println("Initialization of population complete")
-	dtint := time.Since(t0)
-	fmt.Println("Time taken for initialization : ", dtint)
-
 	tdump := time.Now()
 
+	log.Println("Reading Pop1")
+	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	fmt.Println("Reference population :", refgen1)
+	pop1.FromJSON(refgen1)
+	multicell.SetParams(pop1.Params)
 	// Reference direction
-	env0 := multicell.FlattenEnvs(pop0.AncEnvs)
-	env1 := multicell.FlattenEnvs(pop0.NovEnvs)
+	env0 := multicell.FlattenEnvs(pop1.AncEnvs)
+	env1 := multicell.FlattenEnvs(pop1.NovEnvs)
 	lenE := len(env0)
 	denv := multicell.NewVec(lenE)
 	multicell.DiffVecs(denv, env1, env0)
 	multicell.NormalizeVec(denv)
-
-	// Get Principal Axis of <phenotype-genotype> cross-covariance
-	gmix := make([][]float64, 0)
-	pmix := make([][]float64, 0)
-
-	g0 := pop0.GetFlatGenome()
-	e00 := pop0.GetFlatStateVec("E", 0)
-	e01 := pop0.GetFlatStateVec("E", 1)
-	for k, g := range g0 {
-		e00[k] = append(e00[k], g...)
-		e01[k] = append(e01[k], g...)
-	}
-	p00 := pop0.GetFlatStateVec("P", 0)
-	p01 := pop0.GetFlatStateVec("P", 1)
-	gmix = append(gmix, e00...)
-	pmix = append(pmix, p00...)
-	gmix = append(gmix, e01...)
-	pmix = append(pmix, p01...)
-	log.Println("lenG,lenP=", len(gmix[0]), len(pmix[0]))
-
-	log.Println("Reading Pop1")
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen1)
-	fmt.Println("Reference population :", jfilename)
-	pop1.FromJSON(jfilename)
 
 	g1 := pop1.GetFlatGenome()
 	e10 := pop1.GetFlatStateVec("E", 0)
@@ -91,19 +64,22 @@ func main() {
 		e10[k] = append(e10[k], g...)
 		e11[k] = append(e11[k], g...)
 	}
-	p10 := pop1.GetFlatStateVec("P", 1)
+	p10 := pop1.GetFlatStateVec("P", 0)
 	p11 := pop1.GetFlatStateVec("P", 1)
+
+	gmix := make([][]float64, 0)
+	pmix := make([][]float64, 0)
+
 	gmix = append(gmix, e10...)
 	pmix = append(pmix, p10...)
 	gmix = append(gmix, e11...)
 	pmix = append(pmix, p11...)
-
-	if refgen2 > 0 {
+	log.Println("lenG,lenP=", len(gmix[0]), len(pmix[0]))
+	if refgen2 != "" {
 		log.Println("Reading Pop2")
 		pop2 := multicell.NewPopulation(*ncellsP, *maxpopP)
-		jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen2)
-		fmt.Println("Reference population :", jfilename)
-		pop2.FromJSON(jfilename)
+		fmt.Println("Reference population 2:", refgen2)
+		pop2.FromJSON(refgen2)
 
 		g2 := pop2.GetFlatGenome()
 		e20 := pop2.GetFlatStateVec("E", 0)
@@ -145,7 +121,7 @@ func main() {
 		}
 	}
 	log.Printf("Dumping start")
-	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
+	for gen := 1; gen <= epochlength; gen++ {
 		ofilename := fmt.Sprintf("%s_%3.3d.dat", PG_Filename, gen)
 		fout, err := os.OpenFile(ofilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
