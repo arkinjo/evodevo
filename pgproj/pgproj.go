@@ -3,31 +3,33 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/arkinjo/evodevo/multicell"
+	"log"
+	"os"
+	"time"
 )
 
 var PG_Filename string //Dump for phenotypes and genotypes
 var json_in string     //JSON encoding of initial population; default to empty string
 
 func main() {
+	log.Println("Starting...")
 	t0 := time.Now()
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
-	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained") //default to unicellular case
-
+	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	refgenPtr := flag.Int("refgen", 50, "reference generation for evolved genotype")
+	ref1Ptr := flag.String("ref1", "", "reference JSON file 1 (requried)")
+	ref2Ptr := flag.String("ref2", "", "reference JSON file 2 (optional)")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
-	jsoninPtr := flag.String("jsonin", "", "JSON file of input population") //default to empty string
+	jsoninPtr := flag.String("jsonin", "", "basename of JSON files")
 
 	flag.Parse()
 
 	epochlength := *genPtr
-	fmt.Println("epochlength", epochlength)
-	refgen := *refgenPtr
+	refgen1 := *ref1Ptr
+	refgen2 := *ref2Ptr
+
 	PG_Filename = *pgfilenamePtr
 
 	json_in = *jsoninPtr
@@ -35,35 +37,116 @@ func main() {
 	if json_in == "" {
 		log.Fatal("Must specify JSON input file.")
 	}
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
-	jfilename := fmt.Sprintf("%s_001.json", json_in)
-	pop0.FromJSON(jfilename)
-	multicell.SetParams(pop0.Params)
+	if refgen1 == "" {
+		log.Fatal("Must specify JSON reference file 1.")
+	}
+	if refgen2 == "" {
+		log.Fatal("Must specify JSON reference file 2.")
+	}
 
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
-	jfilename = fmt.Sprintf("%s_%3.3d.json", json_in, refgen)
-	fmt.Println("Reference population :", jfilename)
-	pop1.FromJSON(jfilename)
+	log.Println("epochlength", epochlength)
 
-	fmt.Println("Initialization of population complete")
-	dtint := time.Since(t0)
-	fmt.Println("Time taken for initialization : ", dtint)
-
-	fmt.Println("Dumping projections")
 	tdump := time.Now()
 
-	g0 := pop0.GetMeanGenome()
-	g1 := pop1.GetMeanGenome()
-	Gaxis := multicell.NewGenome()
-	multicell.DiffGenomes(&Gaxis, &g1, &g0) //Pointers for bugfix; don't ask why; it just works!
-	Gaxis = Gaxis.NormalizeGenome()
-	Paxis := pop1.Get_Environment_Axis() //Measure everything in direction of ancestral -> novel environment
+	log.Println("Reading Pop1")
+	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	fmt.Println("Reference population :", refgen1)
+	pop1.FromJSON(refgen1)
+	multicell.SetParams(pop1.Params)
+	// Reference direction
+	env0 := multicell.FlattenEnvs(pop1.AncEnvs)
+	env1 := multicell.FlattenEnvs(pop1.NovEnvs)
+	lenE := len(env0)
+	denv := multicell.NewVec(lenE)
+	multicell.DiffVecs(denv, env1, env0)
+	multicell.NormalizeVec(denv)
 
-	for gen := 1; gen <= epochlength; gen++ { //Also project population after pulling back to ancestral environment.
+	g1 := pop1.GetFlatGenome()
+	e10 := pop1.GetFlatStateVec("E", 0)
+	e11 := pop1.GetFlatStateVec("E", 1)
+	for k, g := range g1 {
+		e10[k] = append(e10[k], g...)
+		e11[k] = append(e11[k], g...)
+	}
+
+	log.Println("Reading Pop2")
+	pop2 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	fmt.Println("Reference population 2:", refgen2)
+	pop2.FromJSON(refgen2)
+
+	g2 := pop2.GetFlatGenome()
+	e20 := pop2.GetFlatStateVec("E", 0)
+	e21 := pop2.GetFlatStateVec("E", 1)
+	for k, g := range g2 {
+		e20[k] = append(e20[k], g...)
+		e21[k] = append(e21[k], g...)
+	}
+
+	log.Println("Finding Principal Axes")
+	mp := multicell.NewVec(lenE)
+	multicell.AddVecs(mp, env0, env1)
+	multicell.ScaleVec(mp, 0.5, mp)
+	mg0 := multicell.GetMeanVec(e10)
+	mg1 := multicell.GetMeanVec(e21)
+	lenG := len(mg0)
+	mg := multicell.NewVec(lenG)
+	multicell.AddVecs(mp, mg0, mg1)
+	multicell.ScaleVec(mg, 0.5, mg)
+
+	paxis := multicell.CopyVec(denv)
+	gaxis := multicell.NewVec(lenG)
+	multicell.DiffVecs(gaxis, mg1, mg0)
+	multicell.NormalizeVec(gaxis)
+
+	log.Printf("Dumping start")
+	for gen := 1; gen <= epochlength; gen++ {
+		ofilename := fmt.Sprintf("%s_%3.3d.dat", PG_Filename, gen)
+		fout, err := os.OpenFile(ofilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprintf(fout, "#Geno+e0     \tPheno0     \tGeno+e1     \tPheno1   ")
+		fmt.Fprintf(fout, "\t||p0-e0||  \t||p1-e1||  \tFit     \tWagFit\n")
+
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 		pop.FromJSON(jfilename)
-		pop.Dump_Projections(PG_Filename, gen, Gaxis, Paxis)
+		gt := pop.GetFlatGenome()
+		et0 := pop.GetFlatStateVec("E", 0)
+		et1 := pop.GetFlatStateVec("E", 1)
+		for k, g := range gt {
+			et0[k] = append(et0[k], g...)
+			et1[k] = append(et1[k], g...)
+		}
+
+		pt0 := pop.GetFlatStateVec("P", 0)
+		pt1 := pop.GetFlatStateVec("P", 1)
+
+		for k := range et0 {
+			multicell.DiffVecs(et0[k], et0[k], mg)
+			multicell.DiffVecs(et1[k], et1[k], mg)
+			multicell.DiffVecs(pt0[k], pt0[k], mp)
+			multicell.DiffVecs(pt1[k], pt1[k], mp)
+
+			x0 := multicell.DotVecs(et0[k], gaxis)
+			y0 := multicell.DotVecs(pt0[k], paxis)
+			x1 := multicell.DotVecs(et1[k], gaxis)
+			y1 := multicell.DotVecs(pt1[k], paxis)
+			fmt.Fprintf(fout, "\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
+
+			dp1e1 := pop.Indivs[k].Dp1e1
+			dp0e0 := pop.Indivs[k].Dp0e0
+			fit := pop.Indivs[k].Fit
+			wf := pop.Indivs[k].WagFit
+
+			fmt.Fprintf(fout, "\t%e\t%e\t%e\t%e\n", dp0e0, dp1e1, fit, wf)
+
+		}
+		err = fout.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	}
 
 	dtdump := time.Since(tdump)

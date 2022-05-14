@@ -18,17 +18,19 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	ref1Ptr := flag.String("ref1", "", "reference JSON file 1")
-	ref2Ptr := flag.String("ref2", "", "reference JSON file 2")
+	ref1Ptr := flag.String("ref1", "", "reference JSON file 1 (requried)")
+	ref2Ptr := flag.String("ref2", "", "reference JSON file 2 (optional)")
+	ref3Ptr := flag.String("ref3", "", "reference JSON file 3 (optional)")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
-	jsoninPtr := flag.String("jsonin", "", "basename of JSON files") //default to empty string
+	jsoninPtr := flag.String("jsonin", "", "basename of JSON files")
 
 	flag.Parse()
 
 	epochlength := *genPtr
 	refgen1 := *ref1Ptr
 	refgen2 := *ref2Ptr
+	refgen3 := *ref3Ptr
 	PG_Filename = *pgfilenamePtr
 
 	json_in = *jsoninPtr
@@ -94,6 +96,26 @@ func main() {
 		pmix = append(pmix, p20...)
 		gmix = append(gmix, e21...)
 		pmix = append(pmix, p21...)
+	}
+	if refgen3 != "" {
+		log.Println("Reading Pop3")
+		pop3 := multicell.NewPopulation(*ncellsP, *maxpopP)
+		fmt.Println("Reference population 3:", refgen3)
+		pop3.FromJSON(refgen3)
+
+		g3 := pop3.GetFlatGenome()
+		e30 := pop3.GetFlatStateVec("E", 0)
+		e31 := pop3.GetFlatStateVec("E", 1)
+		for k, g := range g3 {
+			e30[k] = append(e30[k], g...)
+			e31[k] = append(e31[k], g...)
+		}
+		p30 := pop3.GetFlatStateVec("P", 0)
+		p31 := pop3.GetFlatStateVec("P", 1)
+		gmix = append(gmix, e30...)
+		pmix = append(pmix, p30...)
+		gmix = append(gmix, e31...)
+		pmix = append(pmix, p31...)
 	}
 
 	log.Println("Finding Principal Axes")
