@@ -18,8 +18,8 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	ref1Ptr := flag.String("ref1", "", "reference JSON file 1 (requried)")
-	ref2Ptr := flag.String("ref2", "", "reference JSON file 2 (optional)")
+	ref1Ptr := flag.String("ref1", "", "reference JSON file 1")
+	ref2Ptr := flag.String("ref2", "", "reference JSON file 2")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
 	jsoninPtr := flag.String("jsonin", "", "basename of JSON files")
@@ -48,69 +48,53 @@ func main() {
 
 	tdump := time.Now()
 
-	log.Println("Reading Pop1")
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	log.Println("Reading Pop0")
+	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
 	fmt.Println("Reference population :", refgen1)
-	pop1.FromJSON(refgen1)
-	multicell.SetParams(pop1.Params)
+	pop0.FromJSON(refgen1)
+	multicell.SetParams(pop0.Params)
 	// Reference direction
-	env0 := multicell.FlattenEnvs(pop1.AncEnvs)
-	env1 := multicell.FlattenEnvs(pop1.NovEnvs)
+	env0 := multicell.FlattenEnvs(pop0.AncEnvs)
+	env1 := multicell.FlattenEnvs(pop0.NovEnvs)
 	lenE := len(env0)
 	denv := multicell.NewVec(lenE)
 	multicell.DiffVecs(denv, env1, env0)
-	multicell.NormalizeVec(denv)
 
-	g10 := pop1.GetFlatGenome(multicell.IAncEnv)
-	e10 := pop1.GetFlatStateVec("E", 0)
-	for k, g := range g10 {
-		e10[k] = append(e10[k], g...)
+	g00 := pop0.GetFlatGenome(multicell.IAncEnv)
+	e00 := pop0.GetFlatStateVec("E", 0)
+	for k, g := range g00 {
+		e00[k] = append(e00[k], g...)
 	}
 
-	log.Println("Reading Pop2")
-	pop2 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	log.Println("Reading Pop1")
+	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
 	fmt.Println("Reference population 2:", refgen2)
-	pop2.FromJSON(refgen2)
+	pop1.FromJSON(refgen2)
 
-	g21 := pop2.GetFlatGenome(multicell.INovEnv)
-	e21 := pop2.GetFlatStateVec("E", 1)
-	for k, g := range g21 {
-		e21[k] = append(e21[k], g...)
+	g11 := pop1.GetFlatGenome(multicell.INovEnv)
+	e11 := pop1.GetFlatStateVec("E", 1)
+	for k, g := range g11 {
+		e11[k] = append(e11[k], g...)
 	}
 
 	log.Println("Finding Principal Axes")
-	mp := multicell.NewVec(lenE)
-	multicell.AddVecs(mp, env0, env1)
-	multicell.ScaleVec(mp, 0.5, mp)
+	midp := multicell.NewVec(lenE)
+	multicell.AddVecs(midp, env0, env1)
+	multicell.ScaleVec(midp, 0.5, midp)
 	paxis := multicell.CopyVec(denv)
+	multicell.NormalizeVec(paxis)
 
-	mg0 := multicell.GetMeanVec(e10)
-	mg1 := multicell.GetMeanVec(e21)
+	mg0 := multicell.GetMeanVec(e00)
+	mg1 := multicell.GetMeanVec(e11)
 	lenG := len(mg0)
-	mg := multicell.NewVec(lenG)
-	multicell.AddVecs(mg, mg0, mg1)
-	multicell.ScaleVec(mg, 0.5, mg)
+	midg := multicell.NewVec(lenG)
+	multicell.AddVecs(midg, mg0, mg1)
+	multicell.ScaleVec(midg, 0.5, midg)
 
 	gaxis := multicell.NewVec(lenG)
 	multicell.DiffVecs(gaxis, mg1, mg0)
 	multicell.NormalizeVec(gaxis)
 
-	{
-		et0 := multicell.NewVec(lenG)
-		et1 := multicell.NewVec(lenG)
-		multicell.DiffVecs(et0, mg0, mg)
-		multicell.DiffVecs(et1, mg1, mg)
-		pt0 := multicell.NewVec(lenE)
-		pt1 := multicell.NewVec(lenE)
-		multicell.DiffVecs(pt0, env0, mp)
-		multicell.DiffVecs(pt1, env1, mp)
-		x0 := multicell.DotVecs(et0, gaxis) / multicell.Norm2(et0)
-		y0 := multicell.DotVecs(pt0, paxis) / multicell.Norm2(pt0)
-		x1 := multicell.DotVecs(et1, gaxis) / multicell.Norm2(et1)
-		y1 := multicell.DotVecs(pt1, paxis) / multicell.Norm2(pt1)
-		log.Println("###", multicell.Norm2(gaxis), multicell.Norm2(paxis))
-		log.Printf("#\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
-	}
 	log.Printf("Dumping start")
 	for gen := 1; gen <= epochlength; gen++ {
 		ofilename := fmt.Sprintf("%s_%3.3d.dat", PG_Filename, gen)
@@ -124,8 +108,8 @@ func main() {
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 		pop.FromJSON(jfilename)
-		gt0 := pop.GetFlatGenome(multicell.IAncEnv)
-		gt1 := pop.GetFlatGenome(multicell.INovEnv)
+		gt0 := pop.GetFlatGenome(0)
+		gt1 := pop.GetFlatGenome(1)
 		et0 := pop.GetFlatStateVec("E", 0)
 		et1 := pop.GetFlatStateVec("E", 1)
 		for k, g := range gt0 {
@@ -136,16 +120,24 @@ func main() {
 		pt0 := pop.GetFlatStateVec("P", 0)
 		pt1 := pop.GetFlatStateVec("P", 1)
 
-		for k := range et0 {
-			multicell.DiffVecs(et0[k], et0[k], mg)
-			multicell.DiffVecs(et1[k], et1[k], mg)
-			multicell.DiffVecs(pt0[k], pt0[k], mp)
-			multicell.DiffVecs(pt1[k], pt1[k], mp)
+		tx0 := multicell.NewVec(lenG)
+		tx1 := multicell.NewVec(lenG)
+		ty0 := multicell.NewVec(lenE)
+		ty1 := multicell.NewVec(lenE)
 
-			x0 := multicell.DotVecs(et0[k], gaxis) / multicell.Norm2(et0[k])
-			y0 := multicell.DotVecs(pt0[k], paxis) / multicell.Norm2(pt0[k])
-			x1 := multicell.DotVecs(et1[k], gaxis) / multicell.Norm2(et1[k])
-			y1 := multicell.DotVecs(pt1[k], paxis) / multicell.Norm2(pt1[k])
+		for k := range et0 {
+			multicell.DiffVecs(tx0, et0[k], midg)
+			multicell.DiffVecs(tx1, et1[k], midg)
+
+			multicell.DiffVecs(ty0, pt0[k], midp)
+			multicell.DiffVecs(ty1, pt1[k], midp)
+
+			x0 := multicell.DotVecs(tx0, gaxis) / multicell.Norm2(tx0)
+			y0 := multicell.DotVecs(ty0, paxis) / multicell.Norm2(ty0)
+
+			x1 := multicell.DotVecs(tx1, gaxis) / multicell.Norm2(tx1)
+			y1 := multicell.DotVecs(ty1, paxis) / multicell.Norm2(ty1)
+
 			fmt.Fprintf(fout, "\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
 
 			dp1e1 := pop.Indivs[k].Dp1e1
