@@ -61,9 +61,9 @@ func main() {
 	multicell.DiffVecs(denv, env1, env0)
 	multicell.NormalizeVec(denv)
 
-	g1 := pop1.GetFlatGenome(multicell.IAncEnv)
+	g10 := pop1.GetFlatGenome(multicell.IAncEnv)
 	e10 := pop1.GetFlatStateVec("E", 0)
-	for k, g := range g1 {
+	for k, g := range g10 {
 		e10[k] = append(e10[k], g...)
 	}
 
@@ -72,9 +72,9 @@ func main() {
 	fmt.Println("Reference population 2:", refgen2)
 	pop2.FromJSON(refgen2)
 
-	g2 := pop2.GetFlatGenome(multicell.INovEnv)
+	g21 := pop2.GetFlatGenome(multicell.INovEnv)
 	e21 := pop2.GetFlatStateVec("E", 1)
-	for k, g := range g2 {
+	for k, g := range g21 {
 		e21[k] = append(e21[k], g...)
 	}
 
@@ -82,18 +82,35 @@ func main() {
 	mp := multicell.NewVec(lenE)
 	multicell.AddVecs(mp, env0, env1)
 	multicell.ScaleVec(mp, 0.5, mp)
+	paxis := multicell.CopyVec(denv)
+
 	mg0 := multicell.GetMeanVec(e10)
 	mg1 := multicell.GetMeanVec(e21)
 	lenG := len(mg0)
 	mg := multicell.NewVec(lenG)
-	multicell.AddVecs(mp, mg0, mg1)
+	multicell.AddVecs(mg, mg0, mg1)
 	multicell.ScaleVec(mg, 0.5, mg)
 
-	paxis := multicell.CopyVec(denv)
 	gaxis := multicell.NewVec(lenG)
 	multicell.DiffVecs(gaxis, mg1, mg0)
 	multicell.NormalizeVec(gaxis)
 
+	{
+		et0 := multicell.NewVec(lenG)
+		et1 := multicell.NewVec(lenG)
+		multicell.DiffVecs(et0, mg0, mg)
+		multicell.DiffVecs(et1, mg1, mg)
+		pt0 := multicell.NewVec(lenE)
+		pt1 := multicell.NewVec(lenE)
+		multicell.DiffVecs(pt0, env0, mp)
+		multicell.DiffVecs(pt1, env1, mp)
+		x0 := multicell.DotVecs(et0, gaxis) / multicell.Norm2(et0)
+		y0 := multicell.DotVecs(pt0, paxis) / multicell.Norm2(pt0)
+		x1 := multicell.DotVecs(et1, gaxis) / multicell.Norm2(et1)
+		y1 := multicell.DotVecs(pt1, paxis) / multicell.Norm2(pt1)
+		log.Println("###", multicell.Norm2(gaxis), multicell.Norm2(paxis))
+		log.Printf("#\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
+	}
 	log.Printf("Dumping start")
 	for gen := 1; gen <= epochlength; gen++ {
 		ofilename := fmt.Sprintf("%s_%3.3d.dat", PG_Filename, gen)
@@ -125,10 +142,10 @@ func main() {
 			multicell.DiffVecs(pt0[k], pt0[k], mp)
 			multicell.DiffVecs(pt1[k], pt1[k], mp)
 
-			x0 := multicell.DotVecs(et0[k], gaxis)
-			y0 := multicell.DotVecs(pt0[k], paxis)
-			x1 := multicell.DotVecs(et1[k], gaxis)
-			y1 := multicell.DotVecs(pt1[k], paxis)
+			x0 := multicell.DotVecs(et0[k], gaxis) / multicell.Norm2(et0[k])
+			y0 := multicell.DotVecs(pt0[k], paxis) / multicell.Norm2(pt0[k])
+			x1 := multicell.DotVecs(et1[k], gaxis) / multicell.Norm2(et1[k])
+			y1 := multicell.DotVecs(pt1[k], paxis) / multicell.Norm2(pt1[k])
 			fmt.Fprintf(fout, "\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
 
 			dp1e1 := pop.Indivs[k].Dp1e1
