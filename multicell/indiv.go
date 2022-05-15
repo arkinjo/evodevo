@@ -268,13 +268,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		MultMatVec(vf, G.G, g0)
 		if withE { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
-
 				DiffVecs(e_p, cell.E, cell.P)
-
-				// Kalman gain
-				//pscale := cell.getPscale()
-				//multVecVec(e_p, pscale, e_p)
-
 				MultMatVec(ve, G.E, e_p)
 			} else {
 				MultMatVec(ve, G.E, cell.E)
