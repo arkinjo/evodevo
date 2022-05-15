@@ -17,10 +17,20 @@ var sqrt3 float64 = math.Sqrt(3.0)
 func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
-
 	jsonP := flag.String("jsonin", "", "json file of population")
-
+	covP := flag.Int("cov", 2, "0: AncEnv; 1: NovEnv; 2: NovEnv - AncEnv")
 	flag.Parse()
+
+	covFlag := *covP
+
+	switch covFlag {
+	case 0:
+		fmt.Println("# Cross-covariance under Ancestral Environment")
+	case 1:
+		fmt.Println("# Cross-covariance under Novel Environment")
+	case 2:
+		fmt.Println("# Cross-covariance of Novel - Ancestral Environments")
+	}
 
 	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 	if *jsonP != "" {
@@ -44,7 +54,14 @@ func main() {
 	delg := make([][]float64, 0)
 	for k, g := range genome0 {
 		d := multicell.NewVec(lenG)
-		multicell.DiffVecs(d, genome1[k], g)
+		switch covFlag {
+		case 0:
+			d = g
+		case 1:
+			d = genome1[k]
+		case 2:
+			multicell.DiffVecs(d, genome1[k], g)
+		}
 		delg = append(delg, d)
 	}
 
@@ -53,7 +70,14 @@ func main() {
 	dele := make([][]float64, 0)
 	for k, e := range e0 {
 		d := multicell.NewVec(lenE)
-		multicell.DiffVecs(d, e1[k], e)
+		switch covFlag {
+		case 0:
+			d = e
+		case 1:
+			d = e1[k]
+		case 2:
+			multicell.DiffVecs(d, e1[k], e)
+		}
 		dele = append(dele, d)
 	}
 
@@ -66,9 +90,16 @@ func main() {
 	p0 := pop.GetFlatStateVec("P", 0)
 	p1 := pop.GetFlatStateVec("P", 1)
 	delp := make([][]float64, 0)
-	for i, p := range p0 {
+	for k, p := range p0 {
 		d := multicell.NewVec(lenE)
-		multicell.DiffVecs(d, p1[i], p)
+		switch covFlag {
+		case 0:
+			d = p
+		case 1:
+			d = p1[k]
+		case 2:
+			multicell.DiffVecs(d, p1[k], p)
+		}
 		delp = append(delp, d)
 	}
 
