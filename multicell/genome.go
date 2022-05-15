@@ -1,8 +1,6 @@
 package multicell
 
 import (
-	//	"errors"
-	//	"fmt"
 	//	"log"
 	"math"
 	"math/rand"
@@ -240,33 +238,38 @@ func (genome *Genome) Mutate() {
 		t += nenv + ncells
 		if r < t {
 			genome.E.mutateSpmat(DensityE, mutRate)
+			return
 		}
 	}
 	if withF {
 		t += ngenes
 		if r < t {
 			genome.F.mutateSpmat(DensityF, mutRate)
+			return
 		}
 	}
 	t += ngenes
 	if r < t {
 		genome.G.mutateSpmat(DensityG, mutRate)
+		return
 	}
 	if withH {
 		t += ngenes
 		if r < t {
 			genome.H.mutateSpmat(DensityH, mutRate)
+			return
 		}
 		if withJ {
 			t += ngenes
 			if r < t {
 				genome.J.mutateSpmat(DensityJ, mutRate)
+				return
 			}
 		}
 	}
 	t += nenv + ncells
 	if r < t {
 		genome.P.mutateSpmat(DensityP, mutRate)
+		return
 	}
-	return
 }

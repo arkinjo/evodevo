@@ -57,11 +57,12 @@ func main() {
 
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)
-	} else {
+	}
+	multicell.SetParams(pop0.Params)
+	if json_in == "" {
 		fmt.Println("Randomizing initial population")
 		pop0.RandomizeGenome()
 	}
-	multicell.SetParams(pop0.Params)
 
 	ftraj, err := os.OpenFile(T_Filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create file for recording trajectory
 	if err != nil {
