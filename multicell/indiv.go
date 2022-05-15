@@ -150,15 +150,6 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 }
 
 func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
-	genome0 := dad.Bodies[INovEnv].Genome.Copy()
-	genome1 := mom.Bodies[INovEnv].Genome.Copy()
-	CrossoverSpmats(genome0.E, genome1.E)
-	CrossoverSpmats(genome0.F, genome1.F)
-	CrossoverSpmats(genome0.G, genome1.G)
-	CrossoverSpmats(genome0.H, genome1.H)
-	CrossoverSpmats(genome0.J, genome1.J)
-	CrossoverSpmats(genome0.P, genome1.P)
-
 	bodies0 := make([]Body, NBodies)
 	for i := range bodies0 {
 		bodies0[i] = NewBody(ncells)
@@ -169,6 +160,15 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	for i := range bodies1 {
 		bodies1[i] = NewBody(ncells)
 	}
+
+	genome0 := dad.Bodies[INovEnv].Genome.Copy()
+	genome1 := mom.Bodies[INovEnv].Genome.Copy()
+	CrossoverSpmats(genome0.E, genome1.E)
+	CrossoverSpmats(genome0.F, genome1.F)
+	CrossoverSpmats(genome0.G, genome1.G)
+	CrossoverSpmats(genome0.H, genome1.H)
+	CrossoverSpmats(genome0.J, genome1.J)
+	CrossoverSpmats(genome0.P, genome1.P)
 
 	bodies0[IAncEnv].Genome = genome0
 	bodies1[IAncEnv].Genome = genome1
