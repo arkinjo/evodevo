@@ -58,7 +58,7 @@ func TestEqualPopGenomes(pop0, pop1 Population) float64 { //Test for equal genom
 	pop1.SortPopIndivs() //Sort before comparison
 
 	for k, indiv := range pop0.Indivs {
-		u += TestEqualGenomes(indiv.Genome, pop1.Indivs[k].Genome) //Update whether individual wise genomes are same
+		u += TestEqualGenomes(indiv.Bodies[0].Genome, pop1.Indivs[k].Bodies[0].Genome) //Update whether individual wise genomes are same
 	}
 	return u //Warning! Ordering of population individuals is important.
 }

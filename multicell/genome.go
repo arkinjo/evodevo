@@ -5,7 +5,7 @@ import (
 	//	"fmt"
 	//	"log"
 	"math"
-	//	"math/rand"
+	"math/rand"
 )
 
 type Genome struct { //Genome of an individual
@@ -226,4 +226,47 @@ func (genome *Genome) FlatVec() Vec {
 	}
 
 	return vec
+}
+
+func (genome *Genome) Mutate() {
+	r := rand.Intn(geneLength)
+	//Randomly choose one of the genome matrices to mutate;
+	//with prob proportional to no. of columns
+	t := 0
+
+	//This version is specialized for current definition of full model.
+
+	if withE {
+		t += nenv + ncells
+		if r < t {
+			genome.E.mutateSpmat(DensityE, mutRate)
+		}
+	}
+	if withF {
+		t += ngenes
+		if r < t {
+			genome.F.mutateSpmat(DensityF, mutRate)
+		}
+	}
+	t += ngenes
+	if r < t {
+		genome.G.mutateSpmat(DensityG, mutRate)
+	}
+	if withH {
+		t += ngenes
+		if r < t {
+			genome.H.mutateSpmat(DensityH, mutRate)
+		}
+		if withJ {
+			t += ngenes
+			if r < t {
+				genome.J.mutateSpmat(DensityJ, mutRate)
+			}
+		}
+	}
+	t += nenv + ncells
+	if r < t {
+		genome.P.mutateSpmat(DensityP, mutRate)
+	}
+	return
 }
