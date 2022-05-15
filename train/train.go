@@ -19,7 +19,7 @@ func main() {
 	t0 := time.Now()
 	testP := flag.Bool("test", false, "Test run or not")
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
-	elayerP := flag.Bool("layerE", true, "Environmental cue layer")
+	withcueP := flag.Bool("cue", true, "With environmental cue")
 	flayerP := flag.Bool("layerF", true, "Epigenetic layer")
 	hlayerP := flag.Bool("layerH", true, "Higher order complexes")
 	jlayerP := flag.Bool("layerJ", true, "Interactions in higher order interactions")
@@ -38,7 +38,7 @@ func main() {
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
 
-	var settings = multicell.Settings{*maxpopP, *ncellsP, *elayerP, *flayerP, *hlayerP, *jlayerP, *pfbackP, *sdNoiseP}
+	var settings = multicell.Settings{*maxpopP, *ncellsP, *withcueP, *flayerP, *hlayerP, *jlayerP, *pfbackP, *sdNoiseP}
 
 	log.Println("seed=", *seedPtr, "seed_cue=", *seed_cuePtr)
 	multicell.SetSeed(int64(*seedPtr))
