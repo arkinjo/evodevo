@@ -18,18 +18,32 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	jsonP := flag.String("jsonin", "", "json file of population")
-	covP := flag.Int("cov", 2, "0: AncEnv; 1: NovEnv; 2: NovEnv - AncEnv")
+	pflagP := flag.Int("p", 2, "0: AncEnv; 1: NovEnv; 2: NovEnv - AncEnv")
+	egflagP := flag.Int("eg", 2, "0: AncEnv; 1: NovEnv; 2: NovEnv - AncEnv")
 	flag.Parse()
 
-	covFlag := *covP
+	pFlag := *pflagP
+	egFlag := *egflagP
 
-	switch covFlag {
+	switch pFlag {
 	case 0:
-		fmt.Println("# Cross-covariance under Ancestral Environment")
+		fmt.Println("# phenotype under Ancestral Environment")
 	case 1:
-		fmt.Println("# Cross-covariance under Novel Environment")
+		fmt.Println("# phenotype under Novel Environment")
 	case 2:
-		fmt.Println("# Cross-covariance of Novel - Ancestral Environments")
+		fmt.Println("# phenotype difference between Novel and Ancestral Environments")
+	default:
+		log.Fatal("-p must be 0, 1, or 2")
+	}
+	switch egFlag {
+	case 0:
+		fmt.Println("# genotype (+env) under Ancestral Environment")
+	case 1:
+		fmt.Println("# genotype (+env) under Novel Environment")
+	case 2:
+		fmt.Println("# genotype (+env) difference between Novel and Ancestral Environments")
+	default:
+		log.Fatal("-p must be 0, 1, or 2")
 	}
 
 	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
@@ -53,32 +67,34 @@ func main() {
 	lenG := len(genome0[0])
 	delg := make([][]float64, 0)
 	for k, g := range genome0 {
-		d := multicell.NewVec(lenG)
-		switch covFlag {
+		switch egFlag {
 		case 0:
-			d = g
+			delg = append(delg, g)
 		case 1:
-			d = genome1[k]
+			delg = append(delg, genome1[k])
 		case 2:
+			d := multicell.NewVec(lenG)
 			multicell.DiffVecs(d, genome1[k], g)
+			delg = append(delg, d)
 		}
-		delg = append(delg, d)
+
 	}
 
 	e0 := pop.GetFlatStateVec("E", 0)
 	e1 := pop.GetFlatStateVec("E", 1)
 	dele := make([][]float64, 0)
 	for k, e := range e0 {
-		d := multicell.NewVec(lenE)
-		switch covFlag {
+		switch egFlag {
 		case 0:
-			d = e
+			dele = append(dele, e)
 		case 1:
-			d = e1[k]
+			dele = append(dele, e1[k])
 		case 2:
+			d := multicell.NewVec(lenE)
 			multicell.DiffVecs(d, e1[k], e)
+			dele = append(dele, d)
 		}
-		dele = append(dele, d)
+
 	}
 
 	deleg := make([][]float64, 0)
@@ -91,16 +107,17 @@ func main() {
 	p1 := pop.GetFlatStateVec("P", 1)
 	delp := make([][]float64, 0)
 	for k, p := range p0 {
-		d := multicell.NewVec(lenE)
-		switch covFlag {
+		switch pFlag {
 		case 0:
-			d = p
+			delp = append(delp, p)
 		case 1:
-			d = p1[k]
+			delp = append(delp, p1[k])
 		case 2:
+			d := multicell.NewVec(lenE)
 			multicell.DiffVecs(d, p1[k], p)
+			delp = append(delp, d)
 		}
-		delp = append(delp, d)
+
 	}
 
 	mp, meg, cov := multicell.GetCrossCov(delp, deleg, true, true)
