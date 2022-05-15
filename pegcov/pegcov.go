@@ -19,7 +19,6 @@ func main() {
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 
 	jsonP := flag.String("jsonin", "", "json file of population")
-	jsonrefP := flag.String("jsonref", "", "json file of reference population")
 
 	flag.Parse()
 
@@ -32,15 +31,6 @@ func main() {
 		log.Fatal("Specify the input JSON file with -jsonin=filename.")
 	}
 
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	if *jsonrefP != "" {
-		pop1.FromJSON(*jsonrefP)
-		multicell.SetParams(pop1.Params)
-	} else {
-		flag.PrintDefaults()
-		log.Fatal("Specify the reference JSON file with -jsonref=filename.")
-	}
-
 	env0 := multicell.FlattenEnvs(pop.AncEnvs)
 	env1 := multicell.FlattenEnvs(pop.NovEnvs)
 	lenE := len(env0)
@@ -48,16 +38,13 @@ func main() {
 	multicell.DiffVecs(denv, env1, env0)
 	multicell.NormalizeVec(denv)
 
-	genome := pop.GetFlatGenome()
-	lenG := len(genome[0])
-	//	delg := genome
-
-	//	genome1 := pop1.GetFlatGenome()
-	gref := multicell.GetMeanVec(genome)
+	genome0 := pop.GetFlatGenome(multicell.IAncEnv)
+	genome1 := pop.GetFlatGenome(multicell.INovEnv)
+	lenG := len(genome0[0])
 	delg := make([][]float64, 0)
-	for _, g := range genome {
+	for k, g := range genome0 {
 		d := multicell.NewVec(lenG)
-		multicell.DiffVecs(d, g, gref)
+		multicell.DiffVecs(d, genome1[k], g)
 		delg = append(delg, d)
 	}
 
