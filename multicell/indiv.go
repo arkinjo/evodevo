@@ -29,6 +29,7 @@ type Body struct { //Do we want to reimplement this?
 const (
 	IAncEnv = iota // Previous env
 	INovEnv        // Current env
+	NBodies
 )
 
 const ( // Index for cell state vectors
@@ -121,7 +122,7 @@ func (body *Body) Copy() Body {
 }
 
 func NewIndiv(id int) Indiv { //Creates a new individual
-	bodies := make([]Body, 2)
+	bodies := make([]Body, NBodies)
 	for i := range bodies {
 		bodies[i] = NewBody(ncells)
 	}
@@ -158,22 +159,26 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	CrossoverSpmats(genome0.J, genome1.J)
 	CrossoverSpmats(genome0.P, genome1.P)
 
-	bodies0 := make([]Body, 3)
+	bodies0 := make([]Body, NBodies)
 	for i := range bodies0 {
 		bodies0[i] = NewBody(ncells)
-		bodies0[i].Genome = genome0
+
 	}
-	bodies1 := make([]Body, 3)
+
+	bodies1 := make([]Body, NBodies)
 	for i := range bodies1 {
 		bodies1[i] = NewBody(ncells)
-		bodies1[i].Genome = genome1
 	}
+
+	bodies0[IAncEnv].Genome = genome0
+	bodies1[IAncEnv].Genome = genome1
+	bodies0[INovEnv].Genome = genome0.Copy()
+	bodies1[INovEnv].Genome = genome1.Copy()
+	bodies0[INovEnv].Genome.Mutate()
+	bodies1[INovEnv].Genome.Mutate()
 
 	kid0 := Indiv{dad.Id, dad.Id, mom.Id, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 	kid1 := Indiv{mom.Id, dad.Id, mom.Id, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-
-	kid0.Bodies[INovEnv].Genome.Mutate()
-	kid1.Bodies[INovEnv].Genome.Mutate()
 
 	return kid0, kid1
 }

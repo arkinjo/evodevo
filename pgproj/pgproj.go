@@ -61,12 +61,10 @@ func main() {
 	multicell.DiffVecs(denv, env1, env0)
 	multicell.NormalizeVec(denv)
 
-	g1 := pop1.GetFlatGenome()
+	g1 := pop1.GetFlatGenome(multicell.IAncEnv)
 	e10 := pop1.GetFlatStateVec("E", 0)
-	e11 := pop1.GetFlatStateVec("E", 1)
 	for k, g := range g1 {
 		e10[k] = append(e10[k], g...)
-		e11[k] = append(e11[k], g...)
 	}
 
 	log.Println("Reading Pop2")
@@ -74,11 +72,9 @@ func main() {
 	fmt.Println("Reference population 2:", refgen2)
 	pop2.FromJSON(refgen2)
 
-	g2 := pop2.GetFlatGenome()
-	e20 := pop2.GetFlatStateVec("E", 0)
+	g2 := pop2.GetFlatGenome(multicell.INovEnv)
 	e21 := pop2.GetFlatStateVec("E", 1)
 	for k, g := range g2 {
-		e20[k] = append(e20[k], g...)
 		e21[k] = append(e21[k], g...)
 	}
 
@@ -105,18 +101,19 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Fprintf(fout, "#Geno+e0     \tPheno0     \tGeno+e1     \tPheno1   ")
+		fmt.Fprintf(fout, "#\t Geno+e0     \tPheno0     \tGeno+e1     \tPheno1   ")
 		fmt.Fprintf(fout, "\t||p0-e0||  \t||p1-e1||  \tFit     \tWagFit\n")
 
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 		pop.FromJSON(jfilename)
-		gt := pop.GetFlatGenome()
+		gt0 := pop.GetFlatGenome(multicell.IAncEnv)
+		gt1 := pop.GetFlatGenome(multicell.INovEnv)
 		et0 := pop.GetFlatStateVec("E", 0)
 		et1 := pop.GetFlatStateVec("E", 1)
-		for k, g := range gt {
+		for k, g := range gt0 {
 			et0[k] = append(et0[k], g...)
-			et1[k] = append(et1[k], g...)
+			et1[k] = append(et1[k], gt1[k]...)
 		}
 
 		pt0 := pop.GetFlatStateVec("P", 0)
