@@ -49,15 +49,18 @@ func main() {
 	multicell.NormalizeVec(denv)
 
 	genome := pop.GetFlatGenome()
-	genome1 := pop1.GetFlatGenome()
-	gref := multicell.GetMeanVec(genome1)
 	lenG := len(genome[0])
+	//	delg := genome
+
+	//	genome1 := pop1.GetFlatGenome()
+	gref := multicell.GetMeanVec(genome)
 	delg := make([][]float64, 0)
 	for _, g := range genome {
 		d := multicell.NewVec(lenG)
 		multicell.DiffVecs(d, g, gref)
 		delg = append(delg, d)
 	}
+
 	e0 := pop.GetFlatStateVec("E", 0)
 	e1 := pop.GetFlatStateVec("E", 1)
 	dele := make([][]float64, 0)
