@@ -54,11 +54,12 @@ func main() {
 
 	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
 	pop0.Params = settings
-	multicell.SetParams(pop0.Params)
 
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)
-	} else {
+	}
+	multicell.SetParams(pop0.Params)
+	if json_in == "" {
 		fmt.Println("Randomizing initial population")
 		pop0.RandomizeGenome()
 	}
