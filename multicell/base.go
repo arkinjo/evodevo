@@ -1,66 +1,80 @@
 package multicell
 
 import (
+	"fmt"
+	"log"
 	"math"
 	"math/rand"
+
+	"gonum.org/v1/gonum/mat"
 )
+
+type Settings struct {
+	MaxPop  int     // Maximum number of individuals in population
+	NCells  int     // Number of cell types
+	ELayer  bool    // e present?
+	FLayer  bool    // f present?
+	HLayer  bool    // h present?
+	JLayer  bool    //  J present?
+	Pfback  bool    // P feedback to E layer
+	SDNoise float64 // stdev of environmental noise
+}
+
+var default_settings = Settings{1000, 1, true, true, true, true, true, 0.05}
 
 var maxPop int = 1000 // population size
 var ngenes int = 200  // number of genes
 var nenv int = 40     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
+var pheno_feedback bool = false
+var devNoise float64 = 0.05
 
+const cueMag float64 = 1.0    // each trait is +/-cueMag
 const maxDevStep int = 200    // Maximum steps for development.
-const ccStep int = 5          // Number of steady steps for convergence
-const epsDev float64 = 1.0e-6 // Convergence criterion of development.
+const epsDev float64 = 1.0e-5 // Convergence criterion of development.
 const eps float64 = 1.0e-50
+const sqrt3 float64 = 1.7320508075688772935274463415058723669428052538103806280558069794519330169088000370811461867572485756756261414154
+const ccStep float64 = 5.0            // Number of steady steps for convergence
+const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 
-//const l_EMA float64 = 5 //initialize as float for computation
+// Length of a gene for Unicellular organism.
+var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells
 
-var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells // Length of a gene for Unicellular organism.
-var genelength int                                //calculated from layers present or absent.
+//calculated from layers present or absent.
+var geneLength int
 
-const funcspergene float64 = 1.0 //average number of functions per gene
-var GenomeDensity float64 = funcspergene / float64(ngenes)
-var CueResponseDensity float64 = -math.Log(eps) / float64(ngenes)
+const baseDensity float64 = 0.01
 
-var HalfGenomeDensity float64 = 0.5 * GenomeDensity
+var DensityE float64 = baseDensity * float64(ngenes) / float64(nenv+ncells)
+var DensityF float64 = baseDensity
+var DensityG float64 = baseDensity
+var DensityH float64 = baseDensity
+var DensityJ float64 = baseDensity
+var DensityP float64 = baseDensity
 
-const baseMutationRate float64 = 0.01 // default probability of mutation of genome
-var mutRate float64                   //declaration
-const baseSelStrength float64 = 20    // default selection strength; to be normalized by number of cells
-const selDevStep float64 = 20.0       // Developmental steps for selection
+const baseMutationRate float64 = 0.005 // default probability of mutation of genome
+var mutRate float64                    //declaration
+const baseSelStrength float64 = 20.0   // default selection strength; to be normalized by number of cells
+const selDevStep float64 = 20.0        // Developmental steps for selection
 
-//var selStrength float64             //declaration; Selection strength per unit cue
-//var minFitness float64
 const minWagnerFitness float64 = 0.01
 
-var Omega float64 = 1.0 // positive parameter of sigmoid, set to limiting to zero (e.g. 1.0e-10) for step function.
+var withE bool = false // with or without environmental cues.
+var withF bool = true  // Epigenetic marker layer
+var withH bool = true  // Higher order complexes layer
+var withJ bool = false
 
-var withCue bool = false        // with or without environmental cues.
-var pheno_feedback bool = false //whether phenotype is fed back
-var cuestrength float64         // cue strength
-var epig bool = true            // Epigenetic marker layer
-var hoc bool = true             // Higher order complexes layer
-var hoi bool = false
-var hoistrength float64 //declaration
-
-// theoretical standard deviation of matrix elements
-var sdE float64
-var sdF float64
-var sdG float64
-var sdH float64
-var sdJ float64
-var sdP float64
+// slope of activation functions
+var omega_f float64 = 1.0
+var omega_g float64 = 1.0
+var omega_h float64 = 1.0
+var omega_p float64 = 1.0
 
 //Remark: defaults to full model!
 
-type Spmat struct {
-	Ncol int                 // number of columns
-	Mat  [](map[int]float64) // Sparse matrix is an array of maps.
-}
-
 type Vec = []float64 //Vector is a slice
+type Dmat = []Vec
+type Tensor3 []Dmat
 
 //var genrand = rand.New(rand.NewSource(99)) //This is bad for concurrency. DO NOT USE!
 
@@ -68,62 +82,60 @@ func SetSeed(seed int64) {
 	rand.Seed(seed)
 }
 
-func SetMaxPop(n int) {
-	maxPop = n
-}
+func SetParams(s Settings) { //Define whether each layer or interaction is present in model
+	maxPop = s.MaxPop
+	withE = s.ELayer
+	withF = s.FLayer
+	withH = s.HLayer
+	withJ = s.JLayer
+	pheno_feedback = s.Pfback
+	ncells = s.NCells
+	devNoise = s.SDNoise
 
-func SetNcells(n int) {
-	ncells = n
-	//selStrength = baseSelStrength / float64(n*(n+nenv))
-	//minWagnerFitness = math.Exp(-baseSelStrength) //Minimal allowed raw fitness
-}
+	DensityE = baseDensity * float64(ngenes) / float64(nenv+ncells)
 
-func SetLayers(ce, ch float64, pfeedback, epigm, HOC bool) { //Define whether each layer or interaction is present in model
+	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
+	from_g := DensityG * float64(ngenes)
 
-	cuestrength = ce //strength of environment cue
-	pheno_feedback = pfeedback
-	hoistrength = ch //strength of interactions between higher order complexes
-
-	//withCue = cue //Whether environment cue has effect on development
-	epig = epigm //Layer representing epigenetic markers
-	hoc = HOC    //Layer representing higher-order complexes
-	//hoi = HOI    //Allow interaction between higher-order complexes
-
-	genelength = ngenes + nenv + ncells //G and P layers present by default
-	if ce != 0 {
-		withCue = true
-		genelength += nenv + ncells
-	} else {
-		withCue = false
-	}
-
-	if epig {
-		genelength += ngenes
-	}
-	if hoc {
-		genelength += ngenes
-		if ch != 0 {
-			hoi = true
-			genelength += ngenes
+	if withE {
+		geneLength += nenv + ncells
+		from_e := DensityE * float64(nenv+ncells)
+		if pheno_feedback {
+			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
 		} else {
-			hoi = false
+			omega_f = 1.0 / math.Sqrt(from_e+from_g)
 		}
+	} else {
+		omega_f = 1.0 / math.Sqrt(from_g)
+		DensityE = 0.0
 	}
 
-	mutRate = baseMutationRate * float64(fullGeneLength) / float64(genelength) //to compensate for layer removal.
-
-	//initializing theoretical standard deviations for entries of each matrix
-	sdE = math.Sqrt(cuestrength / (CueResponseDensity * float64(nenv+ncells) * (1 + cuestrength)))
-	if pheno_feedback {
-		sdE *= math.Sqrt(0.5) // rescale to account for feedback
+	if withF {
+		geneLength += ngenes
+	} else {
+		DensityF = 0.0
 	}
 
-	sdG = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+cuestrength))
+	omega_g = 1.0 / math.Sqrt(DensityG*float64(ngenes))
+	omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes))
 
-	sdF = math.Sqrt(math.Pi / (float64(ngenes) * GenomeDensity))
-	sdH = 1 / math.Sqrt(GenomeDensity*float64(ngenes)*(1+hoistrength))
-	sdJ = math.Sqrt(hoistrength / (GenomeDensity * float64(ngenes) * (1 + hoistrength)))
-	sdP = 1 / math.Sqrt(CueResponseDensity*float64(ngenes))
+	if withH {
+		geneLength += ngenes
+		if withJ {
+			geneLength += ngenes
+			omega_h = 1.0 / math.Sqrt(from_g*2)
+		} else {
+			omega_h = 1.0 / math.Sqrt(from_g)
+			DensityJ = 0.0
+		}
+	} else {
+		omega_h = 0.0
+		DensityH = 0.0
+	}
+
+	//to compensate for layer removal.
+	mutRate = baseMutationRate * float64(fullGeneLength) / float64(geneLength)
+
 }
 
 func GetMaxPop() int {
@@ -136,10 +148,6 @@ func GetNcells() int {
 
 func GetNenv() int {
 	return nenv
-}
-
-func scale(x float64) float64 {
-	return cuestrength * x
 }
 
 func sigmoid(x, omega float64) float64 {
@@ -159,14 +167,8 @@ func arctan(x, omega float64) float64 {
 }
 
 func lecunatan(x float64) float64 { //Rescaled arctan under same treatment of Le'Cun's hyperbolic tangent.
-	return 6.0 * math.Atan(x/1.73205080756887729352744634150587236694) / math.Pi
+	return 6.0 * math.Atan(x/sqrt3) / math.Pi
 }
-
-/*
-func scaledatan(x, omega float64) float64 {
-	return 2.0 * math.Atan(omega*x) / math.Pi
-}
-*/
 
 func relu(x, omega float64) float64 {
 	if x < 0 {
@@ -177,60 +179,65 @@ func relu(x, omega float64) float64 {
 }
 
 func sigmaf(x float64) float64 { //Activation function for epigenetic markers
-	return lecunatan(x)
+	return lecunatan(x * omega_f)
+	//return tanh(x, omega_f)
 }
 
 func sigmag(x float64) float64 { //Activation function for gene expression levels
-	return lecunatan(x)
+	return lecunatan(x * omega_g)
+	//return tanh(x, omega_g)
 }
 
 func sigmah(x float64) float64 { //Activation function for higher order complexes
-	return lecunatan(x) //abstract level of amount of higher order complexes
+	return lecunatan(x * omega_h) //abstract level of amount of higher order complexes
+	//return tanh(x, omega_h)
 }
 
 func rho(x float64) float64 { //Function for converting gene expression into phenotype
-	return lecunatan(x)
+	//return cueMag * lecunatan(x*omega_p)
+	return cueMag * tanh(x, omega_p)
 }
 
-func NewSpmat(nrow, ncol int) Spmat { //Initialize new sparse matrix
-	mat := make([](map[int]float64), nrow)
+func NewDmat(nrow, ncol int) Dmat {
+	mat := make([]Vec, nrow)
 	for i := range mat {
-		mat[i] = make(map[int]float64)
+		mat[i] = NewVec(ncol)
 	}
-	return Spmat{ncol, mat}
+
+	return mat
 }
 
-func (sp *Spmat) Copy() Spmat {
-	nsp := NewSpmat(len(sp.Mat), sp.Ncol)
-	for i, m := range sp.Mat {
-		for j, d := range m {
-			nsp.Mat[i][j] = d
+func CopyDmat(mat1, mat0 Dmat) {
+	for i, di := range mat0 {
+		for j, dij := range di {
+			mat1[i][j] = dij
 		}
 	}
-	return nsp
 }
 
-func (sp *Spmat) Randomize(density, sd float64) { //Randomize entries of sparse matrix
-	for i := range sp.Mat {
-		for j := 0; j < sp.Ncol; j++ {
-			r := rand.Float64()
-			if r < density {
-				sp.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry
+func ResetDmat(mat Dmat) {
+	for i, mi := range mat {
+		for j := range mi {
+			mat[i][j] = 0
+		}
+	}
+}
+
+func MultDmats(mat0, mat1 Dmat) Dmat {
+	dimi := len(mat0)
+	dimj := len(mat0[0])
+	dimk := len(mat1[0])
+
+	mat := NewDmat(dimi, dimk)
+	for i := 0; i < dimi; i++ {
+		for j := 0; j < dimj; j++ {
+			for k := 0; k < dimk; k++ {
+				mat[i][k] += mat0[i][j] * mat1[j][k]
 			}
 		}
 	}
-}
 
-func DiffSpmat(m1, m2 *Spmat) Spmat { //This function works fine
-	d := NewSpmat(len(m1.Mat), m1.Ncol) //initialization
-	ncol := m1.Ncol
-	for i := range m1.Mat {
-		for j := 0; j < ncol; j++ {
-			d.Mat[i][j] = m1.Mat[i][j] - m2.Mat[i][j]
-		}
-	}
-
-	return d
+	return mat
 }
 
 func NewVec(len int) Vec { //Generate a new (zero) vector of length len
@@ -252,46 +259,32 @@ func Ones(len int) Vec { //Generate a vector of ones of length len
 	return v
 }
 
-func multMatVec(vout Vec, mat Spmat, vin Vec) { //Matrix multiplication
-	for i := range vout {
-		vout[i] = 0.0
-	}
-
-	for i, m := range mat.Mat {
-		for j, d := range m {
-			vout[i] += d * vin[j]
-		}
+func multVecVec(vout, v0, v1 Vec) { //element-wise vector multiplication
+	for i, v := range v0 {
+		vout[i] = v * v1[i]
 	}
 	return
 }
 
-func multMatVec_T(vout Vec, mat Spmat, vin Vec) { //Matrix transposition and then multiplication
-	for i := range vout {
-		vout[i] = 0.0
+func ScaleVec(vout Vec, s float64, vin Vec) {
+	for i, v := range vin {
+		vout[i] = s * v
 	}
-	for i, m := range mat.Mat {
-		vi := vin[i]
-		for j, d := range m {
-			vout[j] += d * vi
-		}
-	}
-
-	return
 }
 
-func addVecs(vout, v0, v1 Vec) { //Sum of vectors
+func AddVecs(vout, v0, v1 Vec) { //Sum of vectors
 	for i := range vout {
 		vout[i] = v0[i] + v1[i]
 	}
 }
 
-func diffVecs(vout, v0, v1 Vec) { //Difference of vectors
+func DiffVecs(vout, v0, v1 Vec) { //Difference of vectors
 	for i := range vout {
 		vout[i] = v0[i] - v1[i]
 	}
 }
 
-func Innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v1, use for axis projection
+func DotVecs(v0, v1 Vec) float64 { //inner product between vectors v0 and v1, use for axis projection
 	dot := 0.0
 	for i, v := range v0 {
 		dot += v * v1[i]
@@ -299,12 +292,16 @@ func Innerproduct(v0, v1 Vec) float64 { //inner product between vectors v0 and v
 	return dot
 }
 
-func Veclength2(v Vec) float64 {
-	return Innerproduct(v, v)
+func Norm2Sq(v Vec) float64 {
+	return DotVecs(v, v)
 }
 
-func Veclength(v Vec) float64 { //Euclidean Length of vector
-	return math.Sqrt(Veclength2(v))
+func Norm2(v Vec) float64 { //Euclidean Length of vector
+	return math.Sqrt(Norm2Sq(v))
+}
+
+func NormalizeVec(v Vec) {
+	ScaleVec(v, 1.0/Norm2(v), v)
 }
 
 func Dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
@@ -348,22 +345,6 @@ func applyFnVec(f func(float64) float64, vec Vec) { //Apply function f to a vect
 	return
 }
 
-func (mat *Spmat) mutateSpmat(density, sd float64) { //mutating a sparse matrix
-	nrow := len(mat.Mat)
-	nmut := int(mutRate * float64(nrow*mat.Ncol))
-	for n := 0; n < nmut; n++ {
-		i := rand.Intn(nrow)
-		j := rand.Intn(mat.Ncol)
-		r := rand.Float64()
-		delete(mat.Mat[i], j)
-		if r < density {
-			mat.Mat[i][j] = rand.NormFloat64() * sd //Scale to theoretical sd per entry.
-		}
-	}
-	//Note: This implementation has non-zero probability of choosing same element to be mutated twice.
-	return
-}
-
 func CopyVec(v Vec) Vec { //makes a copy of a vector
 	l := len(v)
 	v1 := make(Vec, l)
@@ -376,5 +357,152 @@ func MinInt(x, y int) int { //Returns minimum of two integers
 		return x
 	} else {
 		return y
+	}
+}
+
+func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
+	cv := NewVec(len(vecs[0]))
+	for _, v := range vecs {
+		AddVecs(cv, cv, v)
+	}
+
+	fn := 1 / float64(len(vecs))
+
+	ScaleVec(cv, fn, cv)
+
+	return cv
+}
+
+func GetCrossCov(vecs0, vecs1 []Vec, submean0, submean1 bool) (Vec, Vec, Dmat) {
+	cv0 := GetMeanVec(vecs0)
+	cv1 := GetMeanVec(vecs1)
+	ccmat := NewDmat(len(cv0), len(cv1))
+	var d0, d1 float64
+
+	for k := range vecs0 {
+		for i, c0 := range cv0 {
+			if submean0 {
+				d0 = vecs0[k][i] - c0
+			} else {
+				d0 = vecs0[k][i]
+			}
+			for j, c1 := range cv1 {
+				if submean1 {
+					d1 = vecs1[k][j] - c1
+				} else {
+					d1 = vecs1[k][j]
+				}
+				ccmat[i][j] += d0 * d1
+			}
+		}
+	}
+
+	fn := 1.0 / float64(len(vecs0))
+	for i := range cv0 {
+		for j := range cv1 {
+			ccmat[i][j] *= fn
+		}
+	}
+
+	return cv0, cv1, ccmat
+}
+
+// expect flag = mat.SVDThin or mat.SVDThinU
+func GetSVD_opt(ccmat Dmat, flag mat.SVDKind) (*mat.Dense, []float64, *mat.Dense) {
+	dim0 := len(ccmat)
+	dim1 := len(ccmat[0])
+	dim := dim0
+	if dim0 > dim1 {
+		dim = dim1
+	}
+
+	C := mat.NewDense(dim0, dim1, nil)
+	for i, ci := range ccmat {
+		for j, v := range ci {
+			C.Set(i, j, v)
+		}
+	}
+
+	var svd mat.SVD
+	ok := svd.Factorize(C, flag)
+	if !ok {
+		log.Fatal("SVD failed.")
+	}
+	U := mat.NewDense(dim0, dim, nil)
+	V := mat.NewDense(dim1, dim, nil)
+	if flag&mat.SVDThinU == mat.SVDThinU {
+		svd.UTo(U)
+	}
+	if flag&mat.SVDThinV == mat.SVDThinV {
+		svd.VTo(V)
+	}
+
+	vals := svd.Values(nil)
+
+	return U, vals, V
+}
+
+func GetSVD(ccmat Dmat) (*mat.Dense, []float64, *mat.Dense) {
+	return GetSVD_opt(ccmat, mat.SVDThin)
+}
+
+func ProjectSVD(label string, dirE, dirP *mat.VecDense, data0, data1 Dmat, mean0, mean1 Vec, ccmat Dmat, vals Vec, U, V *mat.Dense) {
+	traceP := len(mean0) == len(mean1)
+	trace := 0.0
+	if traceP {
+		for i, v := range ccmat {
+			trace += v[i]
+		}
+	}
+
+	fnorm2 := 0.0
+	for _, v := range vals {
+		fnorm2 += v * v
+	}
+	fmt.Printf("%s_FN2,Tr\t%e\t%e\n", label, fnorm2, trace)
+	dim0, _ := U.Dims()
+	dim1, _ := V.Dims()
+
+	m0 := mat.NewVecDense(dim0, mean0)
+	m1 := mat.NewVecDense(dim1, mean1)
+
+	t0 := mat.NewVecDense(dim0, nil)
+	t1 := mat.NewVecDense(dim1, nil)
+	for i, v := range vals {
+		fmt.Printf("%s_vals\t%d\t%e\n", label, i, v)
+	}
+
+	fmt.Println("#<YX>=UsV_ali \tcomp\tu.<dY>     \tv.<dX>")
+	for i := 0; i < dim0; i++ {
+		u := U.ColView(i)
+		v := V.ColView(i)
+		ue := math.Abs(mat.Dot(dirE, u))
+		vp := math.Abs(mat.Dot(dirP, v))
+		fmt.Printf("%s_ali\t%d\t%e\t%e\n", label, i, ue, vp)
+	}
+
+	fmt.Printf("#<YX>=UsV  \tcomp")
+	for i := 0; i < 3; i++ {
+		fmt.Printf("\tX.v%-5d\tY.u%-5d", i, i)
+	}
+	fmt.Printf("\n")
+	for k := range data0 {
+		fmt.Printf("%s_prj\t%3d", label, k)
+		p0 := mat.NewVecDense(dim0, data0[k])
+		p1 := mat.NewVecDense(dim1, data1[k])
+		for i := 0; i < 3; i++ {
+			t0.SubVec(p0, m0)
+			u := U.ColView(i)
+			y := mat.Dot(t0, u)
+			t1.SubVec(p1, m1)
+			v := V.ColView(i)
+			x := mat.Dot(t1, v)
+			if mat.Dot(dirE, u) < 0.0 {
+				x *= -1
+				y *= -1
+			}
+			fmt.Printf("\t%e \t%e ", x, y)
+		}
+		fmt.Printf("\n")
 	}
 }

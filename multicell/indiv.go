@@ -3,40 +3,39 @@ package multicell
 import (
 	//	"errors"
 	//	"fmt"
-	//	"log"
+	"log"
 	"math"
 	"math/rand"
 )
 
-type Genome struct { //Genome of an individual
-	E Spmat //Environment cue effect on epigenome
-	F Spmat //Regulatory effect of epigenetic markers on gene expression
-	G Spmat //Regulatory effect of gene expression on epigenetic markers
-	H Spmat //Contribution of gene expression on higher order complexes
-	J Spmat //Interaction between higher order complexes
-	P Spmat //Resulting expressed phenotype
-	//Z  Spmat //Gene expression of offspring
-}
-
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
-	E        Vec // Epigenetic markers
-	F        Vec // Epigenetic markers
-	G        Vec // Gene expression
-	H        Vec // Higher order complexes
-	P        Vec // Phenotype; id already in cue
-	NDevStep int // Developmental path length
+	E        Vec     // Env + noise
+	F        Vec     // Epigenetic markers
+	G        Vec     // Gene expression
+	H        Vec     // Higher order complexes
+	P, Pvar  Vec     // moving average and variance of P (P is already EMA)
+	PErr     float64 // ||e - p||_1
+	NDevStep int     // Developmental path length
+
 }
 
 type Body struct { //Do we want to reimplement this?
-	MeanErr  float64
+	PErr     float64
 	NDevStep int
 	Cells    []Cell // Array of cells of different types
 }
 
 const (
-	INoEnv  = iota //No env
-	IAncEnv        // Previous env
+	IAncEnv = iota // Previous env
 	INovEnv        // Current env
+)
+
+const ( // Index for cell state vectors
+	CellE = iota
+	CellF
+	CellG
+	CellH
+	CellP
 )
 
 type Indiv struct { //An individual as an unicellular organism
@@ -44,247 +43,24 @@ type Indiv struct { //An individual as an unicellular organism
 	DadId      int
 	MomId      int
 	Genome     Genome
-	Bodies     []Body  //INoEnv, IAncEnv, INovEnv (see above const.)
+	Bodies     []Body  //IAncEnv, INovEnv (see above const.)
 	Fit        float64 //Fitness with cues
 	WagFit     float64 //Wagner relative fitness
-	AncCuePlas float64 //Cue Plasticity in ancestral environment
-	NovCuePlas float64 //Cue Plasticity in novel environment
-	ObsPlas    float64 //Observed Plasticity
-	Pp         float64 //Degree of polyphenism
-}
-
-func NewGenome() Genome { //Generate new genome matrix ensemble
-	E := NewSpmat(ngenes, nenv+ncells)
-	F := NewSpmat(ngenes, ngenes)
-	G := NewSpmat(ngenes, ngenes)
-	H := NewSpmat(ngenes, ngenes)
-	J := NewSpmat(ngenes, ngenes)
-	P := NewSpmat(ngenes, nenv+ncells)
-	//Z := NewSpmat(ngenes, ngenes)
-
-	genome := Genome{E, F, G, H, J, P}
-
-	return genome
-}
-
-func (G *Genome) Randomize() {
-
-	if withCue {
-		G.E.Randomize(CueResponseDensity, sdE)
-	}
-
-	if epig {
-		G.F.Randomize(GenomeDensity, sdF)
-	}
-	G.G.Randomize(GenomeDensity, sdG)
-
-	if hoc {
-		G.H.Randomize(GenomeDensity, sdH)
-		if hoi {
-			G.J.Randomize(GenomeDensity, sdJ)
-		}
-	}
-	G.P.Randomize(CueResponseDensity, sdP)
-}
-
-func (G *Genome) Clear() { //Sets all entries of genome to zero
-	for _, r := range G.E.Mat {
-		for j := range r { //range over keys
-			delete(r, j)
-		}
-	}
-	for _, r := range G.F.Mat {
-		for j := range r { //range over keys
-			delete(r, j)
-		}
-	}
-	for _, r := range G.G.Mat {
-		for j := range r { //range over keys
-			delete(r, j)
-		}
-	}
-	for _, r := range G.H.Mat {
-		for j := range r { //range over keys
-			delete(r, j)
-		}
-	}
-	for _, r := range G.J.Mat {
-		for j := range r { //range over keys
-			delete(r, j)
-		}
-	}
-	for _, r := range G.P.Mat {
-		for j := range r { //range over keys
-			delete(r, j)
-		}
-	}
-	/*
-		for _, r := range G.Z.Mat {
-			for j := range r { //range over keys
-				delete(r, j)
-			}
-		}
-	*/
-}
-
-func (parent *Genome) Copy() Genome { //creates copy of genome
-	e := parent.E.Copy()
-	f := parent.F.Copy()
-	g := parent.G.Copy()
-	hg := parent.H.Copy()
-	hh := parent.J.Copy()
-	p := parent.P.Copy()
-	//z := parent.Z.Copy()
-
-	//genome := Genome{e, f, g, hg, hh, p, z}
-
-	genome := Genome{e, f, g, hg, hh, p}
-
-	return genome
-}
-
-func DiffGenomes(Gout, G1, G0 *Genome) { //Elementwise difference between two genomes
-	if withCue {
-		Gout.E = DiffSpmat(&G1.E, &G0.E)
-	}
-	if epig {
-		Gout.F = DiffSpmat(&G1.F, &G0.F)
-	}
-
-	Gout.G = DiffSpmat(&G1.G, &G0.G)
-
-	if hoc {
-		Gout.H = DiffSpmat(&G1.H, &G0.H)
-		if hoi {
-			Gout.J = DiffSpmat(&G1.J, &G0.J)
-		}
-	}
-
-	Gout.P = DiffSpmat(&G1.P, &G0.P)
-	//Gout.Z = DiffSpmat(&G1.Z, &G0.Z)
-	//Remark: Ensure that Gout is initialized and empty before applying operation
-}
-
-func (G *Genome) NormalizeGenome() Genome {
-	lambda2 := 0.0
-	eG := G.Copy()
-
-	if withCue {
-		for _, m := range G.E.Mat {
-			for _, v := range m {
-				lambda2 += v * v
-			}
-		}
-	}
-
-	if epig {
-		for _, m := range G.F.Mat {
-			for _, v := range m {
-				lambda2 += v * v
-			}
-		}
-	}
-
-	for _, m := range G.G.Mat {
-		for _, v := range m {
-			lambda2 += v * v
-		}
-	}
-
-	if hoc {
-		for _, m := range G.H.Mat {
-			for _, v := range m {
-				lambda2 += v * v
-			}
-		}
-
-		if hoi {
-			for _, m := range G.J.Mat {
-				for _, v := range m {
-					lambda2 += v * v
-				}
-			}
-		}
-	}
-
-	for _, m := range G.P.Mat {
-		for _, v := range m {
-			lambda2 += v * v
-		}
-	}
-	/*
-		for _, m := range G.Z.Mat {
-			for _, v := range m {
-				lambda2 += v * v
-			}
-		}
-	*/
-
-	if lambda2 == 0 {
-		return eG //avoid division by zero
-	}
-
-	lambda := math.Sqrt(lambda2)
-
-	if withCue {
-		for i, m := range eG.E.Mat {
-			for j := range m {
-				eG.E.Mat[i][j] = eG.E.Mat[i][j] / lambda
-			}
-		}
-	}
-
-	if epig {
-		for i, m := range eG.F.Mat {
-			for j := range m {
-				eG.F.Mat[i][j] = eG.F.Mat[i][j] / lambda
-			}
-		}
-	}
-
-	for i, m := range eG.G.Mat {
-		for j := range m {
-			eG.G.Mat[i][j] = eG.G.Mat[i][j] / lambda
-		}
-	}
-
-	if hoc {
-		for i, m := range eG.H.Mat {
-			for j := range m {
-				eG.H.Mat[i][j] = eG.H.Mat[i][j] / lambda
-			}
-		}
-		if hoi {
-			for i, m := range eG.J.Mat {
-				for j := range m {
-					eG.J.Mat[i][j] = eG.J.Mat[i][j] / lambda
-				}
-			}
-		}
-	}
-
-	for i, m := range eG.P.Mat {
-		for j := range m {
-			eG.P.Mat[i][j] = eG.P.Mat[i][j] / lambda
-		}
-	}
-	/*
-		for i, m := range eG.Z.Mat {
-			for j := range m {
-				eG.Z.Mat[i][j] = eG.Z.Mat[i][j] / lambda
-			}
-		}
-	*/
-	return eG
+	Plasticity float64 //Observed Plasticity
+	Dp1e1      float64 // ||p(e1) - e1||
+	Dp0e0      float64 // ||p(e0) - e0||
+	Dp1e0      float64 // ||p(e1) - e0||
+	Dp0e1      float64 // ||p(e0) - e1||
 }
 
 func NewCell(id int) Cell { //Creates a new cell given id of cell.
-	e := NewCue(nenv, id)
+	e := NewVec(nenv + ncells)
 	f := NewVec(ngenes)
 	g := NewVec(ngenes)
 	h := NewVec(ngenes)
 	p := NewCue(nenv, id)
-	cell := Cell{e, f, g, h, p, 0}
+	pv := NewVec(nenv + ncells)
+	cell := Cell{e, f, g, h, p, pv, 0.0, 0}
 
 	return cell
 }
@@ -298,9 +74,30 @@ func (cell *Cell) Copy() Cell {
 	cell1.G = CopyVec(cell.G)
 	cell1.H = CopyVec(cell.H)
 	cell1.P = CopyVec(cell.P)
+	cell1.Pvar = CopyVec(cell.Pvar)
+	cell1.PErr = cell.PErr
 	cell1.NDevStep = cell.NDevStep
 
 	return cell1
+}
+
+func (cell *Cell) GetState(ivec string) Vec {
+	switch ivec {
+	case "E":
+		return cell.E
+	case "F":
+		return cell.F
+	case "G":
+		return cell.G
+	case "H":
+		return cell.H
+	case "P":
+		return cell.P
+	default:
+		log.Fatal("Cell.GetState: Unknown state vector")
+	}
+
+	return nil // neven happens
 }
 
 func NewBody(ncells int) Body { // Creates an array of new cells of length Ncells
@@ -308,12 +105,12 @@ func NewBody(ncells int) Body { // Creates an array of new cells of length Ncell
 	for id := range cells {
 		cells[id] = NewCell(id) //Initialize each cell
 	}
-	return Body{math.Inf(1), 0, cells}
+	return Body{0, 0, cells}
 }
 
 func (body *Body) Copy() Body {
 	body1 := NewBody(ncells)
-	body1.MeanErr = body.MeanErr
+	body1.PErr = body.PErr
 	body1.NDevStep = body.NDevStep
 	for i, cell := range body.Cells {
 		body1.Cells[i] = cell.Copy()
@@ -328,7 +125,7 @@ func NewIndiv(id int) Indiv { //Creates a new individual
 		bodies[i] = NewBody(ncells)
 	}
 
-	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -342,104 +139,68 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 		indiv1.Bodies[i] = body.Copy()
 	}
 	indiv1.Fit = indiv.Fit
-	indiv1.ObsPlas = indiv.ObsPlas
-	indiv1.Pp = indiv.Pp
+	indiv1.Plasticity = indiv.Plasticity
+	indiv1.Dp1e1 = indiv.Dp1e1
+	indiv1.Dp0e0 = indiv.Dp0e0
+	indiv1.Dp1e0 = indiv.Dp1e0
+	indiv1.Dp0e1 = indiv.Dp0e1
 
 	return indiv1
 }
 
 func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
-	r := rand.Intn(genelength) //Randomly choose one of the genome matrices to mutate; with prob proportional to no. of columns
+	r := rand.Intn(geneLength)
+	//Randomly choose one of the genome matrices to mutate;
+	//with prob proportional to no. of columns
 	t := 0
 
 	//This version is specialized for current definition of full model.
 
-	if withCue {
+	if withE {
 		t += nenv + ncells
 		if r < t {
-			indiv.Genome.E.mutateSpmat(CueResponseDensity, sdE)
+			indiv.Genome.E.mutateSpmat(DensityE, mutRate)
 		}
 	}
-	if epig {
+	if withF {
 		t += ngenes
 		if r < t {
-			indiv.Genome.F.mutateSpmat(GenomeDensity, sdF)
+			indiv.Genome.F.mutateSpmat(DensityF, mutRate)
 		}
 	}
 	t += ngenes
 	if r < t {
-		indiv.Genome.G.mutateSpmat(GenomeDensity, sdG)
+		indiv.Genome.G.mutateSpmat(DensityG, mutRate)
 	}
-	if hoc {
+	if withH {
 		t += ngenes
 		if r < t {
-			indiv.Genome.H.mutateSpmat(GenomeDensity, sdH)
+			indiv.Genome.H.mutateSpmat(DensityH, mutRate)
 		}
-		if hoi {
+		if withJ {
 			t += ngenes
 			if r < t {
-				indiv.Genome.J.mutateSpmat(GenomeDensity, sdJ)
+				indiv.Genome.J.mutateSpmat(DensityJ, mutRate)
 			}
 		}
 	}
 	t += nenv + ncells
 	if r < t {
-		indiv.Genome.P.mutateSpmat(CueResponseDensity, sdP)
+		indiv.Genome.P.mutateSpmat(DensityP, mutRate)
 	}
-	/*
-		t += ngenes
-		if r < t {
-			indiv.Genome.Z.mutateSpmat(GenomeDensity)
-		}
-	*/
-
 	return
 }
 
-func Crossover(dadg, momg *Genome) (Genome, Genome) { //Crossover
-	ng0 := dadg.Copy()
-	ng1 := momg.Copy()
-	//nz0 := dadz
-	//nz1 := momz
-
-	for i := 0; i < ngenes; i++ {
-		r := rand.Float64()
-		if r < 0.5 {
-			e := ng0.E.Mat[i]
-			f := ng0.F.Mat[i]
-			g := ng0.G.Mat[i]
-			hg := ng0.H.Mat[i]
-			hh := ng0.J.Mat[i]
-			p := ng0.P.Mat[i]
-			//z := ng0.Z.Mat[i]
-			//z0 := nz0[i]
-
-			ng0.E.Mat[i] = ng1.E.Mat[i]
-			ng0.F.Mat[i] = ng1.F.Mat[i]
-			ng0.G.Mat[i] = ng1.G.Mat[i]
-			ng0.H.Mat[i] = ng1.H.Mat[i]
-			ng0.J.Mat[i] = ng1.J.Mat[i]
-			ng0.P.Mat[i] = ng1.P.Mat[i]
-			//ng0.Z.Mat[i] = ng1.Z.Mat[i]
-			//nz0[i] = nz1[i]
-
-			ng1.E.Mat[i] = e
-			ng1.F.Mat[i] = f
-			ng1.G.Mat[i] = g
-			ng1.H.Mat[i] = hg
-			ng1.J.Mat[i] = hh
-			ng1.P.Mat[i] = p
-			//ng1.Z.Mat[i] = z
-			//nz1[i] = z0
-		}
-	}
-
-	return ng0, ng1
-}
-
 func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
-	genome0, genome1 :=
-		Crossover(&dad.Genome, &mom.Genome)
+	genome0 := dad.Genome.Copy()
+	genome1 := mom.Genome.Copy()
+	CrossoverSpmats(genome0.E, genome1.E)
+	CrossoverSpmats(genome0.F, genome1.F)
+	CrossoverSpmats(genome0.G, genome1.G)
+	CrossoverSpmats(genome0.H, genome1.H)
+	CrossoverSpmats(genome0.J, genome1.J)
+	CrossoverSpmats(genome0.P, genome1.P)
+
 	bodies0 := make([]Body, 3)
 	for i := range bodies0 {
 		bodies0[i] = NewBody(ncells)
@@ -449,18 +210,17 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 		bodies1[i] = NewBody(ncells)
 	}
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	kid0.Mutate()
 	kid1.Mutate()
-	//Mutation happens with 100% probability
 
 	return kid0, kid1
 }
 
-func (indiv *Indiv) getMeanErr(ienv int) float64 {
-	return indiv.Bodies[ienv].MeanErr
+func (indiv *Indiv) getPErr(ienv int) float64 {
+	return indiv.Bodies[ienv].PErr
 }
 
 func (indiv *Indiv) getNDevStep(ienv int) int {
@@ -474,7 +234,7 @@ func (indiv *Indiv) getFitness() float64 { //fitness in novel/present environmen
 	}
 
 	fdev := float64(ndevstep) / selDevStep
-	ferr := indiv.getMeanErr(INovEnv) * baseSelStrength
+	ferr := indiv.getPErr(INovEnv) * baseSelStrength
 	rawfit := math.Exp(-(ferr + fdev))
 	return rawfit
 }
@@ -484,8 +244,16 @@ func getPlasticity(body0, body1 Body) float64 { //cue plasticity of individual
 	for i, cell := range body0.Cells {
 		d2 += Dist2Vecs(cell.P, body1.Cells[i].P)
 	}
-	//d2 = d2 / float64(nenv*ncells) //Divide by number of phenotypes to normalize
+
 	return d2 / float64(ncells*(ncells+nenv))
+}
+
+func getPEDiff(body Body, envs Cues) float64 {
+	diff := 0.0
+	for i, c := range body.Cells {
+		diff += DistVecs1(c.P, envs[i])
+	}
+	return diff / float64(ncells*(ncells+nenv))
 }
 
 func (indiv *Indiv) getVarpheno() float64 { //Get sum of elementwise variance of phenotype
@@ -497,61 +265,73 @@ func (indiv *Indiv) getVarpheno() float64 { //Get sum of elementwise variance of
 	return sigma2p
 }
 
-func (indiv *Indiv) getPolyphenism(envs Cues) float64 { //Degree of polyphenism of individual; normalize with variance of environment cue
-	sigma2env := GetCueVar(envs)
-	if sigma2env == 0 {
-		return 0
-	} else {
-		sigma2p := indiv.getVarpheno()
-		return sigma2p / sigma2env
+func (cell *Cell) getPscale() Cue {
+	vt := NewVec(nenv + ncells)
+	evar := devNoise * devNoise
+	for i, v := range cell.Pvar {
+		vt[i] = v / (v + evar)
+	}
+	log.Println("Kalman gain", vt)
+	return vt
+}
+
+func (cell *Cell) updatePEMA(pnew Vec) {
+	for i, pi := range pnew {
+		d := pi - cell.P[i]
+		incr := alphaEMA * d
+		cell.P[i] += incr
+		cell.Pvar[i] = (1 - alphaEMA) * (cell.Pvar[i] + d*incr)
 	}
 }
 
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
-	var diff float64
-	var convindex int
-
 	e_p := NewVec(nenv + ncells) // = env - p0
 	g0 := Ones(ngenes)
 	f0 := NewVec(ngenes)
 	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
-	p0 := NewVec(nenv + ncells)
 	ve := NewVec(ngenes)
 	vf := NewVec(ngenes)
 	vg := NewVec(ngenes)
 	vh := NewVec(ngenes)
-	vp := NewVec(nenv + ncells)
+	p1 := NewVec(nenv + ncells)
 	f1 := NewVec(ngenes)
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
-	convindex = 0
-	for nstep := 0; nstep < maxDevStep; nstep++ {
-		multMatVec(vf, G.G, g0)
-		if withCue { //Model with or without cues
+	AddNoise2Cue(cell.E, env, devNoise)
+
+	for nstep := 1; nstep <= maxDevStep; nstep++ {
+		MultMatVec(vf, G.G, g0)
+		if withE { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
-				diffVecs(e_p, env, p0) // env includes noise
-				multMatVec(ve, G.E, e_p)
+
+				DiffVecs(e_p, cell.E, cell.P)
+
+				// Kalman gain
+				//pscale := cell.getPscale()
+				//multVecVec(e_p, pscale, e_p)
+
+				MultMatVec(ve, G.E, e_p)
 			} else {
-				multMatVec(ve, G.E, env)
+				MultMatVec(ve, G.E, cell.E)
 			}
-			addVecs(f1, vf, ve)
+			AddVecs(f1, vf, ve)
 		} else {
 			copy(f1, vf)
 		}
 		applyFnVec(sigmaf, f1)
-		if epig { //Allow or disallow epigenetic layer
-			multMatVec(g1, G.F, f1)
+		if withF { //Allow or disallow epigenetic layer
+			MultMatVec(g1, G.F, f1)
 			applyFnVec(sigmag, g1)
 		} else { //Remove epigenetic layer if false
 			copy(g1, f1)
 		}
-		if hoc { //If layer for higher order complexes is present
-			multMatVec(vg, G.H, g1)
+		if withH { //If layer for higher order complexes is present
+			MultMatVec(vg, G.H, g1)
 
-			if hoi { //If interactions between higher order complexes is present
-				multMatVec(vh, G.J, h0)
-				addVecs(h1, vg, vh)
+			if withJ { //If interactions between higher order complexes is present
+				MultMatVec(vh, G.J, h0)
+				AddVecs(h1, vg, vh)
 			} else {
 				copy(h1, vg)
 			}
@@ -560,71 +340,62 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 			copy(h1, g1) //identity map
 		}
 
-		multMatVec_T(vp, G.P, h1)
-		applyFnVec(rho, vp)
-		diff = DistVecs1(h0, h1) //+ DistVecs1(g0, g1) + DistVecs1(f0, f1) //Stricter convergence criterion requiring convergence in all layers
-		//		diff = DistVecs1(p0, vp)
+		MultMatVec(p1, G.P, h1)
+		applyFnVec(rho, p1)
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
-		copy(p0, vp)
-		if diff < epsDev { //if criterion is reached
-			convindex++ //increment by one
-		} else {
-			convindex = 0
+		cell.updatePEMA(p1)
+		diff := 0.0
+		for _, v := range cell.Pvar {
+			diff += v
 		}
-		if convindex > ccStep {
-			cell.NDevStep = nstep - ccStep //steady state reached
+		diff /= float64(len(cell.Pvar))
+		cell.NDevStep = nstep
+		if diff < epsDev {
 			break
 		}
-		if nstep == maxDevStep-1 {
-			cell.NDevStep = maxDevStep
-		}
-
 	}
-	//	fmt.Println("PathLen: ", cell.NDevStep)
-	//fmt.Println("Phenotype after development:",vpc)
-	//fmt.Println("Id after development:",vpid)
-	copy(cell.E, env)
 	copy(cell.F, f1)
 	copy(cell.G, g1)
 	copy(cell.H, h1)
-	copy(cell.P, vp)
+	cell.PErr = DistVecs1(cell.P, env) / cueMag
+	//cell.PErr = Dist2Vecs(cell.P, env) / (cueMag * cueMag)
 
 	return *cell
 }
 
 func (body *Body) DevBody(G Genome, envs Cues) Body {
-	nenvs := AddNoise2Cues(envs, devNoise)
 	sse := 0.0
 	maxdev := 0
 
 	for i, cell := range body.Cells {
-		body.Cells[i] = cell.DevCell(G, nenvs[i])
-		sse += DistVecs1(cell.P, envs[i]) // L1 norm
+		body.Cells[i] = cell.DevCell(G, envs[i])
+		sse += cell.PErr
 		if cell.NDevStep > maxdev {
 			maxdev = cell.NDevStep
 		}
+		if cell.NDevStep > maxDevStep {
+			log.Println("NDevStep greater than limit: ", cell.NDevStep)
+		}
 	}
 
-	body.MeanErr = sse / float64(ncells*(nenv+ncells)) // L1
+	body.PErr = sse / float64(ncells*(ncells+nenv))
 	body.NDevStep = maxdev
 
 	return *body
 }
 
 func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare developmental process under different conditions
-	indiv.Bodies[INoEnv].DevBody(indiv.Genome, ZeroEnvs)
 	indiv.Bodies[IAncEnv].DevBody(indiv.Genome, ancenvs)
 	indiv.Bodies[INovEnv].DevBody(indiv.Genome, novenvs)
 
 	indiv.Fit = indiv.getFitness()
 
-	// Ignoring convergence/divergence for now
-	indiv.AncCuePlas = getPlasticity(indiv.Bodies[INoEnv], indiv.Bodies[IAncEnv])
-	indiv.NovCuePlas = getPlasticity(indiv.Bodies[INoEnv], indiv.Bodies[INovEnv])
-	indiv.ObsPlas = getPlasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
-	indiv.Pp = indiv.getPolyphenism(novenvs)
-
+	indiv.Plasticity = getPlasticity(indiv.Bodies[IAncEnv], indiv.Bodies[INovEnv])
+	indiv.Dp1e1 = getPEDiff(indiv.Bodies[INovEnv], novenvs)
+	indiv.Dp0e0 = getPEDiff(indiv.Bodies[IAncEnv], ancenvs)
+	indiv.Dp1e0 = getPEDiff(indiv.Bodies[INovEnv], ancenvs)
+	indiv.Dp0e1 = getPEDiff(indiv.Bodies[IAncEnv], novenvs)
 	return *indiv
 }
