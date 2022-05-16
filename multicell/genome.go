@@ -4,6 +4,8 @@ import (
 	//	"log"
 	"math"
 	"math/rand"
+
+	"gonum.org/v1/gonum/stat/distuv"
 )
 
 type Genome struct { //Genome of an individual
@@ -227,30 +229,34 @@ func (genome *Genome) FlatVec() Vec {
 }
 
 func (genome *Genome) Mutate() {
-	r := rand.Intn(fullGeneLength)
-	//Randomly choose one of the genome matrices to mutate;
-	//with prob proportional to no. of columns
+
 	tE := nenv + ncells
 	tF := tE + ngenes
 	tG := tF + ngenes
 	tH := tG + ngenes
 	tJ := tH + ngenes
 
-	//This version is specialized for current definition of full model.
+	lambda := mutRate * float64(ngenes*fullGeneLength)
+	dist := distuv.Poisson{Lambda: lambda}
+	nmut := int(dist.Rand())
 
-	if r < tE {
-		genome.E.mutateSpmat(DensityE, mutRate)
-	} else if r < tF {
-		genome.F.mutateSpmat(DensityF, mutRate)
-	} else if r < tG {
-		genome.G.mutateSpmat(DensityG, mutRate)
-	} else if r < tH {
-		genome.H.mutateSpmat(DensityH, mutRate)
-	} else if r < tJ {
-		genome.J.mutateSpmat(DensityJ, mutRate)
-	} else {
-		genome.P.mutateSpmat(DensityP, mutRate)
+	for n := 0; n < nmut; n++ {
+		irow := rand.Intn(ngenes)
+		icol := rand.Intn(fullGeneLength)
+
+		if icol < tE {
+			genome.E.pMutateSpmat(DensityE, irow, icol)
+		} else if icol < tF {
+			genome.F.pMutateSpmat(DensityF, irow, icol-tE)
+		} else if icol < tG {
+			genome.G.pMutateSpmat(DensityG, irow, icol-tF)
+		} else if icol < tH {
+			genome.H.pMutateSpmat(DensityH, irow, icol-tG)
+		} else if icol < tJ {
+			genome.J.pMutateSpmat(DensityJ, irow, icol-tH)
+		} else {
+			genome.P.pMutateSpmat(DensityP, icol-tJ, irow)
+		}
 	}
-
 	return
 }
