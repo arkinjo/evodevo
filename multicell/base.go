@@ -104,7 +104,7 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	if withE {
 		geneLength += nenv + ncells
 		from_e := DensityE * float64(nenv+ncells)
-		if pheno_feedback {
+		if with_cue && pheno_feedback {
 			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
 		} else {
 			omega_f = 1.0 / math.Sqrt(from_e+from_g)
