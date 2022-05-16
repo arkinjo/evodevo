@@ -227,49 +227,30 @@ func (genome *Genome) FlatVec() Vec {
 }
 
 func (genome *Genome) Mutate() {
-	r := rand.Intn(geneLength)
+	r := rand.Intn(fullGeneLength)
 	//Randomly choose one of the genome matrices to mutate;
 	//with prob proportional to no. of columns
-	t := 0
+	tE := nenv + ncells
+	tF := tE + ngenes
+	tG := tF + ngenes
+	tH := tG + ngenes
+	tJ := tH + ngenes
 
 	//This version is specialized for current definition of full model.
 
-	if withE {
-		t += nenv + ncells
-		if r < t {
-			genome.E.mutateSpmat(DensityE, mutRate)
-			return
-		}
-	}
-	if withF {
-		t += ngenes
-		if r < t {
-			genome.F.mutateSpmat(DensityF, mutRate)
-			return
-		}
-	}
-	t += ngenes
-	if r < t {
+	if r < tE {
+		genome.E.mutateSpmat(DensityE, mutRate)
+	} else if r < tF {
+		genome.F.mutateSpmat(DensityF, mutRate)
+	} else if r < tG {
 		genome.G.mutateSpmat(DensityG, mutRate)
-		return
-	}
-	if withH {
-		t += ngenes
-		if r < t {
-			genome.H.mutateSpmat(DensityH, mutRate)
-			return
-		}
-		if withJ {
-			t += ngenes
-			if r < t {
-				genome.J.mutateSpmat(DensityJ, mutRate)
-				return
-			}
-		}
-	}
-	t += nenv + ncells
-	if r < t {
+	} else if r < tH {
+		genome.H.mutateSpmat(DensityH, mutRate)
+	} else if r < tJ {
+		genome.J.mutateSpmat(DensityJ, mutRate)
+	} else {
 		genome.P.mutateSpmat(DensityP, mutRate)
-		return
 	}
+
+	return
 }

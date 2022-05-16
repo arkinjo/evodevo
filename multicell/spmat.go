@@ -3,6 +3,9 @@ package multicell
 import (
 	//	"math"
 	"math/rand"
+
+	//	"gonum.org/v1/gonum/stat"
+	"gonum.org/v1/gonum/stat/distuv"
 )
 
 type Spmat struct {
@@ -99,7 +102,10 @@ func (mat *Spmat) mutateSpmat(density, mutrate float64) { //mutating a sparse ma
 	}
 
 	nrow := len(mat.Mat)
-	nmut := int(mutrate * float64(nrow*mat.Ncol))
+	lambda := mutrate * float64(nrow*mat.Ncol)
+	dist := distuv.Poisson{Lambda: lambda}
+	nmut := int(dist.Rand())
+
 	density2 := density * 0.5
 	for n := 0; n < nmut; n++ {
 		i := rand.Intn(nrow)

@@ -38,7 +38,7 @@ const ccStep float64 = 5.0            // Number of steady steps for convergence
 const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 
 // Length of a gene for Unicellular organism.
-var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells
+var fullGeneLength = 4*ngenes + 2*(nenv+ncells)
 
 //calculated from layers present or absent.
 var geneLength int
