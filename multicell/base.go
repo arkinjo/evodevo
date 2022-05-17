@@ -43,14 +43,14 @@ var fullGeneLength = 4*ngenes + 2*(nenv+ncells)
 //calculated from layers present or absent.
 var geneLength int
 
-const baseDensity float64 = 0.01
+const inputsPerRow float64 = 2.0
 
-var DensityE float64 = baseDensity * float64(ngenes) / float64(nenv+ncells)
-var DensityF float64 = baseDensity
-var DensityG float64 = baseDensity
-var DensityH float64 = baseDensity
-var DensityJ float64 = baseDensity
-var DensityP float64 = baseDensity
+var DensityE float64 = inputsPerRow / float64(nenv+ncells)
+var DensityF float64 = inputsPerRow / float64(ngenes)
+var DensityG float64 = inputsPerRow / float64(ngenes)
+var DensityH float64 = inputsPerRow / float64(ngenes)
+var DensityJ float64 = inputsPerRow / float64(ngenes)
+var DensityP float64 = inputsPerRow / float64(ngenes)
 
 const baseMutationRate float64 = 0.005 // default probability of mutation of genome
 var mutRate float64                    //declaration
@@ -96,7 +96,7 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	ncells = s.NCells
 	devNoise = s.SDNoise
 
-	DensityE = baseDensity * float64(ngenes) / float64(nenv+ncells)
+	DensityE = inputsPerRow / float64(nenv+ncells)
 
 	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
 	from_g := DensityG * float64(ngenes)
