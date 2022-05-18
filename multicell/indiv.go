@@ -263,7 +263,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	h1 := NewVec(ngenes)
 
 	cue := NewVec(nenv + ncells)
-	AddNoise2Cue(cell.E, env, devNoise)
+	AddNoise2CueFlip(cell.E, env, devNoise)
 	if with_cue {
 		cue = cell.E
 	}
