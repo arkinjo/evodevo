@@ -142,6 +142,8 @@ func AddNoise2CueFlip(cue_out, cue Cue, eta float64) {
 		// Don't use rand_cue here. Use the system rand instead.
 		if rand.Float64() < eta {
 			cue_out[i] = -t
+		} else {
+			cue_out[i] = t
 		}
 	}
 
