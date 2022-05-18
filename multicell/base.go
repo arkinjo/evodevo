@@ -43,7 +43,7 @@ var fullGeneLength = 4*ngenes + 2*(nenv+ncells)
 //calculated from layers present or absent.
 var geneLength int
 
-const inputsPerRow float64 = 2.0
+const inputsPerRow float64 = 4.0
 
 var DensityE float64 = inputsPerRow / float64(nenv+ncells)
 var DensityF float64 = inputsPerRow / float64(ngenes)
