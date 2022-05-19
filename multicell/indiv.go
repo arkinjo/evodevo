@@ -55,7 +55,7 @@ type Indiv struct { //An individual as an unicellular organism
 }
 
 func NewCell(id int) Cell { //Creates a new cell given id of cell.
-	e := NewVec(nenv + ncells)
+	e := NewCue(nenv, id)
 	f := NewVec(ngenes)
 	g := NewVec(ngenes)
 	h := NewVec(ngenes)
@@ -263,7 +263,9 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	h1 := NewVec(ngenes)
 
 	cue := NewVec(nenv + ncells)
+
 	AddNoise2CueFlip(cell.E, env, devNoise)
+
 	if with_cue {
 		cue = cell.E
 	}
