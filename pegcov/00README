@@ -1,0 +1,12 @@
+Principal Component Analysis of Cross-covariance between phenotype and genvironment. <PG>
+* genvironment = genotype + (micro-)environment.
+
+-p=0 => P = p(e0)
+-p=1 => P = p(e1)
+-p=2 => P = p(e1) - p(e0)
+
+-eg=0 -> G = G(e0) (+)* e0
+-eg=1 -> G = G(e1) (+) e1
+-eg=2 -> G = [G(e1) (+) e1] - [G(e0) (+) e0]
+
+(+) indicates direct sum.

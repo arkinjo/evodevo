@@ -17,11 +17,34 @@ var sqrt3 float64 = math.Sqrt(3.0)
 func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
-
 	jsonP := flag.String("jsonin", "", "json file of population")
-	jsonrefP := flag.String("jsonref", "", "json file of reference population")
-
+	pflagP := flag.Int("p", 2, "0: AncEnv; 1: NovEnv; 2: NovEnv - AncEnv")
+	egflagP := flag.Int("eg", 2, "0: AncEnv; 1: NovEnv; 2: NovEnv - AncEnv")
 	flag.Parse()
+
+	pFlag := *pflagP
+	egFlag := *egflagP
+
+	switch pFlag {
+	case 0:
+		fmt.Println("# phenotype under Ancestral Environment")
+	case 1:
+		fmt.Println("# phenotype under Novel Environment")
+	case 2:
+		fmt.Println("# phenotype difference between Novel and Ancestral Environments")
+	default:
+		log.Fatal("-p must be 0, 1, or 2")
+	}
+	switch egFlag {
+	case 0:
+		fmt.Println("# genotype (+env) under Ancestral Environment")
+	case 1:
+		fmt.Println("# genotype (+env) under Novel Environment")
+	case 2:
+		fmt.Println("# genotype (+env) difference between Novel and Ancestral Environments")
+	default:
+		log.Fatal("-p must be 0, 1, or 2")
+	}
 
 	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 	if *jsonP != "" {
@@ -32,15 +55,6 @@ func main() {
 		log.Fatal("Specify the input JSON file with -jsonin=filename.")
 	}
 
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	if *jsonrefP != "" {
-		pop1.FromJSON(*jsonrefP)
-		multicell.SetParams(pop1.Params)
-	} else {
-		flag.PrintDefaults()
-		log.Fatal("Specify the reference JSON file with -jsonref=filename.")
-	}
-
 	env0 := multicell.FlattenEnvs(pop.AncEnvs)
 	env1 := multicell.FlattenEnvs(pop.NovEnvs)
 	lenE := len(env0)
@@ -48,26 +62,39 @@ func main() {
 	multicell.DiffVecs(denv, env1, env0)
 	multicell.NormalizeVec(denv)
 
-	genome := pop.GetFlatGenome()
-	lenG := len(genome[0])
-	//	delg := genome
-
-	//	genome1 := pop1.GetFlatGenome()
-	gref := multicell.GetMeanVec(genome)
+	genome0 := pop.GetFlatGenome(multicell.IAncEnv)
+	genome1 := pop.GetFlatGenome(multicell.INovEnv)
+	lenG := len(genome0[0])
 	delg := make([][]float64, 0)
-	for _, g := range genome {
-		d := multicell.NewVec(lenG)
-		multicell.DiffVecs(d, g, gref)
-		delg = append(delg, d)
+	for k, g := range genome0 {
+		switch egFlag {
+		case 0:
+			delg = append(delg, g)
+		case 1:
+			delg = append(delg, genome1[k])
+		case 2:
+			d := multicell.NewVec(lenG)
+			multicell.DiffVecs(d, genome1[k], g)
+			delg = append(delg, d)
+		}
+
 	}
 
 	e0 := pop.GetFlatStateVec("E", 0)
 	e1 := pop.GetFlatStateVec("E", 1)
 	dele := make([][]float64, 0)
 	for k, e := range e0 {
-		d := multicell.NewVec(lenE)
-		multicell.DiffVecs(d, e1[k], e)
-		dele = append(dele, d)
+		switch egFlag {
+		case 0:
+			dele = append(dele, e)
+		case 1:
+			dele = append(dele, e1[k])
+		case 2:
+			d := multicell.NewVec(lenE)
+			multicell.DiffVecs(d, e1[k], e)
+			dele = append(dele, d)
+		}
+
 	}
 
 	deleg := make([][]float64, 0)
@@ -79,10 +106,18 @@ func main() {
 	p0 := pop.GetFlatStateVec("P", 0)
 	p1 := pop.GetFlatStateVec("P", 1)
 	delp := make([][]float64, 0)
-	for i, p := range p0 {
-		d := multicell.NewVec(lenE)
-		multicell.DiffVecs(d, p1[i], p)
-		delp = append(delp, d)
+	for k, p := range p0 {
+		switch pFlag {
+		case 0:
+			delp = append(delp, p)
+		case 1:
+			delp = append(delp, p1[k])
+		case 2:
+			d := multicell.NewVec(lenE)
+			multicell.DiffVecs(d, p1[k], p)
+			delp = append(delp, d)
+		}
+
 	}
 
 	mp, meg, cov := multicell.GetCrossCov(delp, deleg, true, true)

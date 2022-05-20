@@ -12,7 +12,7 @@ import (
 type Settings struct {
 	MaxPop  int     // Maximum number of individuals in population
 	NCells  int     // Number of cell types
-	ELayer  bool    // e present?
+	WithCue bool    // With cue?
 	FLayer  bool    // f present?
 	HLayer  bool    // h present?
 	JLayer  bool    //  J present?
@@ -26,7 +26,7 @@ var maxPop int = 1000 // population size
 var ngenes int = 200  // number of genes
 var nenv int = 40     // number of environmental cues/phenotypic values per face
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
-var pheno_feedback bool = false
+
 var devNoise float64 = 0.05
 
 const cueMag float64 = 1.0    // each trait is +/-cueMag
@@ -38,19 +38,19 @@ const ccStep float64 = 5.0            // Number of steady steps for convergence
 const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 
 // Length of a gene for Unicellular organism.
-var fullGeneLength = 4*ngenes + 2*nenv + 2*ncells
+var fullGeneLength = 4*ngenes + 2*(nenv+ncells)
 
 //calculated from layers present or absent.
 var geneLength int
 
-const baseDensity float64 = 0.01
+const inputsPerRow float64 = 4.0
 
-var DensityE float64 = baseDensity * float64(ngenes) / float64(nenv+ncells)
-var DensityF float64 = baseDensity
-var DensityG float64 = baseDensity
-var DensityH float64 = baseDensity
-var DensityJ float64 = baseDensity
-var DensityP float64 = baseDensity
+var DensityE float64 = inputsPerRow / float64(nenv+ncells)
+var DensityF float64 = inputsPerRow / float64(ngenes)
+var DensityG float64 = inputsPerRow / float64(ngenes)
+var DensityH float64 = inputsPerRow / float64(ngenes)
+var DensityJ float64 = inputsPerRow / float64(ngenes)
+var DensityP float64 = inputsPerRow / float64(ngenes)
 
 const baseMutationRate float64 = 0.005 // default probability of mutation of genome
 var mutRate float64                    //declaration
@@ -59,7 +59,9 @@ const selDevStep float64 = 20.0        // Developmental steps for selection
 
 const minWagnerFitness float64 = 0.01
 
-var withE bool = false // with or without environmental cues.
+var with_cue bool = true // with or without environmental cues.
+var pheno_feedback bool = false
+var withE bool = false // = with_cue || pheno_feedback
 var withF bool = true  // Epigenetic marker layer
 var withH bool = true  // Higher order complexes layer
 var withJ bool = false
@@ -84,15 +86,17 @@ func SetSeed(seed int64) {
 
 func SetParams(s Settings) { //Define whether each layer or interaction is present in model
 	maxPop = s.MaxPop
-	withE = s.ELayer
+	with_cue = s.WithCue
 	withF = s.FLayer
 	withH = s.HLayer
 	withJ = s.JLayer
 	pheno_feedback = s.Pfback
+	withE = with_cue || pheno_feedback
+
 	ncells = s.NCells
 	devNoise = s.SDNoise
 
-	DensityE = baseDensity * float64(ngenes) / float64(nenv+ncells)
+	DensityE = inputsPerRow / float64(nenv+ncells)
 
 	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
 	from_g := DensityG * float64(ngenes)
@@ -100,7 +104,7 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	if withE {
 		geneLength += nenv + ncells
 		from_e := DensityE * float64(nenv+ncells)
-		if pheno_feedback {
+		if with_cue && pheno_feedback {
 			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
 		} else {
 			omega_f = 1.0 / math.Sqrt(from_e+from_g)

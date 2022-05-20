@@ -187,14 +187,19 @@ func (pop *Population) SetWagnerFitness() { //compute normalized fitness value s
 }
 
 func (pop *Population) RandomizeGenome() {
-	for _, indiv := range pop.Indivs { //Sets genome of every individual to zero
-		indiv.Genome.Randomize()
+	for _, indiv := range pop.Indivs { //Sets genome of every individual to
+
+		indiv.Bodies[0].Genome.Randomize()
+		indiv.Bodies[1].Genome = indiv.Bodies[0].Genome.Copy()
+		indiv.Bodies[1].Genome.Mutate()
 	}
 }
 
 func (pop *Population) ClearGenome() {
 	for _, indiv := range pop.Indivs { //Sets genome of every individual to zero
-		indiv.Genome.Clear()
+		for i := range indiv.Bodies {
+			indiv.Bodies[i].Genome.Clear()
+		}
 	}
 }
 
@@ -226,90 +231,6 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 		}
 	}
 	return MeanPhenotype
-}
-
-func (pop *Population) GetMeanGenome() Genome { //elementwise average genome of population
-	var Gtilde Genome
-	fnpop := 1.0 / float64(len(pop.Indivs))
-	MeanGenome := NewGenome()
-
-	for _, indiv := range pop.Indivs {
-		Gtilde = indiv.Genome
-		if withE {
-			for i, m := range Gtilde.E.Mat {
-				for j, v := range m {
-					MeanGenome.E.Mat[i][j] += v * fnpop
-				}
-			}
-		}
-		if withF {
-			for i, m := range Gtilde.F.Mat {
-				for j, v := range m {
-					MeanGenome.F.Mat[i][j] += v * fnpop
-				}
-			}
-		}
-		for i, m := range Gtilde.G.Mat {
-			for j, v := range m {
-				MeanGenome.G.Mat[i][j] += v * fnpop
-			}
-		}
-		if withH {
-			for i, m := range Gtilde.H.Mat {
-				for j, v := range m {
-					MeanGenome.H.Mat[i][j] += v * fnpop
-				}
-			}
-			if withJ {
-				for i, m := range Gtilde.J.Mat {
-					for j, v := range m {
-						MeanGenome.J.Mat[i][j] += v * fnpop
-					}
-				}
-			}
-		}
-		for i, m := range Gtilde.P.Mat {
-			for j, v := range m {
-				MeanGenome.P.Mat[i][j] += v * fnpop
-			}
-		}
-		/*
-			for i, m := range Gtilde.Z.Mat {
-				for j, v := range m {
-					MeanGenome.Z.Mat[i][j] += v * fnpop
-				}
-			}
-		*/
-	}
-
-	return MeanGenome
-}
-
-func (pop *Population) Get_Environment_Axis() Cues { //CwithJce of axis defined using difference of environment cues
-	axlength2 := 0.0
-
-	e := pop.NovEnvs  //Cue in novel (present) environment
-	e0 := pop.AncEnvs //Cue in ancestral (previous) environment
-	v := NewVec(nenv + ncells)
-	de := NewCues(ncells, nenv)
-
-	for i, p := range e {
-		DiffVecs(v, p, e0[i])
-		axlength2 += Norm2Sq(v)
-		de[i] = v //ids must stay the same
-	}
-
-	axlength := math.Sqrt(axlength2)
-	if axlength == 0 { //if no change in environment cue
-		return de
-	} else { //normalize
-		for i, c := range de {
-			for j, p := range c {
-				de[i][j] = p / axlength //normalize to unit vector
-			}
-		}
-		return de
-	}
 }
 
 func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
@@ -457,10 +378,10 @@ func (pop *Population) GetFlatStateVec(istate string, ienv int) Dmat {
 	return vs0
 }
 
-func (pop *Population) GetFlatGenome() Dmat {
+func (pop *Population) GetFlatGenome(IEnv int) Dmat {
 	vs := make([]Vec, 0)
 	for _, indiv := range pop.Indivs {
-		tv := indiv.Genome.FlatVec()
+		tv := indiv.Bodies[IEnv].Genome.FlatVec()
 		vs = append(vs, tv)
 	}
 	return vs

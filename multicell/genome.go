@@ -1,11 +1,11 @@
 package multicell
 
 import (
-	//	"errors"
-	//	"fmt"
 	//	"log"
 	"math"
-	//	"math/rand"
+	"math/rand"
+
+	"gonum.org/v1/gonum/stat/distuv"
 )
 
 type Genome struct { //Genome of an individual
@@ -226,4 +226,37 @@ func (genome *Genome) FlatVec() Vec {
 	}
 
 	return vec
+}
+
+func (genome *Genome) Mutate() {
+
+	tE := nenv + ncells
+	tF := tE + ngenes
+	tG := tF + ngenes
+	tH := tG + ngenes
+	tJ := tH + ngenes
+
+	lambda := mutRate * float64(ngenes*fullGeneLength)
+	dist := distuv.Poisson{Lambda: lambda}
+	nmut := int(dist.Rand())
+
+	for n := 0; n < nmut; n++ {
+		irow := rand.Intn(ngenes)
+		icol := rand.Intn(fullGeneLength)
+
+		if icol < tE {
+			genome.E.pMutateSpmat(DensityE, irow, icol)
+		} else if icol < tF {
+			genome.F.pMutateSpmat(DensityF, irow, icol-tE)
+		} else if icol < tG {
+			genome.G.pMutateSpmat(DensityG, irow, icol-tF)
+		} else if icol < tH {
+			genome.H.pMutateSpmat(DensityH, irow, icol-tG)
+		} else if icol < tJ {
+			genome.J.pMutateSpmat(DensityJ, irow, icol-tH)
+		} else {
+			genome.P.pMutateSpmat(DensityP, icol-tJ, irow)
+		}
+	}
+	return
 }

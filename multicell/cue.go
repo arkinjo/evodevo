@@ -126,11 +126,25 @@ func CopyCues(cues Cues) Cues {
 	return vs
 }
 
-func AddNoise2Cue(cue_out, cue Cue, eta float64) {
+func AddNoise2CueNormal(cue_out, cue Cue, eta float64) {
 	tv := GetTrait(cue)
+	copy(cue_out, cue)
 	for i, t := range tv {
 		// Don't use rand_cue here. Use the system rand instead.
 		cue_out[i] = t + eta*rand.NormFloat64()
+	}
+
+	return
+}
+
+func AddNoise2CueFlip(cue_out, cue Cue, eta float64) {
+	tv := GetTrait(cue)
+	copy(cue_out, cue)
+	for i, t := range tv {
+		// Don't use rand_cue here. Use the system rand instead.
+		if rand.Float64() < eta {
+			cue_out[i] = -t
+		}
 	}
 
 	return

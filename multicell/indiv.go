@@ -5,7 +5,7 @@ import (
 	//	"fmt"
 	"log"
 	"math"
-	"math/rand"
+	//	"math/rand"
 )
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
@@ -20,14 +20,16 @@ type Cell struct { //A 'cell' is characterized by its gene expression and phenot
 }
 
 type Body struct { //Do we want to reimplement this?
+	Genome   Genome
+	Cells    []Cell // Array of cells of different types
 	PErr     float64
 	NDevStep int
-	Cells    []Cell // Array of cells of different types
 }
 
 const (
 	IAncEnv = iota // Previous env
 	INovEnv        // Current env
+	NBodies
 )
 
 const ( // Index for cell state vectors
@@ -42,7 +44,6 @@ type Indiv struct { //An individual as an unicellular organism
 	Id         int
 	DadId      int
 	MomId      int
-	Genome     Genome
 	Bodies     []Body  //IAncEnv, INovEnv (see above const.)
 	Fit        float64 //Fitness with cues
 	WagFit     float64 //Wagner relative fitness
@@ -54,7 +55,7 @@ type Indiv struct { //An individual as an unicellular organism
 }
 
 func NewCell(id int) Cell { //Creates a new cell given id of cell.
-	e := NewVec(nenv + ncells)
+	e := NewCue(nenv, id)
 	f := NewVec(ngenes)
 	g := NewVec(ngenes)
 	h := NewVec(ngenes)
@@ -100,18 +101,20 @@ func (cell *Cell) GetState(ivec string) Vec {
 	return nil // neven happens
 }
 
-func NewBody(ncells int) Body { // Creates an array of new cells of length Ncells
+func NewBody(ncells int) Body {
+	genome := NewGenome()
 	cells := make([]Cell, ncells)
 	for id := range cells {
 		cells[id] = NewCell(id) //Initialize each cell
 	}
-	return Body{0, 0, cells}
+	return Body{genome, cells, 0, 0}
 }
 
 func (body *Body) Copy() Body {
 	body1 := NewBody(ncells)
 	body1.PErr = body.PErr
 	body1.NDevStep = body.NDevStep
+	body1.Genome = body.Genome.Copy()
 	for i, cell := range body.Cells {
 		body1.Cells[i] = cell.Copy()
 	}
@@ -119,13 +122,12 @@ func (body *Body) Copy() Body {
 }
 
 func NewIndiv(id int) Indiv { //Creates a new individual
-	genome := NewGenome()
-	bodies := make([]Body, 3)
+	bodies := make([]Body, NBodies)
 	for i := range bodies {
 		bodies[i] = NewBody(ncells)
 	}
 
-	indiv := Indiv{id, 0, 0, genome, bodies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	indiv := Indiv{id, 0, 0, bodies, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return indiv
 }
@@ -134,7 +136,6 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 	indiv1 := NewIndiv(indiv.Id)
 	indiv1.DadId = indiv.DadId
 	indiv1.MomId = indiv.MomId
-	indiv1.Genome = indiv.Genome.Copy()
 	for i, body := range indiv.Bodies {
 		indiv1.Bodies[i] = body.Copy()
 	}
@@ -148,52 +149,20 @@ func (indiv *Indiv) Copy() Indiv { //Deep copier
 	return indiv1
 }
 
-func (indiv *Indiv) Mutate() { //Mutates portion of genome of an individual
-	r := rand.Intn(geneLength)
-	//Randomly choose one of the genome matrices to mutate;
-	//with prob proportional to no. of columns
-	t := 0
-
-	//This version is specialized for current definition of full model.
-
-	if withE {
-		t += nenv + ncells
-		if r < t {
-			indiv.Genome.E.mutateSpmat(DensityE, mutRate)
-		}
-	}
-	if withF {
-		t += ngenes
-		if r < t {
-			indiv.Genome.F.mutateSpmat(DensityF, mutRate)
-		}
-	}
-	t += ngenes
-	if r < t {
-		indiv.Genome.G.mutateSpmat(DensityG, mutRate)
-	}
-	if withH {
-		t += ngenes
-		if r < t {
-			indiv.Genome.H.mutateSpmat(DensityH, mutRate)
-		}
-		if withJ {
-			t += ngenes
-			if r < t {
-				indiv.Genome.J.mutateSpmat(DensityJ, mutRate)
-			}
-		}
-	}
-	t += nenv + ncells
-	if r < t {
-		indiv.Genome.P.mutateSpmat(DensityP, mutRate)
-	}
-	return
-}
-
 func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
-	genome0 := dad.Genome.Copy()
-	genome1 := mom.Genome.Copy()
+	bodies0 := make([]Body, NBodies)
+	for i := range bodies0 {
+		bodies0[i] = NewBody(ncells)
+
+	}
+
+	bodies1 := make([]Body, NBodies)
+	for i := range bodies1 {
+		bodies1[i] = NewBody(ncells)
+	}
+
+	genome0 := dad.Bodies[INovEnv].Genome.Copy()
+	genome1 := mom.Bodies[INovEnv].Genome.Copy()
 	CrossoverSpmats(genome0.E, genome1.E)
 	CrossoverSpmats(genome0.F, genome1.F)
 	CrossoverSpmats(genome0.G, genome1.G)
@@ -201,20 +170,15 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	CrossoverSpmats(genome0.J, genome1.J)
 	CrossoverSpmats(genome0.P, genome1.P)
 
-	bodies0 := make([]Body, 3)
-	for i := range bodies0 {
-		bodies0[i] = NewBody(ncells)
-	}
-	bodies1 := make([]Body, 3)
-	for i := range bodies1 {
-		bodies1[i] = NewBody(ncells)
-	}
+	bodies0[IAncEnv].Genome = genome0
+	bodies1[IAncEnv].Genome = genome1
+	bodies0[INovEnv].Genome = genome0.Copy()
+	bodies1[INovEnv].Genome = genome1.Copy()
+	bodies0[INovEnv].Genome.Mutate()
+	bodies1[INovEnv].Genome.Mutate()
 
-	kid0 := Indiv{dad.Id, dad.Id, mom.Id, genome0, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	kid1 := Indiv{mom.Id, dad.Id, mom.Id, genome1, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-
-	kid0.Mutate()
-	kid1.Mutate()
+	kid0 := Indiv{dad.Id, dad.Id, mom.Id, bodies0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	kid1 := Indiv{mom.Id, dad.Id, mom.Id, bodies1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
 	return kid0, kid1
 }
@@ -298,22 +262,22 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
-	AddNoise2Cue(cell.E, env, devNoise)
+	cue := NewVec(nenv + ncells)
+
+	AddNoise2CueNormal(cell.E, env, devNoise)
+
+	if with_cue {
+		cue = cell.E
+	}
 
 	for nstep := 1; nstep <= maxDevStep; nstep++ {
 		MultMatVec(vf, G.G, g0)
 		if withE { //Model with or without cues
 			if pheno_feedback { //If feedback is allowed
-
-				DiffVecs(e_p, cell.E, cell.P)
-
-				// Kalman gain
-				//pscale := cell.getPscale()
-				//multVecVec(e_p, pscale, e_p)
-
+				DiffVecs(e_p, cue, cell.P)
 				MultMatVec(ve, G.E, e_p)
 			} else {
-				MultMatVec(ve, G.E, cell.E)
+				MultMatVec(ve, G.E, cue)
 			}
 			AddVecs(f1, vf, ve)
 		} else {
@@ -365,12 +329,12 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	return *cell
 }
 
-func (body *Body) DevBody(G Genome, envs Cues) Body {
+func (body *Body) DevBody(envs Cues) Body {
 	sse := 0.0
 	maxdev := 0
 
 	for i, cell := range body.Cells {
-		body.Cells[i] = cell.DevCell(G, envs[i])
+		body.Cells[i] = cell.DevCell(body.Genome, envs[i])
 		sse += cell.PErr
 		if cell.NDevStep > maxdev {
 			maxdev = cell.NDevStep
@@ -387,8 +351,8 @@ func (body *Body) DevBody(G Genome, envs Cues) Body {
 }
 
 func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare developmental process under different conditions
-	indiv.Bodies[IAncEnv].DevBody(indiv.Genome, ancenvs)
-	indiv.Bodies[INovEnv].DevBody(indiv.Genome, novenvs)
+	indiv.Bodies[IAncEnv].DevBody(ancenvs)
+	indiv.Bodies[INovEnv].DevBody(novenvs)
 
 	indiv.Fit = indiv.getFitness()
 
