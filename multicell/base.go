@@ -24,7 +24,7 @@ type Settings struct {
 }
 
 func NewSettings(maxpop, ncells int) Settings {
-	return Settings{maxpop, ncells, true, true, true, true, true, 0.05, 0.5, 0.0, 0.0}
+	return Settings{maxpop, ncells, true, true, true, true, true, 0.05, 0.5, 1.0, 1.0}
 }
 
 var maxPop int = 1000 // population size
