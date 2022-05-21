@@ -24,7 +24,9 @@ type Settings struct {
 }
 
 func NewSettings(maxpop, ncells int) Settings {
-	return Settings{maxpop, ncells, true, true, true, true, true, 0.05, 0.5, 1.0, 1.0}
+	return Settings{MaxPop: maxpop, NCells: ncells,
+		WithCue: true, FLayer: true, HLayer: true, JLayer: true, Pfback: true, SDNoise: 0.05,
+		TauF: 0.55, TauG: 1.0, TauH: 1.0}
 }
 
 var maxPop int = 1000 // population size
