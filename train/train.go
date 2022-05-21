@@ -19,13 +19,15 @@ func main() {
 	t0 := time.Now()
 	testP := flag.Bool("test", false, "Test run or not")
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	ncellsP := flag.Int("ncells", 1, "Number of cell types")
 	withcueP := flag.Bool("cue", true, "With environmental cue")
 	flayerP := flag.Bool("layerF", true, "Epigenetic layer")
 	hlayerP := flag.Bool("layerH", true, "Higher order complexes")
 	jlayerP := flag.Bool("layerJ", true, "Interactions in higher order interactions")
 	pfbackP := flag.Bool("pfback", true, "Phenotype feedback to input")
-	ncellsP := flag.Int("ncells", 1, "Number of cell types")
+
 	sdNoiseP := flag.Float64("sdNoise", 0.05, "Std.Dev. of environmental noise")
+	tauFP := flag.Float64("tauF", 0.5, "Decay rate of the f layer")
 
 	seedPtr := flag.Int("seed", 13, "random seed")
 	seed_cuePtr := flag.Int("seed_cue", 7, "random seed for environmental cue")
@@ -38,7 +40,15 @@ func main() {
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
 
-	var settings = multicell.Settings{*maxpopP, *ncellsP, *withcueP, *flayerP, *hlayerP, *jlayerP, *pfbackP, *sdNoiseP}
+	var settings = multicell.NewSettings(*maxpopP, *ncellsP)
+	settings.WithCue = *withcueP
+	settings.WithCue = *withcueP
+	settings.FLayer = *flayerP
+	settings.HLayer = *hlayerP
+	settings.JLayer = *jlayerP
+	settings.Pfback = *pfbackP
+	settings.SDNoise = *sdNoiseP
+	settings.TauF = *tauFP
 
 	log.Println("seed=", *seedPtr, "seed_cue=", *seed_cuePtr)
 	multicell.SetSeed(int64(*seedPtr))

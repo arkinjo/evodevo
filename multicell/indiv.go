@@ -250,13 +250,13 @@ func (cell *Cell) updatePEMA(pnew Vec) {
 
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	e_p := NewVec(nenv + ncells) // = env - p0
-	g0 := Ones(ngenes)
+	g0 := NewVec(ngenes)
 	f0 := NewVec(ngenes)
 	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
-	ve := NewVec(ngenes)
-	vf := NewVec(ngenes)
-	vg := NewVec(ngenes)
-	vh := NewVec(ngenes)
+	Ee := NewVec(ngenes)
+	Gg := NewVec(ngenes)
+	Hg := NewVec(ngenes)
+	Jh := NewVec(ngenes)
 	p1 := NewVec(nenv + ncells)
 	f1 := NewVec(ngenes)
 	g1 := NewVec(ngenes)
@@ -271,45 +271,54 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	}
 
 	for nstep := 1; nstep <= maxDevStep; nstep++ {
-		MultMatVec(vf, G.G, g0)
+		MultMatVec(Gg, G.G, g0)
 		if withE { //Model with or without cues
-			if pheno_feedback { //If feedback is allowed
+			if pheno_feedback { //p-feedback is allowed
 				DiffVecs(e_p, cue, cell.P)
-				MultMatVec(ve, G.E, e_p)
+				MultMatVec(Ee, G.E, e_p)
 			} else {
-				MultMatVec(ve, G.E, cue)
+				MultMatVec(Ee, G.E, cue)
 			}
-			AddVecs(f1, vf, ve)
+			AddVecs(f1, Gg, Ee)
 		} else {
-			copy(f1, vf)
+			copy(f1, Gg)
 		}
-		applyFnVec(sigmaf, f1)
 		if withF { //Allow or disallow epigenetic layer
+			applyFnVec(sigmaf, f1)
+			if NTauF > 0 {
+				WAddVecs(f1, NTauF, f0, f1)
+			}
 			MultMatVec(g1, G.F, f1)
-			applyFnVec(sigmag, g1)
 		} else { //Remove epigenetic layer if false
 			copy(g1, f1)
 		}
-		if withH { //If layer for higher order complexes is present
-			MultMatVec(vg, G.H, g1)
-
-			if withJ { //If interactions between higher order complexes is present
-				MultMatVec(vh, G.J, h0)
-				AddVecs(h1, vg, vh)
+		applyFnVec(sigmag, g1)
+		if NTauG > 0 {
+			WAddVecs(g1, NTauG, g0, g1)
+		}
+		if withH {
+			MultMatVec(Hg, G.H, g1)
+			if withJ {
+				MultMatVec(Jh, G.J, h0)
+				AddVecs(h1, Hg, Jh)
 			} else {
-				copy(h1, vg)
+				copy(h1, g1)
 			}
 			applyFnVec(sigmah, h1)
+			if NTauH > 0 {
+				WAddVecs(h1, NTauH, h0, h1)
+			}
 		} else {
 			copy(h1, g1) //identity map
 		}
-
 		MultMatVec(p1, G.P, h1)
 		applyFnVec(rho, p1)
+
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
 		cell.updatePEMA(p1)
+
 		diff := 0.0
 		for _, v := range cell.Pvar {
 			diff += v

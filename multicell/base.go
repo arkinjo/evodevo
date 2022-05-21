@@ -18,9 +18,16 @@ type Settings struct {
 	JLayer  bool    //  J present?
 	Pfback  bool    // P feedback to E layer
 	SDNoise float64 // stdev of environmental noise
+	TauF    float64
+	TauG    float64
+	TauH    float64
 }
 
-var default_settings = Settings{1000, 1, true, true, true, true, true, 0.05}
+func NewSettings(maxpop, ncells int) Settings {
+	return Settings{MaxPop: maxpop, NCells: ncells,
+		WithCue: true, FLayer: true, HLayer: true, JLayer: true, Pfback: true, SDNoise: 0.05,
+		TauF: 0.55, TauG: 1.0, TauH: 1.0}
+}
 
 var maxPop int = 1000 // population size
 var ngenes int = 200  // number of genes
@@ -44,6 +51,11 @@ var fullGeneLength = 4*ngenes + 2*(nenv+ncells)
 var geneLength int
 
 const inputsPerRow float64 = 4.0
+
+// 1 - (Decay rates)
+var NTauF float64 = 0.5
+var NTauG float64 = 0.0
+var NTauH float64 = 0.0
 
 var DensityE float64 = inputsPerRow / float64(nenv+ncells)
 var DensityF float64 = inputsPerRow / float64(ngenes)
@@ -78,13 +90,11 @@ type Vec = []float64 //Vector is a slice
 type Dmat = []Vec
 type Tensor3 []Dmat
 
-//var genrand = rand.New(rand.NewSource(99)) //This is bad for concurrency. DO NOT USE!
-
 func SetSeed(seed int64) {
 	rand.Seed(seed)
 }
 
-func SetParams(s Settings) { //Define whether each layer or interaction is present in model
+func SetParams(s Settings) {
 	maxPop = s.MaxPop
 	with_cue = s.WithCue
 	withF = s.FLayer
@@ -92,6 +102,9 @@ func SetParams(s Settings) { //Define whether each layer or interaction is prese
 	withJ = s.JLayer
 	pheno_feedback = s.Pfback
 	withE = with_cue || pheno_feedback
+	NTauF = 1 - s.TauF
+	NTauG = 1 - s.TauG
+	NTauH = 1 - s.TauH
 
 	ncells = s.NCells
 	devNoise = s.SDNoise
@@ -279,6 +292,12 @@ func ScaleVec(vout Vec, s float64, vin Vec) {
 func AddVecs(vout, v0, v1 Vec) { //Sum of vectors
 	for i := range vout {
 		vout[i] = v0[i] + v1[i]
+	}
+}
+
+func WAddVecs(vout Vec, sca float64, v0, v1 Vec) { //
+	for i := range vout {
+		vout[i] = sca*v0[i] + (1-sca)*v1[i]
 	}
 }
 

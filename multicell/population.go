@@ -129,7 +129,7 @@ func NewPopulation(ncell, npop int) Population { //Initialize new population
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{default_settings, 0, envs0, envs1, indivs}
+	p := Population{NewSettings(npop, ncell), 0, envs0, envs1, indivs}
 	return p
 }
 
