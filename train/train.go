@@ -19,6 +19,9 @@ func main() {
 	t0 := time.Now()
 	testP := flag.Bool("test", false, "Test run or not")
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	ngenesP := flag.Int("ngenes", 200, "Number of genes")
+	nenvP := flag.Int("nenv", 200, "Number of environmental cues/traits")
+	nselP := flag.Int("nsel", 40, "Number of environmental cues/traits for selection")
 	ncellsP := flag.Int("ncells", 1, "Number of cell types")
 	withcueP := flag.Bool("cue", true, "With environmental cue")
 	flayerP := flag.Bool("layerF", true, "Epigenetic layer")
@@ -40,7 +43,12 @@ func main() {
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
 
-	var settings = multicell.NewSettings(*maxpopP, *ncellsP)
+	var settings = multicell.CurrentSettings()
+	settings.MaxPop = *maxpopP
+	settings.NGenes = *ngenesP
+	settings.NEnv = *nenvP
+	settings.NSel = *nselP
+	settings.NCells = *ncellsP
 	settings.WithCue = *withcueP
 	settings.WithCue = *withcueP
 	settings.FLayer = *flayerP
@@ -62,8 +70,7 @@ func main() {
 	json_out = *jsonoutPtr
 	test_flag := *testP
 
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	pop0.Params = settings
+	pop0 := multicell.NewPopulation(settings)
 
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)

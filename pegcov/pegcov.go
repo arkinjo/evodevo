@@ -16,12 +16,13 @@ var sqrt3 float64 = math.Sqrt(3.0)
 
 func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
-	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	jsonP := flag.String("jsonin", "", "json file of population")
 	pflagP := flag.Int("p", 2, "0: AncEnv; 1: NovEnv; 2: NovEnv - AncEnv")
 	egflagP := flag.Int("eg", 2, "0: AncEnv; 1: NovEnv; 2: NovEnv - AncEnv")
 	flag.Parse()
 
+	settings := multicell.CurrentSettings()
+	settings.MaxPop = *maxpopP
 	pFlag := *pflagP
 	egFlag := *egflagP
 
@@ -46,7 +47,7 @@ func main() {
 		log.Fatal("-p must be 0, 1, or 2")
 	}
 
-	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
+	pop := multicell.NewPopulation(settings)
 	if *jsonP != "" {
 		pop.FromJSON(*jsonP)
 		multicell.SetParams(pop.Params)

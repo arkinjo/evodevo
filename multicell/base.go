@@ -24,6 +24,7 @@ var withJ bool = false
 var devNoise float64 = 0.05
 
 // Decay rates
+var tauF float64 = 0.5
 var tauG float64 = 1.0
 var tauH float64 = 1.0
 

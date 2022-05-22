@@ -266,16 +266,16 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		}
 		if withF { //Allow or disallow epigenetic layer
 			applyFnVec(sigmaf, f1)
-			if NTauF > 0 {
-				WAddVecs(f1, NTauF, f0, f1)
+			if tauF < 1 {
+				WAddVecs(f1, tauF, f1, f0)
 			}
 			MultMatVec(g1, G.F, f1)
 		} else { //Remove epigenetic layer if false
 			copy(g1, f1)
 		}
 		applyFnVec(sigmag, g1)
-		if NTauG > 0 {
-			WAddVecs(g1, NTauG, g0, g1)
+		if tauG < 1 {
+			WAddVecs(g1, tauG, g1, g0)
 		}
 		if withH {
 			MultMatVec(Hg, G.H, g1)
@@ -286,8 +286,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 				copy(h1, g1)
 			}
 			applyFnVec(sigmah, h1)
-			if NTauH > 0 {
-				WAddVecs(h1, NTauH, h0, h1)
+			if tauH < 1 {
+				WAddVecs(h1, tauH, h1, h0)
 			}
 		} else {
 			copy(h1, g1) //identity map

@@ -16,6 +16,7 @@ func main() {
 	log.Println("Starting...")
 	t0 := time.Now()
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	ngenesP := flag.Int("ngenes", 200, "number of genes")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 	ref1Ptr := flag.String("ref1", "", "reference JSON file 1")
@@ -26,6 +27,10 @@ func main() {
 
 	flag.Parse()
 
+	settings := multicell.CurrentSettings()
+	settings.MaxPop = *maxpopP
+	settings.NGenes = *ngenesP
+	settings.NCells = *ncellsP
 	epochlength := *genPtr
 	refgen1 := *ref1Ptr
 	refgen2 := *ref2Ptr
@@ -49,10 +54,11 @@ func main() {
 	tdump := time.Now()
 
 	log.Println("Reading Pop0")
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	pop0 := multicell.NewPopulation(settings)
 	fmt.Println("Reference population :", refgen1)
 	pop0.FromJSON(refgen1)
-	multicell.SetParams(pop0.Params)
+	settings = pop0.Params
+	multicell.SetParams(settings)
 
 	Nsel := multicell.GetNsel()
 	Nenv := multicell.GetNenv()
@@ -71,7 +77,7 @@ func main() {
 	}
 
 	log.Println("Reading Pop1")
-	pop1 := multicell.NewPopulation(*ncellsP, *maxpopP)
+	pop1 := multicell.NewPopulation(settings)
 	fmt.Println("Reference population 2:", refgen2)
 	pop1.FromJSON(refgen2)
 
@@ -110,7 +116,7 @@ func main() {
 		fmt.Fprintf(fout, "\t||p0-e0||  \t||p1-e1||  \tFit     \tWagFit\n")
 
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
-		pop := multicell.NewPopulation(*ncellsP, *maxpopP)
+		pop := multicell.NewPopulation(settings)
 		pop.FromJSON(jfilename)
 		gt0 := pop.GetFlatGenome(0)
 		gt1 := pop.GetFlatGenome(1)

@@ -120,16 +120,17 @@ func (pop *Population) GetStats() PopStats {
 	return stats
 }
 
-func NewPopulation(ncell, npop int) Population { //Initialize new population
-	envs0 := NewCues(ncell, nenv)
-	envs1 := NewCues(ncell, nenv)
+func NewPopulation(s Settings) Population {
+	envs0 := NewCues(s.NCells, s.NEnv)
+	envs1 := NewCues(s.NCells, s.NEnv)
 
-	indivs := make([]Indiv, npop)
+	indivs := make([]Indiv, s.MaxPop)
 	for i := range indivs {
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{NewSettings(npop, ncell), 0, envs0, envs1, indivs}
+	p := Population{Params: s, Gen: 0, AncEnvs: envs0, NovEnvs: envs1,
+		Indivs: indivs}
 	return p
 }
 
@@ -204,10 +205,7 @@ func (pop *Population) ClearGenome() {
 }
 
 func (pop *Population) Copy() Population {
-	npop := len(pop.Indivs)
-	ncell := len(pop.Indivs[0].Bodies[INovEnv].Cells) //number of cells
-
-	pop1 := NewPopulation(ncell, npop)
+	pop1 := NewPopulation(pop.Params)
 	pop1.Params = pop.Params
 	pop1.Gen = pop.Gen
 	pop1.NovEnvs = CopyCues(pop.NovEnvs)
