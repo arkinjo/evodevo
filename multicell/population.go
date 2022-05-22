@@ -95,16 +95,16 @@ func (pop *Population) GetStats() PopStats {
 
 	env0 := FlattenEnvs(GetSelEnvs(pop.AncEnvs))
 	env1 := FlattenEnvs(GetSelEnvs(pop.NovEnvs))
-	lenE := len(env1)
-	dirE := NewVec(lenE)
+	lenP := len(env1)
+	dirE := NewVec(lenP)
 	DiffVecs(dirE, env1, env0)
 	NormalizeVec(dirE)
 
 	mp1 := GetMeanVec(pop.GetFlatStateVec("P", 1, 0, nsel))
-	dirP := NewVec(lenE)
+	dirP := NewVec(lenP)
 	DiffVecs(dirP, mp1, env0)
 	NormalizeVec(dirP)
-
+	log.Println("mp1, env0", dirP, env0)
 	stats.PEDot = DotVecs(dirP, dirE)
 	stats.PErr1 = merr1 / fn
 	stats.PErr0 = merr0 / fn
