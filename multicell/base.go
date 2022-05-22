@@ -31,7 +31,8 @@ func NewSettings(maxpop, ncells int) Settings {
 
 var maxPop int = 1000 // population size
 var ngenes int = 200  // number of genes
-var nenv int = 40     // number of environmental cues/phenotypic values per face
+var nenv int = 200    // number of environmental cues/phenotypic values per face
+var nsel int = 40     // number of environmental cues/phenotypic values per face FOR SELECTION
 var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
 
 var devNoise float64 = 0.05
@@ -45,7 +46,7 @@ const ccStep float64 = 5.0            // Number of steady steps for convergence
 const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 
 // Length of a gene for Unicellular organism.
-var fullGeneLength = 4*ngenes + 2*(nenv+ncells)
+var fullGeneLength = 4*ngenes + 2*nenv
 
 //calculated from layers present or absent.
 var geneLength int
@@ -57,7 +58,7 @@ var NTauF float64 = 0.5
 var NTauG float64 = 0.0
 var NTauH float64 = 0.0
 
-var DensityE float64 = inputsPerRow / float64(nenv+ncells)
+var DensityE float64 = inputsPerRow / float64(nenv)
 var DensityF float64 = inputsPerRow / float64(ngenes)
 var DensityG float64 = inputsPerRow / float64(ngenes)
 var DensityH float64 = inputsPerRow / float64(ngenes)
@@ -105,18 +106,15 @@ func SetParams(s Settings) {
 	NTauF = 1 - s.TauF
 	NTauG = 1 - s.TauG
 	NTauH = 1 - s.TauH
-
 	ncells = s.NCells
 	devNoise = s.SDNoise
 
-	DensityE = inputsPerRow / float64(nenv+ncells)
-
-	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
+	geneLength = ngenes + nenv //G and P layers present by default
 	from_g := DensityG * float64(ngenes)
 
 	if withE {
-		geneLength += nenv + ncells
-		from_e := DensityE * float64(nenv+ncells)
+		geneLength += nenv
+		from_e := DensityE * float64(nenv)
 		if with_cue && pheno_feedback {
 			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
 		} else {
@@ -165,6 +163,10 @@ func GetNcells() int {
 
 func GetNenv() int {
 	return nenv
+}
+
+func GetNsel() int {
+	return nsel
 }
 
 func sigmoid(x, omega float64) float64 {

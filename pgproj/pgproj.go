@@ -53,15 +53,19 @@ func main() {
 	fmt.Println("Reference population :", refgen1)
 	pop0.FromJSON(refgen1)
 	multicell.SetParams(pop0.Params)
+
+	Nsel := multicell.GetNsel()
+	Nenv := multicell.GetNenv()
+
 	// Reference direction
-	env0 := multicell.FlattenEnvs(pop0.AncEnvs)
-	env1 := multicell.FlattenEnvs(pop0.NovEnvs)
-	lenE := len(env0)
-	denv := multicell.NewVec(lenE)
+	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.AncEnvs))
+	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.NovEnvs))
+	lenP := len(env0)
+	denv := multicell.NewVec(lenP)
 	multicell.DiffVecs(denv, env1, env0)
 
 	g00 := pop0.GetFlatGenome(multicell.IAncEnv)
-	e00 := pop0.GetFlatStateVec("E", 0)
+	e00 := pop0.GetFlatStateVec("E", 0, 0, Nenv)
 	for k, g := range g00 {
 		e00[k] = append(e00[k], g...)
 	}
@@ -72,13 +76,13 @@ func main() {
 	pop1.FromJSON(refgen2)
 
 	g11 := pop1.GetFlatGenome(multicell.INovEnv)
-	e11 := pop1.GetFlatStateVec("E", 1)
+	e11 := pop1.GetFlatStateVec("E", 1, 0, Nenv)
 	for k, g := range g11 {
 		e11[k] = append(e11[k], g...)
 	}
 
 	log.Println("Finding Principal Axes")
-	midp := multicell.NewVec(lenE)
+	midp := multicell.NewVec(lenP)
 	multicell.AddVecs(midp, env0, env1)
 	multicell.ScaleVec(midp, 0.5, midp)
 	paxis := multicell.CopyVec(denv)
@@ -110,20 +114,20 @@ func main() {
 		pop.FromJSON(jfilename)
 		gt0 := pop.GetFlatGenome(0)
 		gt1 := pop.GetFlatGenome(1)
-		et0 := pop.GetFlatStateVec("E", 0)
-		et1 := pop.GetFlatStateVec("E", 1)
+		et0 := pop.GetFlatStateVec("E", 0, 0, Nenv)
+		et1 := pop.GetFlatStateVec("E", 1, 0, Nenv)
 		for k, g := range gt0 {
 			et0[k] = append(et0[k], g...)
 			et1[k] = append(et1[k], gt1[k]...)
 		}
 
-		pt0 := pop.GetFlatStateVec("P", 0)
-		pt1 := pop.GetFlatStateVec("P", 1)
+		pt0 := pop.GetFlatStateVec("P", 0, 0, Nsel)
+		pt1 := pop.GetFlatStateVec("P", 1, 0, Nsel)
 
 		tx0 := multicell.NewVec(lenG)
 		tx1 := multicell.NewVec(lenG)
-		ty0 := multicell.NewVec(lenE)
-		ty1 := multicell.NewVec(lenE)
+		ty0 := multicell.NewVec(lenP)
+		ty1 := multicell.NewVec(lenP)
 
 		for k := range et0 {
 			multicell.DiffVecs(tx0, et0[k], midg)

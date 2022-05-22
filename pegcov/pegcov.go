@@ -55,10 +55,13 @@ func main() {
 		log.Fatal("Specify the input JSON file with -jsonin=filename.")
 	}
 
-	env0 := multicell.FlattenEnvs(pop.AncEnvs)
-	env1 := multicell.FlattenEnvs(pop.NovEnvs)
-	lenE := len(env0)
-	denv := multicell.NewVec(lenE)
+	Nenv := multicell.GetNenv()
+	Nsel := multicell.GetNsel()
+
+	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop.AncEnvs))
+	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop.NovEnvs))
+	lenP := len(env0)
+	denv := multicell.NewVec(lenP)
 	multicell.DiffVecs(denv, env1, env0)
 	multicell.NormalizeVec(denv)
 
@@ -80,8 +83,9 @@ func main() {
 
 	}
 
-	e0 := pop.GetFlatStateVec("E", 0)
-	e1 := pop.GetFlatStateVec("E", 1)
+	e0 := pop.GetFlatStateVec("E", 0, 0, Nenv)
+	e1 := pop.GetFlatStateVec("E", 1, 0, Nenv)
+	lenE := len(e0[0])
 	dele := make([][]float64, 0)
 	for k, e := range e0 {
 		switch egFlag {
@@ -103,8 +107,8 @@ func main() {
 		deleg = append(deleg, d)
 	}
 
-	p0 := pop.GetFlatStateVec("P", 0)
-	p1 := pop.GetFlatStateVec("P", 1)
+	p0 := pop.GetFlatStateVec("P", 0, 0, Nsel)
+	p1 := pop.GetFlatStateVec("P", 1, 0, Nsel)
 	delp := make([][]float64, 0)
 	for k, p := range p0 {
 		switch pFlag {
@@ -113,7 +117,7 @@ func main() {
 		case 1:
 			delp = append(delp, p1[k])
 		case 2:
-			d := multicell.NewVec(lenE)
+			d := multicell.NewVec(lenP)
 			multicell.DiffVecs(d, p1[k], p)
 			delp = append(delp, d)
 		}
@@ -132,7 +136,7 @@ func main() {
 	}
 	U, svals, V := multicell.GetSVD(cov)
 	rank := len(svals)
-	Up := multicell.NewDmat(rank, lenE)
+	Up := multicell.NewDmat(rank, lenP)
 	Veg := multicell.NewDmat(rank, lenE+lenG)
 	Ve := multicell.NewDmat(rank, 0)
 	Vg := multicell.NewDmat(rank, 0)
@@ -216,7 +220,7 @@ func main() {
 		fmt.Println()
 	}
 
-	for i := 0; i < lenE; i++ {
+	for i := 0; i < lenP; i++ {
 		fmt.Printf("<dp>,Uvec\t%d\t%e", i, mp[i])
 		for a := 0; a < 5; a++ {
 			fmt.Printf("\t%e", Up[a][i])

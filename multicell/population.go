@@ -9,8 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"sort"
-
-	"gonum.org/v1/gonum/mat"
+	//	"gonum.org/v1/gonum/mat"
 )
 
 type Population struct { //Population of individuals
@@ -93,14 +92,15 @@ func (pop *Population) GetStats() PopStats {
 			div += t / fn
 		}
 	}
-	env0 := FlattenEnvs(pop.AncEnvs)
-	env1 := FlattenEnvs(pop.NovEnvs)
+
+	env0 := FlattenEnvs(GetSelEnvs(pop.AncEnvs))
+	env1 := FlattenEnvs(GetSelEnvs(pop.NovEnvs))
 	lenE := len(env1)
 	dirE := NewVec(lenE)
 	DiffVecs(dirE, env1, env0)
 	NormalizeVec(dirE)
 
-	mp1 := GetMeanVec(pop.GetFlatStateVec("P", 1))
+	mp1 := GetMeanVec(pop.GetFlatStateVec("P", 1, 0, nsel))
 	dirP := NewVec(lenE)
 	DiffVecs(dirP, mp1, env0)
 	NormalizeVec(dirP)
@@ -365,12 +365,12 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 	return pop
 }
 
-func (pop *Population) GetFlatStateVec(istate string, ienv int) Dmat {
+func (pop *Population) GetFlatStateVec(istate string, ienv, ibeg, iend int) Dmat {
 	vs0 := make([]Vec, 0)
 	for _, indiv := range pop.Indivs {
 		tv0 := make([]float64, 0)
 		for _, cell := range indiv.Bodies[ienv].Cells {
-			tv0 = append(tv0, cell.GetState(istate)...)
+			tv0 = append(tv0, cell.GetState(istate, ibeg, iend)...)
 		}
 		vs0 = append(vs0, tv0)
 	}
@@ -385,14 +385,4 @@ func (pop *Population) GetFlatGenome(IEnv int) Dmat {
 		vs = append(vs, tv)
 	}
 	return vs
-}
-
-func (pop *Population) GetPCA(state0 string, ienv0 int, state1 string, ienv1 int) (*mat.Dense, Vec, *mat.Dense) {
-	s0 := pop.GetFlatStateVec(state0, ienv0)
-	s1 := pop.GetFlatStateVec(state1, ienv1)
-
-	_, _, ccmat := GetCrossCov(s0, s1, true, true)
-
-	U, vals, V := GetSVD(ccmat)
-	return U, vals, V
 }

@@ -34,7 +34,7 @@ func main() {
 	epochPtr := flag.Int("nepoch", 20, "number of epochs")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 
-	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 100, "magnitude of environmental change")
 	tfilenamePtr := flag.String("traj_file", "traj.dat", "filename of trajectories")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
@@ -80,7 +80,7 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.NovEnvs = multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5)
+	popstart.NovEnvs = multicell.RandomEnvs(multicell.GetNcells(), 0.5)
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
@@ -113,7 +113,7 @@ func main() {
 
 		OldEnvs := multicell.CopyCues(popstart.NovEnvs)
 		popstart.AncEnvs = OldEnvs
-		popstart.NovEnvs = multicell.ChangeEnvs2(OldEnvs, denv)
+		popstart.NovEnvs = multicell.ChangeEnvs(OldEnvs, denv)
 		err = multicell.DeepVec3NovTest(popstart.NovEnvs, envtraj)
 		if err != nil {
 			fmt.Println(err)
