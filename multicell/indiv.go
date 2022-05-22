@@ -208,7 +208,7 @@ func getPlasticity(body0, body1 Body) float64 { //cue plasticity of individual
 		d2 += Dist2Vecs(cell.P, body1.Cells[i].P)
 	}
 
-	return d2 / float64(ncells*ngenes)
+	return d2 / float64(ncells*nenv)
 }
 
 func getPEDiff(body Body, envs Cues) float64 {
@@ -217,15 +217,6 @@ func getPEDiff(body Body, envs Cues) float64 {
 		diff += DistVecs1(c.P[0:nsel], envs[i][0:nsel])
 	}
 	return diff / float64(ncells*nsel)
-}
-
-func (indiv *Indiv) getVarpheno() float64 { //Get sum of elementwise variance of phenotype
-	pvec := make([]Cue, 0)
-	for _, c := range indiv.Bodies[INovEnv].Cells {
-		pvec = append(pvec, c.P) //Note: To be used AFTER development
-	}
-	sigma2p := GetCueVar(pvec)
-	return sigma2p
 }
 
 func (cell *Cell) updatePEMA(pnew Vec) {
