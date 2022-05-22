@@ -9,8 +9,29 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+var maxPop int = 200 // population size
+var ngenes int = 200 // number of genes
+var nenv int = 200   // number of environmental cues/traits per face
+var nsel int = 40    // number of environmental cues/traits per face FOR SELECTION
+var ncells int = 1   //number of cell types
+
+var with_cue bool = true // with or without environmental cues.
+var pheno_feedback bool = false
+var withE bool = false // = with_cue || pheno_feedback
+var withF bool = true  // Epigenetic marker layer
+var withH bool = true  // Higher order complexes layer
+var withJ bool = false
+var devNoise float64 = 0.05
+
+// Decay rates
+var tauG float64 = 1.0
+var tauH float64 = 1.0
+
 type Settings struct {
-	MaxPop  int     // Maximum number of individuals in population
+	MaxPop  int // Maximum number of individuals in population
+	NGenes  int
+	NEnv    int
+	NSel    int
 	NCells  int     // Number of cell types
 	WithCue bool    // With cue?
 	FLayer  bool    // f present?
@@ -23,19 +44,13 @@ type Settings struct {
 	TauH    float64
 }
 
-func NewSettings(maxpop, ncells int) Settings {
-	return Settings{MaxPop: maxpop, NCells: ncells,
-		WithCue: true, FLayer: true, HLayer: true, JLayer: true, Pfback: true, SDNoise: 0.05,
-		TauF: 0.55, TauG: 1.0, TauH: 1.0}
+func CurrentSettings() Settings {
+	return Settings{MaxPop: maxPop,
+		NGenes: ngenes, NEnv: nenv, NSel: nsel, NCells: ncells,
+		WithCue: with_cue, FLayer: withF, HLayer: withH, JLayer: withJ,
+		Pfback: pheno_feedback, SDNoise: devNoise,
+		TauF: tauF, TauG: tauG, TauH: tauH}
 }
-
-var maxPop int = 1000 // population size
-var ngenes int = 200  // number of genes
-var nenv int = 200    // number of environmental cues/phenotypic values per face
-var nsel int = 40     // number of environmental cues/phenotypic values per face FOR SELECTION
-var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
-
-var devNoise float64 = 0.05
 
 const cueMag float64 = 1.0    // each trait is +/-cueMag
 const maxDevStep int = 200    // Maximum steps for development.
@@ -53,11 +68,6 @@ var geneLength int
 
 const inputsPerRow float64 = 4.0
 
-// 1 - (Decay rates)
-var NTauF float64 = 0.5
-var NTauG float64 = 0.0
-var NTauH float64 = 0.0
-
 var DensityE float64 = inputsPerRow / float64(nenv)
 var DensityF float64 = inputsPerRow / float64(ngenes)
 var DensityG float64 = inputsPerRow / float64(ngenes)
@@ -71,13 +81,6 @@ const baseSelStrength float64 = 20.0   // default selection strength; to be norm
 const selDevStep float64 = 20.0        // Developmental steps for selection
 
 const minWagnerFitness float64 = 0.01
-
-var with_cue bool = true // with or without environmental cues.
-var pheno_feedback bool = false
-var withE bool = false // = with_cue || pheno_feedback
-var withF bool = true  // Epigenetic marker layer
-var withH bool = true  // Higher order complexes layer
-var withJ bool = false
 
 // slope of activation functions
 var omega_f float64 = 1.0
@@ -97,17 +100,28 @@ func SetSeed(seed int64) {
 
 func SetParams(s Settings) {
 	maxPop = s.MaxPop
+	ngenes = s.NGenes
+	nenv = s.NEnv
+	nsel = s.NSel
+	ncells = s.NCells
 	with_cue = s.WithCue
 	withF = s.FLayer
 	withH = s.HLayer
 	withJ = s.JLayer
 	pheno_feedback = s.Pfback
-	withE = with_cue || pheno_feedback
-	NTauF = 1 - s.TauF
-	NTauG = 1 - s.TauG
-	NTauH = 1 - s.TauH
-	ncells = s.NCells
 	devNoise = s.SDNoise
+	withE = with_cue || pheno_feedback
+	tauF = s.TauF
+	tauG = s.TauG
+	tauH = s.TauH
+
+	fullGeneLength = 4*ngenes + 2*nenv
+	DensityE = inputsPerRow / float64(nenv)
+	DensityF = inputsPerRow / float64(ngenes)
+	DensityG = inputsPerRow / float64(ngenes)
+	DensityH = inputsPerRow / float64(ngenes)
+	DensityJ = inputsPerRow / float64(ngenes)
+	DensityP = inputsPerRow / float64(ngenes)
 
 	geneLength = ngenes + nenv //G and P layers present by default
 	from_g := DensityG * float64(ngenes)
