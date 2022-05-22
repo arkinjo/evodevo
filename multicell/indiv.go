@@ -230,7 +230,7 @@ func (cell *Cell) updatePEMA(pnew Vec) {
 
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	e_p := NewVec(nenv) // = env - p0
-	g0 := NewVec(ngenes)
+	g0 := Ones(ngenes)
 	f0 := NewVec(ngenes)
 	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
 	Ee := NewVec(ngenes)
