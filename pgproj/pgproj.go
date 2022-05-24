@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/arkinjo/evodevo/multicell"
 	"log"
+	"math"
 	"os"
 	"time"
 )
@@ -135,6 +136,10 @@ func main() {
 		ty0 := multicell.NewVec(lenP)
 		ty1 := multicell.NewVec(lenP)
 
+		dx0 := make([]float64, 0)
+		dy0 := make([]float64, 0)
+		dx1 := make([]float64, 0)
+		dy1 := make([]float64, 0)
 		for k := range et0 {
 			multicell.DiffVecs(tx0, et0[k], midg)
 			multicell.DiffVecs(tx1, et1[k], midg)
@@ -148,7 +153,12 @@ func main() {
 			x1 := multicell.DotVecs(tx1, gaxis) / multicell.Norm2(tx1)
 			y1 := multicell.DotVecs(ty1, paxis) / multicell.Norm2(ty1)
 
-			fmt.Fprintf(fout, "\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
+			fmt.Fprintf(fout, "Data\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
+
+			dx0 = append(dx0, x0)
+			dy0 = append(dy0, y0)
+			dx1 = append(dx1, x1)
+			dy1 = append(dy1, y1)
 
 			dp1e1 := pop.Indivs[k].Dp1e1
 			dp0e0 := pop.Indivs[k].Dp0e0
@@ -158,6 +168,12 @@ func main() {
 			fmt.Fprintf(fout, "\t%e\t%e\t%e\t%e\n", dp0e0, dp1e1, fit, wf)
 
 		}
+		ax0, sx0 := avesd(dx0)
+		ay0, sy0 := avesd(dy0)
+		fmt.Fprintf(fout, "AVESD0\t%d\t%e\t%e\t%e\t%e\n", gen, ax0, ay0, sx0, sy0)
+		ax1, sx1 := avesd(dx1)
+		ay1, sy1 := avesd(dy1)
+		fmt.Fprintf(fout, "AVESD1\t%d\t%e\t%e\t%e\t%e\n", gen, ax1, ay1, sx1, sy1)
 		err = fout.Close()
 		if err != nil {
 			log.Fatal(err)
@@ -171,4 +187,22 @@ func main() {
 	dt := time.Since(t0)
 
 	fmt.Println("Total time taken : ", dt)
+}
+
+func avesd(data []float64) (float64, float64) {
+	ave := 0.0
+	v := 0.0
+	fn := float64(len(data))
+	for _, d := range data {
+		ave += d
+	}
+	ave /= fn
+	for _, d := range data {
+		dev := d - ave
+		v += dev * dev
+	}
+
+	sd := math.Sqrt(v / fn)
+
+	return ave, sd
 }
