@@ -142,12 +142,15 @@ func SetParams(s Settings) {
 
 	if withF {
 		geneLength += ngenes
+		omega_g = 1.0 / math.Sqrt(DensityF*float64(ngenes)*(2-tauF))
 	} else {
 		DensityF = 0.0
+		efac := 1.0
+		if with_cue && pheno_feedback {
+			efac = 2.0
+		}
+		omega_g = 1.0 / math.Sqrt(DensityG*float64(ngenes)*(2-tauG)+efac*DensityE*float64(nenv))
 	}
-
-	omega_g = 1.0 / math.Sqrt(DensityF*float64(ngenes)*(2-tauF))
-	omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes))
 
 	if withH {
 		geneLength += ngenes
@@ -158,9 +161,11 @@ func SetParams(s Settings) {
 			omega_h = 1.0 / math.Sqrt(from_g*(2-tauG))
 			DensityJ = 0.0
 		}
+		omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes)*(2-tauH))
 	} else {
 		omega_h = 0.0
 		DensityH = 0.0
+		omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes)*(2-tauG))
 	}
 
 	//to compensate for layer removal.

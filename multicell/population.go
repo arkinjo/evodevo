@@ -313,9 +313,17 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 
 	return new_population
 }
+
 func (pop *Population) SortPopIndivs() {
 	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id })
 }
+
+func (pop *Population) ChangeEnvs(denv int) {
+	OldEnvs := CopyCues(pop.NovEnvs)
+	pop.AncEnvs = OldEnvs
+	pop.NovEnvs = ChangeEnvs(OldEnvs, denv)
+}
+
 func (pop *Population) DevPop(gen int) Population {
 	pop.Gen = gen
 

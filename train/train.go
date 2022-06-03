@@ -87,7 +87,7 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.NovEnvs = multicell.RandomEnvs(multicell.GetNcells(), 0.5)
+	popstart.ChangeEnvs(denv)
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
@@ -109,18 +109,13 @@ func main() {
 		fmt.Println("End of epoch", epoch)
 
 		if !test_flag && epoch == maxepochs { //Export output population; just before epoch change
-			//Update to environment just before epoch change
-			pop1.AncEnvs = multicell.CopyCues(pop1.NovEnvs)
 			pop1.ToJSON(json_out)
 		}
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :", dtevol)
 
 		popstart = pop1 //Update population after evolution.
-
-		OldEnvs := multicell.CopyCues(popstart.NovEnvs)
-		popstart.AncEnvs = OldEnvs
-		popstart.NovEnvs = multicell.ChangeEnvs(OldEnvs, denv)
+		popstart.ChangeEnvs(denv)
 		err = multicell.DeepVec3NovTest(popstart.NovEnvs, envtraj)
 		if err != nil {
 			fmt.Println(err)

@@ -29,6 +29,9 @@ func RandomEnv(density float64) Cue { //Fake up a boolean environment vector for
 // Mutate precisely n bits of environment cue; ignore id part
 func ChangeEnv(cue Cue, n int) Cue {
 	env1 := CopyVec(cue)
+	if n == 0 {
+		return env1
+	}
 	indices := make([]int, nenv)
 	for i := range indices {
 		indices[i] = i
