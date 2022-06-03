@@ -24,7 +24,7 @@ var withJ bool = false
 var devNoise float64 = 0.05
 
 // Decay rates
-var tauF float64 = 0.5
+var tauF float64 = 0.2
 var tauG float64 = 1.0
 var tauH float64 = 1.0
 
@@ -131,12 +131,12 @@ func SetParams(s Settings) {
 		geneLength += nenv
 		from_e := DensityE * float64(nenv)
 		if with_cue && pheno_feedback {
-			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
+			omega_f = 1.0 / math.Sqrt(2*from_e+from_g*(2-tauG))
 		} else {
-			omega_f = 1.0 / math.Sqrt(from_e+from_g)
+			omega_f = 1.0 / math.Sqrt(from_e+from_g*(2-tauG))
 		}
 	} else {
-		omega_f = 1.0 / math.Sqrt(from_g)
+		omega_f = 1.0 / math.Sqrt(from_g*(2-tauG))
 		DensityE = 0.0
 	}
 
@@ -146,16 +146,16 @@ func SetParams(s Settings) {
 		DensityF = 0.0
 	}
 
-	omega_g = 1.0 / math.Sqrt(DensityG*float64(ngenes))
+	omega_g = 1.0 / math.Sqrt(DensityF*float64(ngenes)*(2-tauF))
 	omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes))
 
 	if withH {
 		geneLength += ngenes
 		if withJ {
 			geneLength += ngenes
-			omega_h = 1.0 / math.Sqrt(from_g*2)
+			omega_h = 1.0 / math.Sqrt(from_g*((2-tauG)+(2-tauH)))
 		} else {
-			omega_h = 1.0 / math.Sqrt(from_g)
+			omega_h = 1.0 / math.Sqrt(from_g*(2-tauG))
 			DensityJ = 0.0
 		}
 	} else {
@@ -314,7 +314,7 @@ func AddVecs(vout, v0, v1 Vec) { //Sum of vectors
 
 func WAddVecs(vout Vec, sca float64, v0, v1 Vec) { //
 	for i := range vout {
-		vout[i] = sca*v0[i] + (1-sca)*v1[i]
+		vout[i] = sca*v0[i] + v1[i]
 	}
 }
 
