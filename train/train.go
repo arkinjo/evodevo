@@ -29,7 +29,7 @@ func main() {
 	jlayerP := flag.Bool("layerJ", true, "Interactions in higher order interactions")
 	pfbackP := flag.Bool("pfback", true, "Phenotype feedback to input")
 
-	sdNoiseP := flag.Float64("sdNoise", 0.05, "Std.Dev. of environmental noise")
+	noiseP := flag.Float64("noise", 0.05, "Strength of environmental noise")
 	tauFP := flag.Float64("tauF", 0.5, "Decay rate of the f layer")
 
 	seedPtr := flag.Int("seed", 13, "random seed")
@@ -55,7 +55,7 @@ func main() {
 	settings.HLayer = *hlayerP
 	settings.JLayer = *jlayerP
 	settings.Pfback = *pfbackP
-	settings.SDNoise = *sdNoiseP
+	settings.SDNoise = *noiseP
 	settings.TauF = *tauFP
 
 	log.Println("seed=", *seedPtr, "seed_cue=", *seed_cuePtr)
