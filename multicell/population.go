@@ -231,20 +231,6 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 	return MeanPhenotype
 }
 
-func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
-	e := pop.NovEnvs  // novel environment
-	e0 := pop.AncEnvs // ancestral environment
-
-	me := NewCues(ncells, nenv) // midpoint
-
-	for i, c := range e {
-		for j, v := range c {
-			me[i][j] = (v + e0[i][j]) / 2.0
-		}
-	}
-	return me
-}
-
 func (pop *Population) Selection(nNewPop int) []Indiv { //Selects parents for new population
 	npop := len(pop.Indivs)
 	//var parents []Indiv //Does this even work?
