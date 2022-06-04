@@ -310,6 +310,10 @@ func (pop *Population) ChangeEnvs(denv int) {
 	pop.NovEnvs = ChangeEnvs(OldEnvs, denv)
 }
 
+func (pop *Population) SetRandomNovEnvs() {
+	pop.NovEnvs = RandomEnvs(ncells, 0.5)
+}
+
 func (pop *Population) DevPop(gen int) Population {
 	pop.Gen = gen
 

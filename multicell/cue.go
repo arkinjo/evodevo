@@ -1,6 +1,7 @@
 package multicell
 
 import (
+	//	"fmt"
 	"math/rand"
 )
 
@@ -88,7 +89,6 @@ func AddNoise2CueFlip(cue_out, cue Cue, eta float64) {
 			cue_out[i] = -t
 		}
 	}
-
 	return
 }
 

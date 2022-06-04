@@ -75,6 +75,7 @@ func main() {
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)
 	}
+	pop0.Params.SDNoise = settings.SDNoise
 	multicell.SetParams(pop0.Params)
 	if json_in == "" {
 		fmt.Println("Randomizing initial population")
@@ -87,7 +88,12 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.ChangeEnvs(denv)
+	if json_in != "" {
+		popstart.ChangeEnvs(denv)
+	} else {
+		popstart.SetRandomNovEnvs()
+	}
+
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
