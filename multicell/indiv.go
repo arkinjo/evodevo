@@ -173,6 +173,10 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	bodies1[IAncEnv].Genome = genome1
 	bodies0[INovEnv].Genome = genome0.Copy()
 	bodies1[INovEnv].Genome = genome1.Copy()
+
+	// Different mutations for Anc and Nov envs.
+	bodies0[IAncEnv].Genome.Mutate()
+	bodies1[IAncEnv].Genome.Mutate()
 	bodies0[INovEnv].Genome.Mutate()
 	bodies1[INovEnv].Genome.Mutate()
 
