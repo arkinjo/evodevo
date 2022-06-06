@@ -30,6 +30,7 @@ func main() {
 	pfbackP := flag.Bool("pfback", true, "Phenotype feedback to input")
 
 	noiseP := flag.Float64("noise", 0.05, "Strength of environmental noise")
+	mutP := flag.Float64("mut", 0.005, "Mutation rate")
 	tauFP := flag.Float64("tauF", 0.5, "Decay rate of the f layer")
 
 	seedPtr := flag.Int("seed", 13, "random seed")
@@ -56,6 +57,7 @@ func main() {
 	settings.JLayer = *jlayerP
 	settings.Pfback = *pfbackP
 	settings.SDNoise = *noiseP
+	settings.MutRate = *mutP
 	settings.TauF = *tauFP
 
 	log.Println("seed=", *seedPtr, "seed_cue=", *seed_cuePtr)
@@ -76,6 +78,7 @@ func main() {
 		pop0.FromJSON(json_in)
 	}
 	pop0.Params.SDNoise = settings.SDNoise
+	pop0.Params.MutRate = settings.MutRate
 	multicell.SetParams(pop0.Params)
 	if json_in == "" {
 		fmt.Println("Randomizing initial population")

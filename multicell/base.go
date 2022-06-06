@@ -21,7 +21,8 @@ var withE bool = false // = with_cue || pheno_feedback
 var withF bool = true  // Epigenetic marker layer
 var withH bool = true  // Higher order complexes layer
 var withJ bool = false
-var devNoise float64 = 0.05
+var devNoise float64 = 0.05 // noise strength
+var mutRate float64 = 0.005 // mutation rate
 
 // Decay rates
 var tauF float64 = 0.2
@@ -40,6 +41,7 @@ type Settings struct {
 	JLayer  bool    //  J present?
 	Pfback  bool    // P feedback to E layer
 	SDNoise float64 // stdev of environmental noise
+	MutRate float64 // mutation rate
 	TauF    float64
 	TauG    float64
 	TauH    float64
@@ -49,7 +51,7 @@ func CurrentSettings() Settings {
 	return Settings{MaxPop: maxPop,
 		NGenes: ngenes, NEnv: nenv, NSel: nsel, NCells: ncells,
 		WithCue: with_cue, FLayer: withF, HLayer: withH, JLayer: withJ,
-		Pfback: pheno_feedback, SDNoise: devNoise,
+		Pfback: pheno_feedback, SDNoise: devNoise, MutRate: mutRate,
 		TauF: tauF, TauG: tauG, TauH: tauH}
 }
 
@@ -76,10 +78,8 @@ var DensityH float64 = inputsPerRow / float64(ngenes)
 var DensityJ float64 = inputsPerRow / float64(ngenes)
 var DensityP float64 = inputsPerRow / float64(ngenes)
 
-const baseMutationRate float64 = 0.005 // default probability of mutation of genome
-var mutRate float64                    //declaration
-const baseSelStrength float64 = 20.0   // default selection strength; to be normalized by number of cells
-const selDevStep float64 = 20.0        // Developmental steps for selection
+const baseSelStrength float64 = 20.0 // default selection strength; to be normalized by number of cells
+const selDevStep float64 = 20.0      // Developmental steps for selection
 
 const minWagnerFitness float64 = 0.01
 
@@ -111,6 +111,7 @@ func SetParams(s Settings) {
 	withJ = s.JLayer
 	pheno_feedback = s.Pfback
 	devNoise = s.SDNoise
+	mutRate = s.MutRate
 	withE = with_cue || pheno_feedback
 	tauF = s.TauF
 	tauG = s.TauG
@@ -167,9 +168,6 @@ func SetParams(s Settings) {
 		DensityH = 0.0
 		omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes)*(2-tauG))
 	}
-
-	//to compensate for layer removal.
-	mutRate = baseMutationRate * float64(fullGeneLength) / float64(geneLength)
 
 }
 
