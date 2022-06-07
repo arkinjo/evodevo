@@ -64,13 +64,13 @@ func main() {
 	Nenv := multicell.GetNenv()
 	Nsel := multicell.GetNsel()
 
-	// Reference direction
-	//	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.AncEnvs))
-	//	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.NovEnvs))
+	// Reference direction (Selective Envs only)
+	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.AncEnvs))
+	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.NovEnvs))
+	lenP := len(env0)
 
 	g00 := pop0.GetFlatGenome(multicell.IAncEnv)
 	e00 := pop0.GetFlatStateVec("E", multicell.IAncEnv, 0, Nenv)
-	p00 := pop0.GetFlatStateVec("P", multicell.IAncEnv, 0, Nsel)
 	for k, g := range g00 {
 		e00[k] = append(e00[k], g...)
 	}
@@ -82,7 +82,6 @@ func main() {
 
 	g11 := pop1.GetFlatGenome(multicell.INovEnv)
 	e11 := pop1.GetFlatStateVec("E", multicell.INovEnv, 0, Nenv)
-	p11 := pop1.GetFlatStateVec("P", multicell.INovEnv, 0, Nsel)
 	for k, g := range g11 {
 		e11[k] = append(e11[k], g...)
 	}
@@ -99,14 +98,11 @@ func main() {
 	multicell.DiffVecs(gaxis, mg1, mg0)
 	multicell.NormalizeVec(gaxis)
 
-	mp0 := multicell.GetMeanVec(p00)
-	mp1 := multicell.GetMeanVec(p11)
-	lenP := len(mp0)
 	midp := multicell.NewVec(lenP)
-	multicell.AddVecs(midp, mp0, mp1)
+	multicell.AddVecs(midp, env0, env1)
 	multicell.ScaleVec(midp, 0.5, midp)
 	paxis := multicell.NewVec(lenP)
-	multicell.DiffVecs(paxis, mp1, mp0)
+	multicell.DiffVecs(paxis, env1, env0)
 	multicell.NormalizeVec(paxis)
 
 	log.Printf("Dumping start")
