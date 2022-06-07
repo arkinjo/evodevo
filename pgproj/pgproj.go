@@ -61,18 +61,16 @@ func main() {
 	settings = pop0.Params
 	multicell.SetParams(settings)
 
-	Nsel := multicell.GetNsel()
 	Nenv := multicell.GetNenv()
+	Nsel := multicell.GetNsel()
 
 	// Reference direction
-	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.AncEnvs))
-	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.NovEnvs))
-	lenP := multicell.GetNsel()
-	denv := multicell.NewVec(lenP)
-	multicell.DiffVecs(denv, env1[0:lenP], env0[0:lenP])
+	//	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.AncEnvs))
+	//	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.NovEnvs))
 
 	g00 := pop0.GetFlatGenome(multicell.IAncEnv)
-	e00 := pop0.GetFlatStateVec("E", 0, 0, Nenv)
+	e00 := pop0.GetFlatStateVec("E", multicell.IAncEnv, 0, Nenv)
+	p00 := pop0.GetFlatStateVec("P", multicell.IAncEnv, 0, Nsel)
 	for k, g := range g00 {
 		e00[k] = append(e00[k], g...)
 	}
@@ -83,17 +81,13 @@ func main() {
 	pop1.FromJSON(refgen2)
 
 	g11 := pop1.GetFlatGenome(multicell.INovEnv)
-	e11 := pop1.GetFlatStateVec("E", 1, 0, Nenv)
+	e11 := pop1.GetFlatStateVec("E", multicell.INovEnv, 0, Nenv)
+	p11 := pop1.GetFlatStateVec("P", multicell.INovEnv, 0, Nsel)
 	for k, g := range g11 {
 		e11[k] = append(e11[k], g...)
 	}
 
 	log.Println("Finding Principal Axes")
-	midp := multicell.NewVec(lenP)
-	multicell.AddVecs(midp, env0, env1)
-	multicell.ScaleVec(midp, 0.5, midp)
-	paxis := multicell.CopyVec(denv)
-	multicell.NormalizeVec(paxis)
 
 	mg0 := multicell.GetMeanVec(e00)
 	mg1 := multicell.GetMeanVec(e11)
@@ -101,10 +95,19 @@ func main() {
 	midg := multicell.NewVec(lenG)
 	multicell.AddVecs(midg, mg0, mg1)
 	multicell.ScaleVec(midg, 0.5, midg)
-
 	gaxis := multicell.NewVec(lenG)
 	multicell.DiffVecs(gaxis, mg1, mg0)
 	multicell.NormalizeVec(gaxis)
+
+	mp0 := multicell.GetMeanVec(p00)
+	mp1 := multicell.GetMeanVec(p11)
+	lenP := len(mp0)
+	midp := multicell.NewVec(lenP)
+	multicell.AddVecs(midp, mp0, mp1)
+	multicell.ScaleVec(midp, 0.5, midp)
+	paxis := multicell.NewVec(lenP)
+	multicell.DiffVecs(paxis, mp1, mp0)
+	multicell.NormalizeVec(paxis)
 
 	log.Printf("Dumping start")
 	for gen := 1; gen <= epochlength; gen++ {
@@ -130,7 +133,6 @@ func main() {
 
 		pt0 := pop.GetFlatStateVec("P", 0, 0, Nsel)
 		pt1 := pop.GetFlatStateVec("P", 1, 0, Nsel)
-
 		tx0 := multicell.NewVec(lenG)
 		tx1 := multicell.NewVec(lenG)
 		ty0 := multicell.NewVec(lenP)
