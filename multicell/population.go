@@ -172,7 +172,7 @@ func (pop *Population) ToJSON(filename string) {
 		log.Fatal(err)
 	}
 
-	log.Println("Successfuly exported population to", filename)
+	log.Println("Successfully exported population to", filename)
 }
 
 func (pop *Population) SetWagnerFitness() { //compute normalized fitness value similar to Wagner (1996).
