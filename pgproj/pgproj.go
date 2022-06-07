@@ -67,9 +67,9 @@ func main() {
 	// Reference direction
 	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.AncEnvs))
 	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.NovEnvs))
-	lenP := len(env0)
+	lenP := multicell.GetNsel()
 	denv := multicell.NewVec(lenP)
-	multicell.DiffVecs(denv, env1, env0)
+	multicell.DiffVecs(denv, env1[0:lenP], env0[0:lenP])
 
 	g00 := pop0.GetFlatGenome(multicell.IAncEnv)
 	e00 := pop0.GetFlatStateVec("E", 0, 0, Nenv)

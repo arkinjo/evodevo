@@ -61,9 +61,10 @@ func main() {
 
 	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop.AncEnvs))
 	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop.NovEnvs))
-	lenP := len(env0)
+	lenE := len(env0)
+	lenP := multicell.GetNsel()
 	denv := multicell.NewVec(lenP)
-	multicell.DiffVecs(denv, env1, env0)
+	multicell.DiffVecs(denv, env1[0:lenP], env0[0:lenP])
 	multicell.NormalizeVec(denv)
 
 	genome0 := pop.GetFlatGenome(multicell.IAncEnv)
@@ -86,7 +87,6 @@ func main() {
 
 	e0 := pop.GetFlatStateVec("E", 0, 0, Nenv)
 	e1 := pop.GetFlatStateVec("E", 1, 0, Nenv)
-	lenE := len(e0[0])
 	dele := make([][]float64, 0)
 	for k, e := range e0 {
 		switch egFlag {
