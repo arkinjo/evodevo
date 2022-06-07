@@ -344,7 +344,10 @@ func Norm2(v Vec) float64 { //Euclidean Length of vector
 }
 
 func NormalizeVec(v Vec) {
-	ScaleVec(v, 1.0/Norm2(v), v)
+	norm := Norm2(v)
+	if norm > 0 {
+		ScaleVec(v, 1.0/norm, v)
+	}
 }
 
 func Dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
