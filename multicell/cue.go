@@ -2,6 +2,7 @@ package multicell
 
 import (
 	//	"fmt"
+	"log"
 	"math/rand"
 )
 
@@ -25,24 +26,6 @@ func RandomEnv(density float64) Cue { //Fake up a boolean environment vector for
 		}
 	}
 	return v
-}
-
-// Mutate precisely n bits of environment cue; ignore id part
-func ChangeEnv(cue Cue, n int) Cue {
-	env1 := CopyVec(cue)
-	if n == 0 {
-		return env1
-	}
-	indices := make([]int, nenv)
-	for i := range indices {
-		indices[i] = i
-	}
-	rand_cue.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
-	for _, i := range indices[0:n] {
-		env1[i] = -env1[i]
-	}
-
-	return env1
 }
 
 func NewCues(ncells, nenv int) Cues {
@@ -92,10 +75,55 @@ func AddNoise2CueFlip(cue_out, cue Cue, eta float64) {
 	return
 }
 
+// Mutate precisely n bits of environment cue; ignore id part
+func ChangeEnv(cue Cue, n int) Cue {
+	env1 := CopyVec(cue)
+	if n == 0 {
+		return env1
+	}
+	indices := make([]int, len(env1))
+	for i := range indices {
+		indices[i] = i
+	}
+	rand_cue.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
+	for _, i := range indices[0:n] {
+		env1[i] = -env1[i]
+	}
+
+	return env1
+}
+
+// make sure to change env(1:nsel) if n < nsel/2
+func ChangeEnv2(cue Cue, n int) Cue {
+	if n == 0 {
+		return CopyVec(cue)
+	}
+
+	env1 := CopyVec(cue[0:nsel])
+	env2 := CopyVec(cue[nsel:])
+	if n <= nsel/2 {
+		env1 = ChangeEnv(env1, n)
+	} else if n-nsel/2 <= nenv-nsel {
+		env1 = ChangeEnv(env1, nsel/2)
+		env2 = ChangeEnv(env2, n-nsel/2)
+	} else {
+		env2 = ChangeEnv(env2, nenv-nsel)
+		env1 = ChangeEnv(env1, n-(nenv-nsel))
+	}
+	if false {
+		d1 := DistVecs1(env1, cue[0:nsel]) / 2
+		d2 := DistVecs1(env2, cue[nsel:]) / 2
+		log.Println("#### ChangeEnv2:", d1, d2, "########")
+	}
+	env1 = append(env1, env2...)
+
+	return env1
+}
+
 func ChangeEnvs(cues Cues, n int) Cues { //Flips precisely n bits in each environment cue
 	cues1 := CopyCues(cues)
 	for i, cue := range cues {
-		cues1[i] = ChangeEnv(cue, n)
+		cues1[i] = ChangeEnv2(cue, n)
 	}
 	return cues1
 }
