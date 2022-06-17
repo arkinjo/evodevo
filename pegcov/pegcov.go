@@ -9,7 +9,6 @@ import (
 	"math"
 
 	"github.com/arkinjo/evodevo/multicell"
-	//	"gonum.org/v1/gonum/mat"
 )
 
 var sqrt3 float64 = math.Sqrt(3.0)
@@ -56,8 +55,22 @@ func main() {
 		log.Fatal("Specify the input JSON file with -jsonin=filename.")
 	}
 
+	Nenv := multicell.GetNenv()
+	Nsel := multicell.GetNsel()
+
+	fenv0 := multicell.FlattenEnvs(pop.AncEnvs)
+	//	fenv1 := multicell.FlattenEnvs(pop.NovEnvs)
+	lenE := len(fenv0)
+
 	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop.AncEnvs))
 	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop.NovEnvs))
+
+	lenP := len(env0)
+	denv := multicell.NewVec(lenP)
+	multicell.DiffVecs(denv, env1, env0)
+	// for PC projection
+	paxis := multicell.CopyVec(denv)
+	multicell.NormalizeVec(paxis)
 
 	genome0 := pop.GetFlatGenome(multicell.IAncEnv)
 	genome1 := pop.GetFlatGenome(multicell.INovEnv)
@@ -77,10 +90,8 @@ func main() {
 
 	}
 
-	Nenv := multicell.GetNenv()
 	e0 := pop.GetFlatStateVec("E", 0, 0, Nenv)
 	e1 := pop.GetFlatStateVec("E", 1, 0, Nenv)
-	lenE := len(e0[0])
 	dele := make([][]float64, 0)
 	for k, e := range e0 {
 		switch egFlag {
@@ -102,14 +113,8 @@ func main() {
 		deleg = append(deleg, d)
 	}
 
-	Nsel := multicell.GetNsel()
 	p0 := pop.GetFlatStateVec("P", 0, 0, Nsel)
 	p1 := pop.GetFlatStateVec("P", 1, 0, Nsel)
-	lenP := len(p0[0])
-	denv := multicell.NewVec(lenP)
-	multicell.DiffVecs(denv, env1[0:lenP], env0[0:lenP])
-	multicell.NormalizeVec(denv)
-
 	delp := make([][]float64, 0)
 	for k, p := range p0 {
 		switch pFlag {
@@ -127,15 +132,22 @@ func main() {
 
 	mp, meg, cov := multicell.GetCrossCov(delp, deleg, true, true)
 
-	me := meg[0:lenE]
-	mg := meg[lenE:]
-	for k, p := range delp {
-		multicell.DiffVecs(delp[k], p, mp)
-		multicell.DiffVecs(dele[k], dele[k], me)
-		multicell.DiffVecs(delg[k], delg[k], mg)
+	pdis := multicell.DotVecs(paxis, mp)
+	pmag := multicell.Norm2(mp)
+	pvv := multicell.GetVarVec(delp)
+	pvar := 0.0
+	for _, v := range pvv {
+		pvar += v
+	}
+	fmt.Printf("Pdenv\t%e\t%e\t%e\n", pdis, pmag, pvar)
+
+	U, svals, V := multicell.GetSVD(cov)
+
+	for k := range delp {
+		multicell.DiffVecs(delp[k], delp[k], mp)
 		multicell.DiffVecs(deleg[k], deleg[k], meg)
 	}
-	U, svals, V := multicell.GetSVD(cov)
+
 	rank := len(svals)
 	Up := multicell.NewDmat(rank, lenP)
 	Veg := multicell.NewDmat(rank, lenE+lenG)
@@ -151,7 +163,7 @@ func main() {
 			Veg[a][i] = V.At(i, a)
 		}
 
-		neg := multicell.DotVecs(Up[a], denv)
+		neg := multicell.DotVecs(Up[a], paxis)
 		if neg < 0.0 {
 			multicell.ScaleVec(Up[a], -1, Up[a])
 			multicell.ScaleVec(Veg[a], -1, Veg[a])
@@ -169,10 +181,10 @@ func main() {
 	for _, p := range mp {
 		fnp += p * p
 	}
-	for _, e := range me {
+	for _, e := range meg[0:lenE] {
 		fne += e * e
 	}
-	for _, g := range mg {
+	for _, g := range meg[lenE:] {
 		fng += g * g
 	}
 
@@ -191,34 +203,42 @@ func main() {
 		v2 := v * v
 		cum += v * v / totS
 		fmt.Printf("SVals\t%d\t%e\t%e\t%e\t%e\n", a, v2, v2/totS, cum, weightE[a])
-		ali := multicell.DotVecs(Up[a], denv)
+		ali := multicell.DotVecs(Up[a], paxis)
 		fmt.Printf("Ali\t%d\t%e\n", a, ali)
 	}
-	fmt.Printf("Center\t0")
-	for a := 0; a < 3; a++ {
-		doteg := multicell.DotVecs(meg, Veg[a])
-		dote := multicell.DotVecs(me, Ve[a])
-		dotg := multicell.DotVecs(mg, Vg[a])
-		dotp := multicell.DotVecs(mp, Up[a])
 
-		fmt.Printf("\t%e\t%e\t%e\t%e", doteg, dote, dotg, dotp)
+	// Projection on the denv axis.
+	geaxis := make([]float64, len(meg))
+	for i, d := range paxis {
+		for j := range geaxis {
+			geaxis[j] += d * cov[i][j]
+		}
 	}
-	fmt.Println()
+	sigma := multicell.Norm2(geaxis)
+	multicell.NormalizeVec(geaxis)
+	fmt.Printf("Sigma\t%e\n", sigma)
 
 	for k, dp0 := range delp {
 		fmt.Printf("Prj\t%d", k)
-		dg0 := delg[k]
-		de0 := dele[k]
 		deg0 := deleg[k]
-		for i := 0; i < 3; i++ {
-			doteg := multicell.DotVecs(deg0, Veg[i])
-			dotg := multicell.DotVecs(dg0, Vg[i])
-			dote := multicell.DotVecs(de0, Ve[i])
-			dotp := multicell.DotVecs(dp0, Up[i])
+		de0 := deg0[0:lenE]
+		dg0 := deg0[lenE:]
 
-			fmt.Printf("\t%e\t%e\t%e\t%e", doteg, dote, dotg, dotp)
-		}
-		fmt.Println()
+		// projection on denv
+		doteg := multicell.DotVecs(deg0, geaxis)
+		dote := multicell.DotVecs(de0, geaxis[0:lenE])
+		dotg := multicell.DotVecs(dg0, geaxis[lenE:])
+		dotp := multicell.DotVecs(dp0, paxis)
+		fmt.Printf("\t%e\t%e\t%e\t%e", doteg, dote, dotg, dotp)
+
+		// projection on principal axis
+		doteg = multicell.DotVecs(deg0, Veg[0])
+		dotg = multicell.DotVecs(dg0, Vg[0])
+		dote = multicell.DotVecs(de0, Ve[0])
+		dotp = multicell.DotVecs(dp0[0:lenP], Up[0])
+
+		fmt.Printf("\t%e\t%e\t%e\t%e\n", doteg, dote, dotg, dotp)
+
 	}
 
 	for i := 0; i < lenP; i++ {
