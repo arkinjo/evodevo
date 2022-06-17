@@ -40,7 +40,7 @@ type Settings struct {
 	HLayer  bool    // h present?
 	JLayer  bool    //  J present?
 	Pfback  bool    // P feedback to E layer
-	SDNoise float64 // stdev of environmental noise
+	SDNoise float64 // probability (or stdev) of environmental noise
 	MutRate float64 // mutation rate
 	TauF    float64
 	TauG    float64
@@ -410,6 +410,25 @@ func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	cv := NewVec(len(vecs[0]))
 	for _, v := range vecs {
 		AddVecs(cv, cv, v)
+	}
+
+	fn := 1 / float64(len(vecs))
+
+	ScaleVec(cv, fn, cv)
+
+	return cv
+}
+
+func GetVarVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
+	lv := len(vecs[0])
+	cv := NewVec(lv)
+	mv := GetMeanVec(vecs)
+	for _, v := range vecs {
+		dv := NewVec(lv)
+		DiffVecs(dv, v, mv)
+		for i, d := range dv {
+			cv[i] += d * d
+		}
 	}
 
 	fn := 1 / float64(len(vecs))
