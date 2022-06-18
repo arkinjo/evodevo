@@ -9,32 +9,51 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+var maxPop int = 200 // population size
+var ngenes int = 200 // number of genes
+var nenv int = 200   // number of environmental cues/traits per face
+var nsel int = 40    // number of environmental cues/traits per face FOR SELECTION
+var ncells int = 1   //number of cell types
+
+var with_cue bool = true // with or without environmental cues.
+var pheno_feedback bool = false
+var withE bool = false // = with_cue || pheno_feedback
+var withF bool = true  // Epigenetic marker layer
+var withH bool = true  // Higher order complexes layer
+var withJ bool = false
+var devNoise float64 = 0.05 // noise strength
+var mutRate float64 = 0.005 // mutation rate
+
+// Decay rates
+var tauF float64 = 0.2
+var tauG float64 = 1.0
+var tauH float64 = 1.0
+
 type Settings struct {
-	MaxPop  int     // Maximum number of individuals in population
+	MaxPop  int // Maximum number of individuals in population
+	NGenes  int
+	NEnv    int
+	NSel    int
 	NCells  int     // Number of cell types
 	WithCue bool    // With cue?
 	FLayer  bool    // f present?
 	HLayer  bool    // h present?
 	JLayer  bool    //  J present?
 	Pfback  bool    // P feedback to E layer
-	SDNoise float64 // stdev of environmental noise
+	SDNoise float64 // probability (or stdev) of environmental noise
+	MutRate float64 // mutation rate
 	TauF    float64
 	TauG    float64
 	TauH    float64
 }
 
-func NewSettings(maxpop, ncells int) Settings {
-	return Settings{MaxPop: maxpop, NCells: ncells,
-		WithCue: true, FLayer: true, HLayer: true, JLayer: true, Pfback: true, SDNoise: 0.05,
-		TauF: 0.55, TauG: 1.0, TauH: 1.0}
+func CurrentSettings() Settings {
+	return Settings{MaxPop: maxPop,
+		NGenes: ngenes, NEnv: nenv, NSel: nsel, NCells: ncells,
+		WithCue: with_cue, FLayer: withF, HLayer: withH, JLayer: withJ,
+		Pfback: pheno_feedback, SDNoise: devNoise, MutRate: mutRate,
+		TauF: tauF, TauG: tauG, TauH: tauH}
 }
-
-var maxPop int = 1000 // population size
-var ngenes int = 200  // number of genes
-var nenv int = 40     // number of environmental cues/phenotypic values per face
-var ncells int = 1    //number of cell types/phenotypes to be trained simultaneously; not exported
-
-var devNoise float64 = 0.05
 
 const cueMag float64 = 1.0    // each trait is +/-cueMag
 const maxDevStep int = 200    // Maximum steps for development.
@@ -45,38 +64,24 @@ const ccStep float64 = 5.0            // Number of steady steps for convergence
 const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 
 // Length of a gene for Unicellular organism.
-var fullGeneLength = 4*ngenes + 2*(nenv+ncells)
+var fullGeneLength = 4*ngenes + 2*nenv
 
 //calculated from layers present or absent.
 var geneLength int
 
 const inputsPerRow float64 = 4.0
 
-// 1 - (Decay rates)
-var NTauF float64 = 0.5
-var NTauG float64 = 0.0
-var NTauH float64 = 0.0
-
-var DensityE float64 = inputsPerRow / float64(nenv+ncells)
+var DensityE float64 = inputsPerRow / float64(nenv)
 var DensityF float64 = inputsPerRow / float64(ngenes)
 var DensityG float64 = inputsPerRow / float64(ngenes)
 var DensityH float64 = inputsPerRow / float64(ngenes)
 var DensityJ float64 = inputsPerRow / float64(ngenes)
 var DensityP float64 = inputsPerRow / float64(ngenes)
 
-const baseMutationRate float64 = 0.005 // default probability of mutation of genome
-var mutRate float64                    //declaration
-const baseSelStrength float64 = 20.0   // default selection strength; to be normalized by number of cells
-const selDevStep float64 = 20.0        // Developmental steps for selection
+const baseSelStrength float64 = 20.0 // default selection strength; to be normalized by number of cells
+const selDevStep float64 = 20.0      // Developmental steps for selection
 
 const minWagnerFitness float64 = 0.01
-
-var with_cue bool = true // with or without environmental cues.
-var pheno_feedback bool = false
-var withE bool = false // = with_cue || pheno_feedback
-var withF bool = true  // Epigenetic marker layer
-var withH bool = true  // Higher order complexes layer
-var withJ bool = false
 
 // slope of activation functions
 var omega_f float64 = 1.0
@@ -96,62 +101,73 @@ func SetSeed(seed int64) {
 
 func SetParams(s Settings) {
 	maxPop = s.MaxPop
+	ngenes = s.NGenes
+	nenv = s.NEnv
+	nsel = s.NSel
+	ncells = s.NCells
 	with_cue = s.WithCue
 	withF = s.FLayer
 	withH = s.HLayer
 	withJ = s.JLayer
 	pheno_feedback = s.Pfback
-	withE = with_cue || pheno_feedback
-	NTauF = 1 - s.TauF
-	NTauG = 1 - s.TauG
-	NTauH = 1 - s.TauH
-
-	ncells = s.NCells
 	devNoise = s.SDNoise
+	mutRate = s.MutRate
+	withE = with_cue || pheno_feedback
+	tauF = s.TauF
+	tauG = s.TauG
+	tauH = s.TauH
 
-	DensityE = inputsPerRow / float64(nenv+ncells)
+	fullGeneLength = 4*ngenes + 2*nenv
+	DensityE = inputsPerRow / float64(nenv)
+	DensityF = inputsPerRow / float64(ngenes)
+	DensityG = inputsPerRow / float64(ngenes)
+	DensityH = inputsPerRow / float64(ngenes)
+	DensityJ = inputsPerRow / float64(ngenes)
+	DensityP = inputsPerRow / float64(ngenes)
 
-	geneLength = ngenes + (nenv + ncells) //G and P layers present by default
+	geneLength = ngenes + nenv //G and P layers present by default
 	from_g := DensityG * float64(ngenes)
 
 	if withE {
-		geneLength += nenv + ncells
-		from_e := DensityE * float64(nenv+ncells)
+		geneLength += nenv
+		from_e := DensityE * float64(nenv)
 		if with_cue && pheno_feedback {
-			omega_f = 1.0 / math.Sqrt(2*from_e+from_g)
+			omega_f = 1.0 / math.Sqrt(2*from_e+from_g*(2-tauG))
 		} else {
-			omega_f = 1.0 / math.Sqrt(from_e+from_g)
+			omega_f = 1.0 / math.Sqrt(from_e+from_g*(2-tauG))
 		}
 	} else {
-		omega_f = 1.0 / math.Sqrt(from_g)
+		omega_f = 1.0 / math.Sqrt(from_g*(2-tauG))
 		DensityE = 0.0
 	}
 
 	if withF {
 		geneLength += ngenes
+		omega_g = 1.0 / math.Sqrt(DensityF*float64(ngenes)*(2-tauF))
 	} else {
 		DensityF = 0.0
+		efac := 1.0
+		if with_cue && pheno_feedback {
+			efac = 2.0
+		}
+		omega_g = 1.0 / math.Sqrt(DensityG*float64(ngenes)*(2-tauG)+efac*DensityE*float64(nenv))
 	}
-
-	omega_g = 1.0 / math.Sqrt(DensityG*float64(ngenes))
-	omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes))
 
 	if withH {
 		geneLength += ngenes
 		if withJ {
 			geneLength += ngenes
-			omega_h = 1.0 / math.Sqrt(from_g*2)
+			omega_h = 1.0 / math.Sqrt(from_g*((2-tauG)+(2-tauH)))
 		} else {
-			omega_h = 1.0 / math.Sqrt(from_g)
+			omega_h = 1.0 / math.Sqrt(from_g*(2-tauG))
 			DensityJ = 0.0
 		}
+		omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes)*(2-tauH))
 	} else {
 		omega_h = 0.0
 		DensityH = 0.0
+		omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes)*(2-tauG))
 	}
-
-	//to compensate for layer removal.
-	mutRate = baseMutationRate * float64(fullGeneLength) / float64(geneLength)
 
 }
 
@@ -165,6 +181,10 @@ func GetNcells() int {
 
 func GetNenv() int {
 	return nenv
+}
+
+func GetNsel() int {
+	return nsel
 }
 
 func sigmoid(x, omega float64) float64 {
@@ -297,7 +317,7 @@ func AddVecs(vout, v0, v1 Vec) { //Sum of vectors
 
 func WAddVecs(vout Vec, sca float64, v0, v1 Vec) { //
 	for i := range vout {
-		vout[i] = sca*v0[i] + (1-sca)*v1[i]
+		vout[i] = sca*v0[i] + v1[i]
 	}
 }
 
@@ -324,7 +344,10 @@ func Norm2(v Vec) float64 { //Euclidean Length of vector
 }
 
 func NormalizeVec(v Vec) {
-	ScaleVec(v, 1.0/Norm2(v), v)
+	norm := Norm2(v)
+	if norm > 0 {
+		ScaleVec(v, 1.0/norm, v)
+	}
 }
 
 func Dist2Vecs(v0, v1 Vec) float64 { //Euclidean distance between 2 vectors squared
@@ -387,6 +410,25 @@ func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	cv := NewVec(len(vecs[0]))
 	for _, v := range vecs {
 		AddVecs(cv, cv, v)
+	}
+
+	fn := 1 / float64(len(vecs))
+
+	ScaleVec(cv, fn, cv)
+
+	return cv
+}
+
+func GetVarVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
+	lv := len(vecs[0])
+	cv := NewVec(lv)
+	mv := GetMeanVec(vecs)
+	for _, v := range vecs {
+		dv := NewVec(lv)
+		DiffVecs(dv, v, mv)
+		for i, d := range dv {
+			cv[i] += d * d
+		}
 	}
 
 	fn := 1 / float64(len(vecs))

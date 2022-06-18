@@ -18,12 +18,12 @@ type Genome struct { //Genome of an individual
 }
 
 func NewGenome() Genome { //Generate new genome matrix ensemble
-	E := NewSpmat(ngenes, nenv+ncells)
+	E := NewSpmat(ngenes, nenv)
 	F := NewSpmat(ngenes, ngenes)
 	G := NewSpmat(ngenes, ngenes)
 	H := NewSpmat(ngenes, ngenes)
 	J := NewSpmat(ngenes, ngenes)
-	P := NewSpmat(nenv+ncells, ngenes)
+	P := NewSpmat(nenv, ngenes)
 	genome := Genome{E, F, G, H, J, P}
 
 	return genome
@@ -182,10 +182,9 @@ func (G *Genome) NormalizeGenome() Genome {
 func (genome *Genome) FlatVec() Vec {
 	vec := make([]float64, 0)
 
-	nenvcell := nenv + ncells
 	if withE {
 		for _, v := range genome.E.Mat {
-			for j := 0; j < nenvcell; j++ {
+			for j := 0; j < nenv; j++ {
 				vec = append(vec, v[j])
 			}
 		}
@@ -220,7 +219,7 @@ func (genome *Genome) FlatVec() Vec {
 		}
 	}
 	for _, v := range genome.P.Mat {
-		for j := 0; j < nenvcell; j++ {
+		for j := 0; j < ngenes; j++ {
 			vec = append(vec, v[j])
 		}
 	}
@@ -230,7 +229,7 @@ func (genome *Genome) FlatVec() Vec {
 
 func (genome *Genome) Mutate() {
 
-	tE := nenv + ncells
+	tE := nenv
 	tF := tE + ngenes
 	tG := tF + ngenes
 	tH := tG + ngenes

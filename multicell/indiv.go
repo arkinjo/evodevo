@@ -9,6 +9,7 @@ import (
 )
 
 type Cell struct { //A 'cell' is characterized by its gene expression and phenotype
+	Id       int
 	E        Vec     // Env + noise
 	F        Vec     // Epigenetic markers
 	G        Vec     // Gene expression
@@ -55,50 +56,48 @@ type Indiv struct { //An individual as an unicellular organism
 }
 
 func NewCell(id int) Cell { //Creates a new cell given id of cell.
-	e := NewCue(nenv, id)
+	e := NewVec(nenv)
 	f := NewVec(ngenes)
 	g := NewVec(ngenes)
 	h := NewVec(ngenes)
-	p := NewCue(nenv, id)
-	pv := NewVec(nenv + ncells)
-	cell := Cell{e, f, g, h, p, pv, 0.0, 0}
+	p := NewVec(nenv)
+	pv := NewVec(nenv)
+	cell := Cell{id, e, f, g, h, p, pv, 0.0, 0}
 
 	return cell
 }
 
 func (cell *Cell) Copy() Cell {
-	id := GetId(cell.P) //Extract id part of cell phenotype
-	cell1 := NewCell(id)
-
-	cell1.E = CopyVec(cell.E)
-	cell1.F = CopyVec(cell.F)
-	cell1.G = CopyVec(cell.G)
-	cell1.H = CopyVec(cell.H)
-	cell1.P = CopyVec(cell.P)
-	cell1.Pvar = CopyVec(cell.Pvar)
+	cell1 := NewCell(cell.Id)
+	copy(cell1.E, cell.E)
+	copy(cell1.F, cell.F)
+	copy(cell1.G, cell.G)
+	copy(cell1.H, cell.H)
+	copy(cell1.P, cell.P)
+	copy(cell1.Pvar, cell.Pvar)
 	cell1.PErr = cell.PErr
 	cell1.NDevStep = cell.NDevStep
 
 	return cell1
 }
 
-func (cell *Cell) GetState(ivec string) Vec {
+func (cell *Cell) GetState(ivec string, ibeg, iend int) Vec {
 	switch ivec {
 	case "E":
-		return cell.E
+		return cell.E[ibeg:iend]
 	case "F":
-		return cell.F
+		return cell.F[ibeg:iend]
 	case "G":
-		return cell.G
+		return cell.G[ibeg:iend]
 	case "H":
-		return cell.H
+		return cell.H[ibeg:iend]
 	case "P":
-		return cell.P
+		return cell.P[ibeg:iend]
 	default:
 		log.Fatal("Cell.GetState: Unknown state vector")
 	}
 
-	return nil // neven happens
+	return nil // never happens
 }
 
 func NewBody(ncells int) Body {
@@ -174,6 +173,10 @@ func Mate(dad, mom *Indiv) (Indiv, Indiv) { //Generates offspring
 	bodies1[IAncEnv].Genome = genome1
 	bodies0[INovEnv].Genome = genome0.Copy()
 	bodies1[INovEnv].Genome = genome1.Copy()
+
+	// Different mutations for Anc and Nov envs.
+	bodies0[IAncEnv].Genome.Mutate()
+	bodies1[IAncEnv].Genome.Mutate()
 	bodies0[INovEnv].Genome.Mutate()
 	bodies1[INovEnv].Genome.Mutate()
 
@@ -209,34 +212,15 @@ func getPlasticity(body0, body1 Body) float64 { //cue plasticity of individual
 		d2 += Dist2Vecs(cell.P, body1.Cells[i].P)
 	}
 
-	return d2 / float64(ncells*(ncells+nenv))
+	return d2 / float64(ncells*nenv)
 }
 
 func getPEDiff(body Body, envs Cues) float64 {
 	diff := 0.0
 	for i, c := range body.Cells {
-		diff += DistVecs1(c.P, envs[i])
+		diff += DistVecs1(c.P[0:nsel], envs[i][0:nsel])
 	}
-	return diff / float64(ncells*(ncells+nenv))
-}
-
-func (indiv *Indiv) getVarpheno() float64 { //Get sum of elementwise variance of phenotype
-	pvec := make([]Cue, 0)
-	for _, c := range indiv.Bodies[INovEnv].Cells {
-		pvec = append(pvec, c.P) //Note: To be used AFTER development
-	}
-	sigma2p := GetCueVar(pvec)
-	return sigma2p
-}
-
-func (cell *Cell) getPscale() Cue {
-	vt := NewVec(nenv + ncells)
-	evar := devNoise * devNoise
-	for i, v := range cell.Pvar {
-		vt[i] = v / (v + evar)
-	}
-	log.Println("Kalman gain", vt)
-	return vt
+	return diff / float64(ncells*nsel)
 }
 
 func (cell *Cell) updatePEMA(pnew Vec) {
@@ -249,7 +233,7 @@ func (cell *Cell) updatePEMA(pnew Vec) {
 }
 
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
-	e_p := NewVec(nenv + ncells) // = env - p0
+	e_p := NewVec(nenv) // = env - p0
 	g0 := Ones(ngenes)
 	f0 := NewVec(ngenes)
 	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
@@ -257,14 +241,15 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	Gg := NewVec(ngenes)
 	Hg := NewVec(ngenes)
 	Jh := NewVec(ngenes)
-	p1 := NewVec(nenv + ncells)
+	p1 := NewVec(nenv)
 	f1 := NewVec(ngenes)
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
-	cue := NewVec(nenv + ncells)
+	cue := NewVec(nenv)
 
-	AddNoise2CueNormal(cell.E, env, devNoise)
+	//  AddNoise2CueNormal(cell.E, env, devNoise)
+	AddNoise2CueFlip(cell.E, env, devNoise)
 
 	if with_cue {
 		cue = cell.E
@@ -285,16 +270,16 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		}
 		if withF { //Allow or disallow epigenetic layer
 			applyFnVec(sigmaf, f1)
-			if NTauF > 0 {
-				WAddVecs(f1, NTauF, f0, f1)
+			if tauF < 1 {
+				WAddVecs(f1, 1-tauF, f0, f1)
 			}
 			MultMatVec(g1, G.F, f1)
 		} else { //Remove epigenetic layer if false
 			copy(g1, f1)
 		}
 		applyFnVec(sigmag, g1)
-		if NTauG > 0 {
-			WAddVecs(g1, NTauG, g0, g1)
+		if tauG < 1 {
+			WAddVecs(g1, 1-tauG, g0, g1)
 		}
 		if withH {
 			MultMatVec(Hg, G.H, g1)
@@ -305,8 +290,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 				copy(h1, g1)
 			}
 			applyFnVec(sigmah, h1)
-			if NTauH > 0 {
-				WAddVecs(h1, NTauH, h0, h1)
+			if tauH < 1 {
+				WAddVecs(h1, 1-tauH, h0, h1)
 			}
 		} else {
 			copy(h1, g1) //identity map
@@ -332,8 +317,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	copy(cell.F, f1)
 	copy(cell.G, g1)
 	copy(cell.H, h1)
-	cell.PErr = DistVecs1(cell.P, env) / cueMag
-	//cell.PErr = Dist2Vecs(cell.P, env) / (cueMag * cueMag)
+	cell.PErr = DistVecs1(cell.P[0:nsel], env[0:nsel]) / cueMag
 
 	return *cell
 }
@@ -353,7 +337,7 @@ func (body *Body) DevBody(envs Cues) Body {
 		}
 	}
 
-	body.PErr = sse / float64(ncells*(ncells+nenv))
+	body.PErr = sse / float64(ncells*nsel)
 	body.NDevStep = maxdev
 
 	return *body

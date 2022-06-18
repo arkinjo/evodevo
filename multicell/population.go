@@ -9,8 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"sort"
-
-	"gonum.org/v1/gonum/mat"
+	//	"gonum.org/v1/gonum/mat"
 )
 
 type Population struct { //Population of individuals
@@ -93,15 +92,16 @@ func (pop *Population) GetStats() PopStats {
 			div += t / fn
 		}
 	}
-	env0 := FlattenEnvs(pop.AncEnvs)
-	env1 := FlattenEnvs(pop.NovEnvs)
-	lenE := len(env1)
-	dirE := NewVec(lenE)
+
+	env0 := FlattenEnvs(GetSelEnvs(pop.AncEnvs))
+	env1 := FlattenEnvs(GetSelEnvs(pop.NovEnvs))
+	lenP := len(env1)
+	dirE := NewVec(lenP)
 	DiffVecs(dirE, env1, env0)
 	NormalizeVec(dirE)
 
-	mp1 := GetMeanVec(pop.GetFlatStateVec("P", 1))
-	dirP := NewVec(lenE)
+	mp1 := GetMeanVec(pop.GetFlatStateVec("P", 1, 0, nsel))
+	dirP := NewVec(lenP)
 	DiffVecs(dirP, mp1, env0)
 	NormalizeVec(dirP)
 
@@ -120,16 +120,17 @@ func (pop *Population) GetStats() PopStats {
 	return stats
 }
 
-func NewPopulation(ncell, npop int) Population { //Initialize new population
-	envs0 := NewCues(ncell, nenv)
-	envs1 := NewCues(ncell, nenv)
+func NewPopulation(s Settings) Population {
+	envs0 := NewCues(s.NCells, s.NEnv)
+	envs1 := NewCues(s.NCells, s.NEnv)
 
-	indivs := make([]Indiv, npop)
+	indivs := make([]Indiv, s.MaxPop)
 	for i := range indivs {
 		indivs[i] = NewIndiv(i)
 	}
 
-	p := Population{NewSettings(npop, ncell), 0, envs0, envs1, indivs}
+	p := Population{Params: s, Gen: 0, AncEnvs: envs0, NovEnvs: envs1,
+		Indivs: indivs}
 	return p
 }
 
@@ -171,7 +172,7 @@ func (pop *Population) ToJSON(filename string) {
 		log.Fatal(err)
 	}
 
-	log.Println("Successfuly exported population to", filename)
+	log.Println("Successfully exported population to", filename)
 }
 
 func (pop *Population) SetWagnerFitness() { //compute normalized fitness value similar to Wagner (1996).
@@ -204,10 +205,7 @@ func (pop *Population) ClearGenome() {
 }
 
 func (pop *Population) Copy() Population {
-	npop := len(pop.Indivs)
-	ncell := len(pop.Indivs[0].Bodies[INovEnv].Cells) //number of cells
-
-	pop1 := NewPopulation(ncell, npop)
+	pop1 := NewPopulation(pop.Params)
 	pop1.Params = pop.Params
 	pop1.Gen = pop.Gen
 	pop1.NovEnvs = CopyCues(pop.NovEnvs)
@@ -231,20 +229,6 @@ func (pop *Population) GetMeanPhenotype(gen int) Cues { //elementwise average ph
 		}
 	}
 	return MeanPhenotype
-}
-
-func (pop *Population) Get_Mid_Env() Cues { //Midpoint between ancestral (previous) and novel (current) environment
-	e := pop.NovEnvs  // novel environment
-	e0 := pop.AncEnvs // ancestral environment
-
-	me := NewCues(ncells, nenv) // midpoint
-
-	for i, c := range e {
-		for j, v := range c {
-			me[i][j] = (v + e0[i][j]) / 2.0
-		}
-	}
-	return me
 }
 
 func (pop *Population) Selection(nNewPop int) []Indiv { //Selects parents for new population
@@ -315,9 +299,21 @@ func (pop *Population) PairReproduce(nNewPop int) Population { //Crossover in or
 
 	return new_population
 }
+
 func (pop *Population) SortPopIndivs() {
 	sort.Slice(pop.Indivs, func(i, j int) bool { return pop.Indivs[i].Id < pop.Indivs[j].Id })
 }
+
+func (pop *Population) ChangeEnvs(denv int) {
+	OldEnvs := CopyCues(pop.NovEnvs)
+	pop.AncEnvs = OldEnvs
+	pop.NovEnvs = ChangeEnvs(OldEnvs, denv)
+}
+
+func (pop *Population) SetRandomNovEnvs() {
+	pop.NovEnvs = RandomEnvs(ncells, 0.5)
+}
+
 func (pop *Population) DevPop(gen int) Population {
 	pop.Gen = gen
 
@@ -365,12 +361,12 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 	return pop
 }
 
-func (pop *Population) GetFlatStateVec(istate string, ienv int) Dmat {
+func (pop *Population) GetFlatStateVec(istate string, ienv, ibeg, iend int) Dmat {
 	vs0 := make([]Vec, 0)
 	for _, indiv := range pop.Indivs {
 		tv0 := make([]float64, 0)
 		for _, cell := range indiv.Bodies[ienv].Cells {
-			tv0 = append(tv0, cell.GetState(istate)...)
+			tv0 = append(tv0, cell.GetState(istate, ibeg, iend)...)
 		}
 		vs0 = append(vs0, tv0)
 	}
@@ -385,14 +381,4 @@ func (pop *Population) GetFlatGenome(IEnv int) Dmat {
 		vs = append(vs, tv)
 	}
 	return vs
-}
-
-func (pop *Population) GetPCA(state0 string, ienv0 int, state1 string, ienv1 int) (*mat.Dense, Vec, *mat.Dense) {
-	s0 := pop.GetFlatStateVec(state0, ienv0)
-	s1 := pop.GetFlatStateVec(state1, ienv1)
-
-	_, _, ccmat := GetCrossCov(s0, s1, true, true)
-
-	U, vals, V := GetSVD(ccmat)
-	return U, vals, V
 }

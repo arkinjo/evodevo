@@ -19,6 +19,9 @@ func main() {
 	t0 := time.Now()
 	testP := flag.Bool("test", false, "Test run or not")
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	ngenesP := flag.Int("ngenes", 200, "Number of genes")
+	nenvP := flag.Int("nenv", 200, "Number of environmental cues/traits")
+	nselP := flag.Int("nsel", 40, "Number of environmental cues/traits for selection")
 	ncellsP := flag.Int("ncells", 1, "Number of cell types")
 	withcueP := flag.Bool("cue", true, "With environmental cue")
 	flayerP := flag.Bool("layerF", true, "Epigenetic layer")
@@ -26,7 +29,8 @@ func main() {
 	jlayerP := flag.Bool("layerJ", true, "Interactions in higher order interactions")
 	pfbackP := flag.Bool("pfback", true, "Phenotype feedback to input")
 
-	sdNoiseP := flag.Float64("sdNoise", 0.05, "Std.Dev. of environmental noise")
+	noiseP := flag.Float64("noise", 0.05, "Strength of environmental noise")
+	mutP := flag.Float64("mut", 0.005, "Mutation rate")
 	tauFP := flag.Float64("tauF", 0.5, "Decay rate of the f layer")
 
 	seedPtr := flag.Int("seed", 13, "random seed")
@@ -34,20 +38,26 @@ func main() {
 	epochPtr := flag.Int("nepoch", 20, "number of epochs")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
 
-	denvPtr := flag.Int("denv", 20, "magnitude of environmental change")
+	denvPtr := flag.Int("denv", 100, "magnitude of environmental change")
 	tfilenamePtr := flag.String("traj_file", "traj.dat", "filename of trajectories")
 	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
 	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
 	flag.Parse()
 
-	var settings = multicell.NewSettings(*maxpopP, *ncellsP)
+	var settings = multicell.CurrentSettings()
+	settings.MaxPop = *maxpopP
+	settings.NGenes = *ngenesP
+	settings.NEnv = *nenvP
+	settings.NSel = *nselP
+	settings.NCells = *ncellsP
 	settings.WithCue = *withcueP
 	settings.WithCue = *withcueP
 	settings.FLayer = *flayerP
 	settings.HLayer = *hlayerP
 	settings.JLayer = *jlayerP
 	settings.Pfback = *pfbackP
-	settings.SDNoise = *sdNoiseP
+	settings.SDNoise = *noiseP
+	settings.MutRate = *mutP
 	settings.TauF = *tauFP
 
 	log.Println("seed=", *seedPtr, "seed_cue=", *seed_cuePtr)
@@ -62,12 +72,13 @@ func main() {
 	json_out = *jsonoutPtr
 	test_flag := *testP
 
-	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP)
-	pop0.Params = settings
+	pop0 := multicell.NewPopulation(settings)
 
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)
 	}
+	pop0.Params.SDNoise = settings.SDNoise
+	pop0.Params.MutRate = settings.MutRate
 	multicell.SetParams(pop0.Params)
 	if json_in == "" {
 		fmt.Println("Randomizing initial population")
@@ -80,7 +91,12 @@ func main() {
 	}
 
 	popstart := pop0
-	popstart.NovEnvs = multicell.RandomEnvs(multicell.GetNcells(), multicell.GetNenv(), 0.5)
+	if json_in != "" {
+		popstart.ChangeEnvs(denv)
+	} else {
+		popstart.SetRandomNovEnvs()
+	}
+
 	fmt.Println("Initialization of population complete")
 	dtint := time.Since(t0)
 	fmt.Println("Time taken for initialization : ", dtint)
@@ -102,18 +118,13 @@ func main() {
 		fmt.Println("End of epoch", epoch)
 
 		if !test_flag && epoch == maxepochs { //Export output population; just before epoch change
-			//Update to environment just before epoch change
-			pop1.AncEnvs = multicell.CopyCues(pop1.NovEnvs)
 			pop1.ToJSON(json_out)
 		}
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :", dtevol)
 
 		popstart = pop1 //Update population after evolution.
-
-		OldEnvs := multicell.CopyCues(popstart.NovEnvs)
-		popstart.AncEnvs = OldEnvs
-		popstart.NovEnvs = multicell.ChangeEnvs2(OldEnvs, denv)
+		popstart.ChangeEnvs(denv)
 		err = multicell.DeepVec3NovTest(popstart.NovEnvs, envtraj)
 		if err != nil {
 			fmt.Println(err)

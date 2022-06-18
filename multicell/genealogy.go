@@ -11,7 +11,7 @@ func DOT_Genealogy(genfilename, popfilename string, ngen, npop int) {
 	var id, dadid, momid string
 	nanctraj := []int{}
 	rnanctraj := []int{}
-	pop := NewPopulation(ncells, npop)
+	pop := NewPopulation(CurrentSettings())
 	genfile := fmt.Sprintf("%s.dot", genfilename)
 
 	fdot, err := os.OpenFile(genfile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
