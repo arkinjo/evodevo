@@ -59,7 +59,7 @@ const cueMag float64 = 1.0    // each trait is +/-cueMag
 const maxDevStep int = 200    // Maximum steps for development.
 const epsDev float64 = 1.0e-5 // Convergence criterion of development.
 const eps float64 = 1.0e-50
-const sqrt3 float64 = 1.7320508075688772935274463415058723669428052538103806280558069794519330169088000370811461867572485756756261414154
+const sqrt3 float64 = 1.73205080756887729352744634150587236694280525381038062805580697
 const ccStep float64 = 5.0            // Number of steady steps for convergence
 const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 
