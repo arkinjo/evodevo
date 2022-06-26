@@ -255,6 +255,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		cue = cell.E
 	}
 
+	lambda := 1.0 / lambdaE
+
 	for nstep := 1; nstep <= maxDevStep; nstep++ {
 		MultMatVec(Gg, G.G, g0)
 		if withE { //Model with or without cues
@@ -264,6 +266,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 			} else {
 				MultMatVec(Ee, G.E, cue)
 			}
+			lambda *= lambdaE
+			ScaleVec(Ee, lambda, Ee)
 			AddVecs(f1, Gg, Ee)
 		} else {
 			copy(f1, Gg)
