@@ -255,7 +255,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		cue = cell.E
 	}
 
-	lambda := 1.0 / lambdaE
+	lambda := 1.0 / dampFactorE
 
 	for nstep := 1; nstep <= maxDevStep; nstep++ {
 		MultMatVec(Gg, G.G, g0)
@@ -266,7 +266,7 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 			} else {
 				MultMatVec(Ee, G.E, cue)
 			}
-			lambda *= lambdaE
+			lambda *= dampFactorE
 			ScaleVec(Ee, lambda, Ee)
 			AddVecs(f1, Gg, Ee)
 		} else {

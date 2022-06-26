@@ -30,7 +30,7 @@ var tauG float64 = 1.0
 var tauH float64 = 1.0
 
 // Damping rate of environmental cues
-var lambdaE float64 = 0.8
+var dampFactorE float64 = 1.0
 
 type Settings struct {
 	MaxPop  int // Maximum number of individuals in population
