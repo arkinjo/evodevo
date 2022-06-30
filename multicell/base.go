@@ -32,22 +32,37 @@ var tauH float64 = 1.0
 // Damping rate of environmental cues
 var dampFactorE float64 = 1.0
 
+// matrix densities
+const defaultDensity float64 = 0.02 // = 4 / 200 (4 inputs per row)
+var DensityE float64 = defaultDensity
+var DensityF float64 = defaultDensity
+var DensityG float64 = defaultDensity
+var DensityH float64 = defaultDensity
+var DensityJ float64 = defaultDensity
+var DensityP float64 = defaultDensity
+
 type Settings struct {
-	MaxPop  int // Maximum number of individuals in population
-	NGenes  int
-	NEnv    int
-	NSel    int
-	NCells  int     // Number of cell types
-	WithCue bool    // With cue?
-	FLayer  bool    // f present?
-	HLayer  bool    // h present?
-	JLayer  bool    //  J present?
-	Pfback  bool    // P feedback to E layer
-	SDNoise float64 // probability (or stdev) of environmental noise
-	MutRate float64 // mutation rate
-	TauF    float64
-	TauG    float64
-	TauH    float64
+	MaxPop   int // Maximum number of individuals in population
+	NGenes   int
+	NEnv     int
+	NSel     int
+	NCells   int     // Number of cell types
+	WithCue  bool    // With cue?
+	FLayer   bool    // f present?
+	HLayer   bool    // h present?
+	JLayer   bool    //  J present?
+	Pfback   bool    // P feedback to E layer
+	SDNoise  float64 // probability (or stdev) of environmental noise
+	MutRate  float64 // mutation rate
+	TauF     float64
+	TauG     float64
+	TauH     float64
+	DensityE float64
+	DensityF float64
+	DensityG float64
+	DensityH float64
+	DensityJ float64
+	DensityP float64
 }
 
 func CurrentSettings() Settings {
@@ -55,31 +70,26 @@ func CurrentSettings() Settings {
 		NGenes: ngenes, NEnv: nenv, NSel: nsel, NCells: ncells,
 		WithCue: with_cue, FLayer: withF, HLayer: withH, JLayer: withJ,
 		Pfback: pheno_feedback, SDNoise: devNoise, MutRate: mutRate,
-		TauF: tauF, TauG: tauG, TauH: tauH}
+		TauF: tauF, TauG: tauG, TauH: tauH,
+		DensityE: DensityE, DensityF: DensityF, DensityG: DensityG,
+		DensityH: DensityH, DensityJ: DensityJ, DensityP: DensityP}
+
 }
 
-const cueMag float64 = 1.0    // each trait is +/-cueMag
-const maxDevStep int = 200    // Maximum steps for development.
-const epsDev float64 = 1.0e-5 // Convergence criterion of development.
-const eps float64 = 1.0e-50
-const sqrt3 float64 = 1.73205080756887729352744634150587236694280525381038062805580697
-const ccStep float64 = 5.0            // Number of steady steps for convergence
-const alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
+const (
+	cueMag     = 1.0    // each trait is +/-cueMag
+	maxDevStep = 200    // Maximum steps for development.
+	epsDev     = 1.0e-5 // Convergence criterion of development.
+	eps        = 1.0e-50
+	sqrt3      = 1.73205080756887729352744634150587236694280525381038062805580697
+	ccStep     = 5.0                  // Number of steady steps for convergence
+	alphaEMA   = 2.0 / (1.0 + ccStep) // exponential moving average/variance
+)
 
 // Length of a gene for Unicellular organism.
 var fullGeneLength = 4*ngenes + 2*nenv
 
 //calculated from layers present or absent.
-var geneLength int
-
-const inputsPerRow float64 = 4.0
-
-var DensityE float64 = inputsPerRow / float64(nenv)
-var DensityF float64 = inputsPerRow / float64(ngenes)
-var DensityG float64 = inputsPerRow / float64(ngenes)
-var DensityH float64 = inputsPerRow / float64(ngenes)
-var DensityJ float64 = inputsPerRow / float64(ngenes)
-var DensityP float64 = inputsPerRow / float64(ngenes)
 
 const baseSelStrength float64 = 20.0 // default selection strength; to be normalized by number of cells
 const selDevStep float64 = 20.0      // Developmental steps for selection
@@ -119,20 +129,16 @@ func SetParams(s Settings) {
 	tauF = s.TauF
 	tauG = s.TauG
 	tauH = s.TauH
+	DensityE = s.DensityE
+	DensityF = s.DensityF
+	DensityG = s.DensityG
+	DensityH = s.DensityH
+	DensityJ = s.DensityJ
+	DensityP = s.DensityP
 
-	fullGeneLength = 4*ngenes + 2*nenv
-	DensityE = inputsPerRow / float64(nenv)
-	DensityF = inputsPerRow / float64(ngenes)
-	DensityG = inputsPerRow / float64(ngenes)
-	DensityH = inputsPerRow / float64(ngenes)
-	DensityJ = inputsPerRow / float64(ngenes)
-	DensityP = inputsPerRow / float64(ngenes)
-
-	geneLength = ngenes + nenv //G and P layers present by default
 	from_g := DensityG * float64(ngenes)
 
 	if withE {
-		geneLength += nenv
 		from_e := DensityE * float64(nenv)
 		if with_cue && pheno_feedback {
 			omega_f = 1.0 / math.Sqrt(2*from_e+from_g*(2-tauG))
@@ -145,7 +151,6 @@ func SetParams(s Settings) {
 	}
 
 	if withF {
-		geneLength += ngenes
 		omega_g = 1.0 / math.Sqrt(DensityF*float64(ngenes)*(2-tauF))
 	} else {
 		DensityF = 0.0
@@ -157,9 +162,7 @@ func SetParams(s Settings) {
 	}
 
 	if withH {
-		geneLength += ngenes
 		if withJ {
-			geneLength += ngenes
 			omega_h = 1.0 / math.Sqrt(from_g*((2-tauG)+(2-tauH)))
 		} else {
 			omega_h = 1.0 / math.Sqrt(from_g*(2-tauG))

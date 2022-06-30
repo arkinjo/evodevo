@@ -32,6 +32,12 @@ func main() {
 	noiseP := flag.Float64("noise", 0.05, "Strength of environmental noise")
 	mutP := flag.Float64("mut", 0.005, "Mutation rate")
 	tauFP := flag.Float64("tauF", 0.5, "Decay rate of the f layer")
+	denEP := flag.Float64("dE", 0.02, "Density of E")
+	denFP := flag.Float64("dF", 0.02, "Density of F")
+	denGP := flag.Float64("dG", 0.02, "Density of G")
+	denHP := flag.Float64("dH", 0.02, "Density of H")
+	denJP := flag.Float64("dJ", 0.02, "Density of J")
+	denPP := flag.Float64("dP", 0.02, "Density of P")
 
 	seedPtr := flag.Int("seed", 13, "random seed")
 	seed_cuePtr := flag.Int("seed_cue", 7, "random seed for environmental cue")
@@ -59,6 +65,12 @@ func main() {
 	settings.SDNoise = *noiseP
 	settings.MutRate = *mutP
 	settings.TauF = *tauFP
+	settings.DensityE = *denEP
+	settings.DensityF = *denFP
+	settings.DensityG = *denGP
+	settings.DensityH = *denHP
+	settings.DensityJ = *denJP
+	settings.DensityP = *denPP
 
 	log.Println("seed=", *seedPtr, "seed_cue=", *seed_cuePtr)
 	multicell.SetSeed(int64(*seedPtr))
@@ -77,6 +89,7 @@ func main() {
 	if json_in != "" { //read input population as a json file, if given
 		pop0.FromJSON(json_in)
 	}
+
 	pop0.Params.SDNoise = settings.SDNoise
 	pop0.Params.MutRate = settings.MutRate
 	multicell.SetParams(pop0.Params)
