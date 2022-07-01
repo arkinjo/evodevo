@@ -31,7 +31,7 @@ func main() {
 
 	noiseP := flag.Float64("noise", 0.05, "Strength of environmental noise")
 	mutP := flag.Float64("mut", 0.005, "Mutation rate")
-	tauFP := flag.Float64("tauF", 0.5, "Decay rate of the f layer")
+	tauFP := flag.Float64("tauF", 0.2, "Decay rate of the f layer")
 	denEP := flag.Float64("dE", 0.02, "Density of E")
 	denFP := flag.Float64("dF", 0.02, "Density of F")
 	denGP := flag.Float64("dG", 0.02, "Density of G")
