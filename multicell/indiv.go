@@ -234,11 +234,13 @@ func (cell *Cell) updatePEMA(pnew Vec) {
 
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	cell.P = Zeroes(nenv) // just to make sure it's zeroes.
-	g0 := Zeroes(ngenes)
-	f0 := Ones(ngenes)
+	cue := Zeroes(nenv)
+	g0 := Ones(ngenes)
+	f0 := Zeroes(ngenes)
+	h0 := Zeroes(ngenes)
 
-	e_p := NewVec(nenv)  // = env - p0
-	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
+	e_p := NewVec(nenv) // = env - p0
+
 	Ee := NewVec(ngenes)
 	Gg := NewVec(ngenes)
 	Hg := NewVec(ngenes)
@@ -247,8 +249,6 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	f1 := NewVec(ngenes)
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
-
-	cue := Zeroes(nenv)
 
 	//  AddNoise2CueNormal(cell.E, env, devNoise)
 	AddNoise2CueFlip(cell.E, env, devNoise)
