@@ -233,10 +233,14 @@ func (cell *Cell) updatePEMA(pnew Vec) {
 }
 
 func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
-	e_p := NewVec(nenv) // = env - p0
+	cell.P = Zeroes(nenv) // just to make sure it's zeroes.
+	cue := Zeroes(nenv)
 	g0 := Ones(ngenes)
-	f0 := NewVec(ngenes)
-	h0 := NewVec(ngenes) //No higher order complexes in embryonic stage
+	f0 := Zeroes(ngenes)
+	h0 := Zeroes(ngenes)
+
+	e_p := NewVec(nenv) // = env - p0
+
 	Ee := NewVec(ngenes)
 	Gg := NewVec(ngenes)
 	Hg := NewVec(ngenes)
@@ -246,14 +250,14 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 	g1 := NewVec(ngenes)
 	h1 := NewVec(ngenes)
 
-	cue := NewVec(nenv)
-
 	//  AddNoise2CueNormal(cell.E, env, devNoise)
 	AddNoise2CueFlip(cell.E, env, devNoise)
 
 	if with_cue {
 		cue = cell.E
 	}
+
+	lambda := 1.0 / dampFactorE
 
 	for nstep := 1; nstep <= maxDevStep; nstep++ {
 		MultMatVec(Gg, G.G, g0)
@@ -264,6 +268,8 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 			} else {
 				MultMatVec(Ee, G.E, cue)
 			}
+			lambda *= dampFactorE
+			ScaleVec(Ee, lambda, Ee)
 			AddVecs(f1, Gg, Ee)
 		} else {
 			copy(f1, Gg)

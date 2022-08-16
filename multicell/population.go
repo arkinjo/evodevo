@@ -121,6 +121,8 @@ func (pop *Population) GetStats() PopStats {
 }
 
 func NewPopulation(s Settings) Population {
+	SetParams(s)
+
 	envs0 := NewCues(s.NCells, s.NEnv)
 	envs1 := NewCues(s.NCells, s.NEnv)
 
