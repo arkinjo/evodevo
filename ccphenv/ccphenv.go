@@ -15,13 +15,13 @@ func main() {
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 
-	jsoninP := flag.String("jsonin", "", "json file of input population")
+	jsongzinP := flag.String("jsonin", "", ".json.gz file of input population")
 
 	flag.Parse()
 
 	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
-	if *jsoninP != "" {
-		pop.FromJSON(*jsoninP)
+	if *jsongzinP != "" {
+		pop.ImportPopGz(*jsongzinP)
 		multicell.SetParams(pop.Params)
 	} else {
 		flag.PrintDefaults()

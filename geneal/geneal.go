@@ -33,7 +33,7 @@ func main() {
 	}
 	pop0 := multicell.NewPopulation(*ncellsP, *maxpopP) //with randomized genome to start
 	jfilename := fmt.Sprintf("%s_001.json", json_in)
-	pop0.FromJSON(jfilename)
+	pop0.ImportPopGz(jfilename)
 	multicell.SetParams(pop0.Params)
 
 	fmt.Println("Making DOT genealogy file")

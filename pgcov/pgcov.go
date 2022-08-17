@@ -5,9 +5,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+
 	"github.com/arkinjo/evodevo/multicell"
 	"gonum.org/v1/gonum/mat"
-	"log"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 
 	pop := multicell.NewPopulation(*ncellsP, *maxpopP)
 	if *jsonP != "" {
-		pop.FromJSON(*jsonP)
+		pop.ImportPopGz(*jsonP)
 		multicell.SetParams(pop.Params)
 	} else {
 		flag.PrintDefaults()

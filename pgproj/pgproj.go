@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/arkinjo/evodevo/multicell"
 	"log"
 	"math"
 	"os"
 	"time"
+
+	"github.com/arkinjo/evodevo/multicell"
 )
 
 var PG_Filename string //Dump for phenotypes and genotypes
@@ -59,7 +60,7 @@ func main() {
 	log.Println("Reading Pop0")
 	pop0 := multicell.NewPopulation(settings)
 	fmt.Println("Reference population :", refgen1)
-	pop0.FromJSON(refgen1)
+	pop0.ImportPopGz(refgen1)
 	settings = pop0.Params
 	multicell.SetParams(settings)
 
@@ -81,7 +82,7 @@ func main() {
 	log.Println("Reading Pop1")
 	pop1 := multicell.NewPopulation(settings)
 	fmt.Println("Reference population 2:", refgen2)
-	pop1.FromJSON(refgen2)
+	pop1.ImportPopGz(refgen2)
 
 	g11 := pop1.GetFlatGenome(multicell.INovEnv)
 	e11 := pop1.GetFlatStateVec("E", multicell.INovEnv, 0, Nenv)
@@ -126,7 +127,7 @@ func main() {
 
 		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
 		pop := multicell.NewPopulation(settings)
-		pop.FromJSON(jfilename)
+		pop.ImportPopGz(jfilename)
 		gt0 := pop.GetFlatGenome(0)
 		gt1 := pop.GetFlatGenome(1)
 		et0 := pop.GetFlatStateVec("E", 0, 0, Nenv)

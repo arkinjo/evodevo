@@ -87,7 +87,7 @@ func main() {
 	pop0 := multicell.NewPopulation(settings)
 
 	if json_in != "" { //read input population as a json file, if given
-		pop0.FromJSON(json_in)
+		pop0.ImportPopGz(json_in)
 	}
 
 	pop0.Params.SDNoise = settings.SDNoise
@@ -131,7 +131,7 @@ func main() {
 		fmt.Println("End of epoch", epoch)
 
 		if !test_flag && epoch == maxepochs { //Export output population; just before epoch change
-			pop1.ToJSON(json_out)
+			pop1.ExportPopGz(json_out)
 		}
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :", dtevol)

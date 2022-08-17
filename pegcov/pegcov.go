@@ -48,7 +48,7 @@ func main() {
 
 	pop := multicell.NewPopulation(settings)
 	if *jsonP != "" {
-		pop.FromJSON(*jsonP)
+		pop.ImportPopGz(*jsonP)
 		multicell.SetParams(pop.Params)
 	} else {
 		flag.PrintDefaults()
