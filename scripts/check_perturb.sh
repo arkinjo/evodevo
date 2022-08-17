@@ -12,7 +12,7 @@ pegcov=~/work/GitHub/evodevo/pegcov/pegcov
 for denv in 2 {10..100..10}; do
     for i in {01..${NIND}}; do
 	zsh perturb.sh $base ${denv} ${NOISE} $i $RANDOM
-	$pegcov -jsonin pops/${base}_perturb${denv}_${NOISE}_01_001.json \
+	$pegcov -jsonin pops/${base}_perturb${denv}_${NOISE}_01_001.json.gz \
 		-p=2 -eg=2 \
 		> per/${base}_${denv}_${NOISE}_${i}.dat
     done

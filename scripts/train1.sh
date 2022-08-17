@@ -55,7 +55,7 @@ echo $base ${e}${f}G${h}${j}${p}
 if [ ${DENV2} -eq 100 ]; then
     $train -maxpop=${MAXPOP} -ncells=${NCELLS} -nepoch=${NEPOCH1} \
 	   -traj_file=traj/${base}_train.traj \
-	   -jsonout=json/${base}_train.json \
+	   -jsonout=json/${base}_train.json.gz \
 	   -denv=${DENV1} -noise=${NOISE} -mut=${MUT} \
 	   -cue=${e} -layerF=${f} -layerH=${h} -layerJ=${j} \
 	   -pfback=${p} \
@@ -67,16 +67,16 @@ fi
 
 $train -test=true -nepoch=${NEPOCH2} -maxpop=${MAXPOP} -ncells=${NCELLS} \
        -traj_file=traj/${base}_run${DENV2}.traj \
-       -jsonin=json/${base}_train.json \
-       -jsonout=pops/${base}_run${DENV2} \
+       -jsongzin=json/${base}_train.json.gz \
+       -jsongzout=pops/${base}_run${DENV2} \
        -denv=${DENV2} -noise=${NOISE} -mut=${MUT} \
        -seed=${SEED2} -seed_cue=${SEEDCUE2} \
        > /dev/null
 
 for epo in {01..${NEPOCH2}}; do
     $pgproj -maxpop=${MAXPOP} -ncells=${NCELLS} -ngen=${NGEN} \
-	    -ref1=pops/${base}_run${DENV2}_${epo}_${REF1}.json \
-	    -ref2=pops/${base}_run${DENV2}_${epo}_${REF2}.json \
+	    -ref1=pops/${base}_run${DENV2}_${epo}_${REF1}.json.gz \
+	    -ref2=pops/${base}_run${DENV2}_${epo}_${REF2}.json.gz \
 	    -jsonin=pops/${base}_run${DENV2}_${epo} \
 	    -PG_file=proj/${base}_run${DENV2}_${epo} -env=false
 done

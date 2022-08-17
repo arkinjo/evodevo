@@ -11,8 +11,8 @@ import (
 )
 
 var T_Filename string = "traj.dat"
-var json_in string //JSON encoding of initial population; default to empty string
-var json_out string = "popout"
+var jsongz_in string //gzip compressed JSON encoding of initial population; default to empty string
+var jsongz_out string = "popout"
 var jfilename string
 
 func main() {
@@ -46,8 +46,8 @@ func main() {
 
 	denvPtr := flag.Int("denv", 100, "magnitude of environmental change")
 	tfilenamePtr := flag.String("traj_file", "traj.dat", "filename of trajectories")
-	jsoninPtr := flag.String("jsonin", "", "json file of input population") //default to empty string
-	jsonoutPtr := flag.String("jsonout", "popout", "json file of output population")
+	jsongzinPtr := flag.String("jsongzin", "", "json file of input population") //default to empty string
+	jsongzoutPtr := flag.String("jsongzout", "popout", "json file of output population")
 	flag.Parse()
 
 	var settings = multicell.CurrentSettings()
@@ -80,20 +80,20 @@ func main() {
 	epochlength := *genPtr
 	denv := *denvPtr
 	T_Filename = *tfilenamePtr
-	json_in = *jsoninPtr
-	json_out = *jsonoutPtr
+	jsongz_in = *jsongzinPtr
+	jsongz_out = *jsongzoutPtr
 	test_flag := *testP
 
 	pop0 := multicell.NewPopulation(settings)
 
-	if json_in != "" { //read input population as a json file, if given
-		pop0.ImportPopGz(json_in)
+	if jsongz_in != "" { //read input population as a .json.gz file, if given
+		pop0.ImportPopGz(jsongz_in)
 	}
 
 	pop0.Params.SDNoise = settings.SDNoise
 	pop0.Params.MutRate = settings.MutRate
 	multicell.SetParams(pop0.Params)
-	if json_in == "" {
+	if jsongz_in == "" {
 		fmt.Println("Randomizing initial population")
 		pop0.RandomizeGenome()
 	}
@@ -104,7 +104,7 @@ func main() {
 	}
 
 	popstart := pop0
-	if json_in != "" {
+	if jsongz_in != "" {
 		popstart.ChangeEnvs(denv)
 	} else {
 		popstart.SetRandomNovEnvs()
@@ -127,11 +127,11 @@ func main() {
 			fmt.Println("Epoch ", epoch, "has environments", popstart.NovEnvs)
 		}
 
-		pop1 := popstart.Evolve(test_flag, ftraj, json_out, epochlength, epoch)
+		pop1 := popstart.Evolve(test_flag, ftraj, jsongz_out, epochlength, epoch)
 		fmt.Println("End of epoch", epoch)
 
 		if !test_flag && epoch == maxepochs { //Export output population; just before epoch change
-			pop1.ExportPopGz(json_out)
+			pop1.ExportPopGz(jsongz_out)
 		}
 		dtevol := time.Since(tevol)
 		fmt.Println("Time taken to simulate evolution :", dtevol)
