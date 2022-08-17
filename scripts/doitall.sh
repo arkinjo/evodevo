@@ -18,6 +18,7 @@ for base in EFGHJP _FGHJP E_G__P EFGHJ_; do
 
     # requires gnuplot
     #zsh plot_covprj.sh $base 
+	)
 done
 
 wait
