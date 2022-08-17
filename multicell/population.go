@@ -1,9 +1,11 @@
 package multicell
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"math/rand"
@@ -136,14 +138,14 @@ func NewPopulation(s Settings) Population {
 	return p
 }
 
-func (pop *Population) FromJSON(filename string) {
+func (pop *Population) ImportPopGz(filename string) {
 	pop.ClearGenome()
-	fin, err := os.Open(filename)
+	fin, err := os.Open(filename) //This should be a .json.gz file
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	byteValue, _ := ioutil.ReadAll(fin)
+	byteValue, _ := io.ReadAll(fin)
 	err = json.Unmarshal(byteValue, pop)
 	if err != nil {
 		log.Fatal(err)
@@ -156,15 +158,16 @@ func (pop *Population) FromJSON(filename string) {
 	log.Println("Successfully imported population from", filename)
 }
 
-func (pop *Population) ToJSON(filename string) {
+func (pop *Population) ExportPopGz(filename string) { //Exports population to .json.gz file
 	jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
 	if err != nil {
 		log.Fatal(err)
 	}
-	fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create json file
+	fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create json.gz file
 	if err != nil {
 		log.Fatal(err)
 	}
+	/* Writing directly to .json file
 	_, err = fout.Write(jsonpop)
 	if err != nil {
 		log.Fatal(err)
@@ -173,7 +176,24 @@ func (pop *Population) ToJSON(filename string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	*/
 
+	//log.Println("Successfully exported population to", filename)
+
+	var fileGZ bytes.Buffer
+	zipper := gzip.NewWriter(&fileGZ)
+	_, err = zipper.Write(jsonpop)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = zipper.Close() //Close gzipper and flush compressed info
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = fout.Close() //Close file
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("Successfully exported population to", filename)
 }
 
