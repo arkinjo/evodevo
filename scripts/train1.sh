@@ -6,7 +6,7 @@ base=${1:-"EFGHJP"} # E_G__P
 DENV2=${2:-"100"}
 RANDOM=${3:-"13531"}
 
-EVODEVODIR=~/work/GitHub/evodevo
+EVODEVODIR=~/Documents/GitHub/evodevo
 train=${EVODEVODIR}/train/train
 #ccphenv=${EVODEVODIR}/ccphenv/ccphenv
 pgproj=${EVODEVODIR}/pgproj/pgproj

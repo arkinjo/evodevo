@@ -7,7 +7,7 @@ NOISE=${3:-"0.00"}
 IND=${4:-"01"}
 RANDOM=${5:-"13531"}
 
-EVODEVODIR=~/work/GitHub/evodevo
+EVODEVODIR=~/Documents/GitHub/evodevo
 train=${EVODEVODIR}/train/train
 #ccphenv=${EVODEVODIR}/ccphenv/ccphenv
 pgproj=${EVODEVODIR}/pgproj/pgproj

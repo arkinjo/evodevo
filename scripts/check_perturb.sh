@@ -5,7 +5,7 @@ NIND=20
 NOISE=0.05
 
 ## cross-covariance analysis
-pegcov=~/work/GitHub/evodevo/pegcov/pegcov
+pegcov=~/Documents/GitHub/evodevo/pegcov/pegcov
 #
 
 # perturb and compute cross-covariance for the 1st generations.

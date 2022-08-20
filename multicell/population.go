@@ -145,8 +145,11 @@ func (pop *Population) ImportPopGz(filename string) {
 		log.Fatal(err)
 	}
 
-	byteValue, _ := io.ReadAll(fin)
-	err = json.Unmarshal(byteValue, pop)
+	//byteValue, _ := io.ReadAll(fin)
+	gzreader, err := gzip.NewReader(fin)
+	buf := new(bytes.Buffer)
+	io.Copy(buf, gzreader)
+	err = json.Unmarshal(buf.Bytes(), pop)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -167,22 +170,23 @@ func (pop *Population) ExportPopGz(filename string) { //Exports population to .j
 	if err != nil {
 		log.Fatal(err)
 	}
-	/* Writing directly to .json file
-	_, err = fout.Write(jsonpop)
+	/* Writing directly to .json file, bugtest
+	utest, err := os.OpenFile("utest.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	_, err = utest.Write(jsonpop)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = fout.Close()
+	err = utest.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	*/
+	//*/
 
 	//log.Println("Successfully exported population to", filename)
 
-	var fileGZ bytes.Buffer
-	zipper := gzip.NewWriter(&fileGZ)
-	_, err = zipper.Write(jsonpop)
+	var buf bytes.Buffer
+	zipper := gzip.NewWriter(&buf)
+	_, err = zipper.Write([]byte(string(jsonpop)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -190,6 +194,11 @@ func (pop *Population) ExportPopGz(filename string) { //Exports population to .j
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = os.WriteFile(filename, []byte(buf.String()), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	err = fout.Close() //Close file
 	if err != nil {
 		log.Fatal(err)
