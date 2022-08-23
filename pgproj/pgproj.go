@@ -26,7 +26,7 @@ func main() {
 	ref2Ptr := flag.String("ref2", "", "reference JSON file 2")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
-	jsoninPtr := flag.String("jsonin", "", "basename of JSON files")
+	jsongzinPtr := flag.String("jsonin", "", "basename of JSON files")
 
 	flag.Parse()
 
@@ -41,7 +41,7 @@ func main() {
 
 	PG_Filename = *pgfilenamePtr
 
-	json_in = *jsoninPtr
+	json_in = *jsongzinPtr
 
 	if json_in == "" {
 		log.Fatal("Must specify JSON input file.")

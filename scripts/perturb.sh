@@ -31,8 +31,8 @@ echo $base
 
 $train -test=true -nepoch=${NEPOCH2} -maxpop=${MAXPOP} -ncells=${NCELLS} \
        -traj_file=traj/${base}_perturb${DENV}_${NOISE}_${IND}.traj \
-       -jsonin=json/${base}_train.json \
-       -jsonout=pops/${base}_perturb${DENV}_${NOISE} \
+       -jsongzin=json/${base}_train.json \
+       -jsongzout=pops/${base}_perturb${DENV}_${NOISE} \
        -seed=${SEED2} -seed_cue=${SEEDCUE2} \
        -ngen=${NGEN} -denv=${DENV} -noise=${NOISE} -mut=${MUT}\
        > gegege
