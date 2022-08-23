@@ -185,7 +185,10 @@ func (pop *Population) ExportPopGz(filename string) { //Exports population to .j
 	//log.Println("Successfully exported population to", filename)
 
 	var buf bytes.Buffer
-	zipper := gzip.NewWriter(&buf)
+	zipper, err := gzip.NewWriterLevel(&buf, gzip.DefaultCompression)
+	if err != nil{
+		log.Fatal(err)
+	}
 	_, err = zipper.Write([]byte(string(jsonpop)))
 	if err != nil {
 		log.Fatal(err)
