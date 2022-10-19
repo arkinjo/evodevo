@@ -196,7 +196,8 @@ func (indiv *Indiv) getNDevStep(ienv int) int {
 
 func (indiv *Indiv) getFitness() float64 { //fitness in novel/present environment
 	ndevstep := indiv.getNDevStep(INovEnv)
-	if ndevstep == maxDevStep {
+
+	if maxDevStep > 1 && ndevstep == maxDevStep {
 		return 0.0
 	}
 
