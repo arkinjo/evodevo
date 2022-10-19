@@ -116,6 +116,7 @@ func SetSeed(seed int64) {
 
 func SetParams(s Settings) {
 	maxPop = s.MaxPop
+	maxDevStep = s.MaxDevStep
 	ngenes = s.NGenes
 	nenv = s.NEnv
 	nsel = s.NSel
