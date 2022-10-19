@@ -18,6 +18,7 @@ func main() {
 	log.Println("Starting...")
 	t0 := time.Now()
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	maxdevstepP := flag.Int("maxdevstep", 200, "maximum number of steps for development")
 	ngenesP := flag.Int("ngenes", 200, "number of genes")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
@@ -32,6 +33,7 @@ func main() {
 
 	settings := multicell.CurrentSettings()
 	settings.MaxPop = *maxpopP
+	settings.MaxDevStep = *maxdevstepP
 	settings.NGenes = *ngenesP
 	settings.NCells = *ncellsP
 	epochlength := *genPtr

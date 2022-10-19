@@ -46,7 +46,7 @@ done > ${base}_sigma.dat
 for denv in 2 {10..100..10}; do
     for i in {01..${NIND}}; do
 	echo -n $denv
-	fgrep Pdenv per/${base}_${denv}_${NOISE}_${i}.dat | awk '{printf "\t%e\t%e\t%e\n", $2, $3, $4}'
+	fgrep Pdenv per/${base}_${denv}_${NOISE}_${i}.dat | awk '{printf "\t%e\t%e\t%e\n", $2, $3, $4}' #Cross covariance between phenotype and environment
     done
 done > ${base}_pheno.dat
 
@@ -54,7 +54,7 @@ done > ${base}_pheno.dat
 for denv in 2 {10..100..10}; do
     for i in {01..${NIND}}; do
 	echo -n $denv
-	fgrep SVal per/${base}_${denv}_${NOISE}_${i}.dat | awk '$2==0 {printf "\t%e\t%e\t%e\n", $3, $4, $5}'
+	fgrep SVal per/${base}_${denv}_${NOISE}_${i}.dat | awk '$2==0 {printf "\t%e\t%e\t%e\n", $3, $4, $5}' #0+1th singular value, prop, cum prop
     done
 done > ${base}_sval1.dat
 

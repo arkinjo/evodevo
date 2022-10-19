@@ -19,6 +19,7 @@ func main() {
 	t0 := time.Now()
 	testP := flag.Bool("test", false, "Test run or not")
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	maxdevstepP := flag.Int("maxdevstep", 200, "maximum number of steps for development")
 	ngenesP := flag.Int("ngenes", 200, "Number of genes")
 	nenvP := flag.Int("nenv", 200, "Number of environmental cues/traits")
 	nselP := flag.Int("nsel", 40, "Number of environmental cues/traits for selection")
@@ -52,6 +53,7 @@ func main() {
 
 	var settings = multicell.CurrentSettings()
 	settings.MaxPop = *maxpopP
+	settings.MaxDevStep = *maxdevstepP
 	settings.NGenes = *ngenesP
 	settings.NEnv = *nenvP
 	settings.NSel = *nselP
