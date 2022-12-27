@@ -27,7 +27,7 @@ func main() {
 	ref2Ptr := flag.String("ref2", "", "reference JSON file 2")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
-	jsongzinPtr := flag.String("jsonin", "", "basename of JSON files")
+	jsongzinPtr := flag.String("jsongzin", "", "basename of JSON files")
 
 	flag.Parse()
 
@@ -127,7 +127,7 @@ func main() {
 		fmt.Fprintf(fout, "#\t Geno+e0     \tPheno0     \tGeno+e1     \tPheno1   ")
 		fmt.Fprintf(fout, "\t||p0-e0||  \t||p1-e1||  \tFit     \tWagFit\n")
 
-		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
+		jfilename := fmt.Sprintf("%s_%3.3d.json.gz", json_in, gen)
 		pop := multicell.NewPopulation(settings)
 		pop.ImportPopGz(jfilename)
 		gt0 := pop.GetFlatGenome(0)

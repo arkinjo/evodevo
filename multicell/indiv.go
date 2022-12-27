@@ -2,7 +2,7 @@ package multicell
 
 import (
 	//	"errors"
-	//	"fmt"
+	//"fmt"
 	"log"
 	"math"
 	//	"math/rand"
@@ -336,6 +336,7 @@ func (body *Body) DevBody(envs Cues) Body {
 	for i, cell := range body.Cells {
 		body.Cells[i] = cell.DevCell(body.Genome, envs[i])
 		sse += cell.PErr
+		//fmt.Println("Ndev:",cell.NDevStep)
 		if cell.NDevStep > maxdev {
 			maxdev = cell.NDevStep
 		}
@@ -351,6 +352,7 @@ func (body *Body) DevBody(envs Cues) Body {
 }
 
 func (indiv *Indiv) Develop(ancenvs, novenvs Cues) Indiv { //Compare developmental process under different conditions
+	//fmt.Printf("Id:%d",indiv.Id)
 	indiv.Bodies[IAncEnv].DevBody(ancenvs)
 	indiv.Bodies[INovEnv].DevBody(novenvs)
 

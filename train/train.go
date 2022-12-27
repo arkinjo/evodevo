@@ -51,7 +51,7 @@ func main() {
 	jsongzoutPtr := flag.String("jsongzout", "popout", "json file of output population")
 	flag.Parse()
 
-	var settings = multicell.CurrentSettings()
+	settings := multicell.CurrentSettings()
 	settings.MaxPop = *maxpopP
 	settings.MaxDevStep = *maxdevstepP
 	settings.NGenes = *ngenesP
