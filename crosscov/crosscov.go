@@ -52,6 +52,9 @@ func cca(vecs0, vecs1 [][]float64, axis0 []float64) {
 		ali := multicell.DotVecs(U[a], axis0)
 		fmt.Printf("Ali\t%d\t%e\n", a, ali)
 	}
+	for i, v := range U[0] {
+		fmt.Printf("LSVec1\t%d\t%e\n", i, v)
+	}
 }
 
 func main() {

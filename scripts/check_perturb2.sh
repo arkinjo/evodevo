@@ -8,6 +8,7 @@ NOISE=0.05
 pegcov=~/work/GitHub/evodevo/crosscov/crosscov
 #
 
+
 # perturb and compute cross-covariance for the 1st generations.
 for denv in 2 {10..100..10}; do
     for i in {01..${NIND}}; do
@@ -21,6 +22,8 @@ for denv in 2 {10..100..10}; do
 
     done
 done
+
+mkdir LSVec1
 
 # extracting data
 for cc in pe pG; do
@@ -78,4 +81,12 @@ for cc in pe pG; do
 	    fgrep SVal per/${base}_${denv}_${NOISE}_${i}_${cc}.dat | awk '$2==0 {printf "\t%e\n", $3*(1.0/$4 - 1.0)}'
 	done
     done > ${base}_${cc}_svals.dat
+
+	# First singular vector elements
+	for denv in 2 {10..100..10}; do
+	for i in {01..$NIND}; do
+		fgrep LSVec1 per/${base}_${denv}_${NOISE}_${i}_${cc}.dat > LSVec1/${base}_${denv}_${NOISE}_${i}_${cc}.LSVec1
+	done 
+	done
+	 
 done
