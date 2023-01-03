@@ -22,7 +22,7 @@ func DOT_Genealogy(genfilename, popfilename string, ngen, npop int) {
 	pars := make(map[int]bool)
 	for gen := ngen; gen > 0; gen-- {
 		jfilename := fmt.Sprintf("%s_%3.3d.json", popfilename, gen)
-		pop.FromJSON(jfilename)
+		pop.ImportPopGz(jfilename)
 
 		ids := make([]string, 0)
 		for _, indiv := range pop.Indivs {

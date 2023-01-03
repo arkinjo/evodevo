@@ -10,6 +10,7 @@ import (
 )
 
 var maxPop int = 200 // population size
+var maxDevStep = 200 // Maximum steps for development.
 var ngenes int = 200 // number of genes
 var nenv int = 200   // number of environmental cues/traits per face
 var nsel int = 40    // number of environmental cues/traits per face FOR SELECTION
@@ -42,31 +43,32 @@ var DensityJ float64 = defaultDensity
 var DensityP float64 = defaultDensity
 
 type Settings struct {
-	MaxPop   int // Maximum number of individuals in population
-	NGenes   int
-	NEnv     int
-	NSel     int
-	NCells   int     // Number of cell types
-	WithCue  bool    // With cue?
-	FLayer   bool    // f present?
-	HLayer   bool    // h present?
-	JLayer   bool    //  J present?
-	Pfback   bool    // P feedback to E layer
-	SDNoise  float64 // probability (or stdev) of environmental noise
-	MutRate  float64 // mutation rate
-	TauF     float64
-	TauG     float64
-	TauH     float64
-	DensityE float64
-	DensityF float64
-	DensityG float64
-	DensityH float64
-	DensityJ float64
-	DensityP float64
+	MaxPop     int // Maximum number of individuals in population
+	MaxDevStep int // Maximum steps for development.
+	NGenes     int
+	NEnv       int
+	NSel       int
+	NCells     int     // Number of cell types
+	WithCue    bool    // With cue?
+	FLayer     bool    // f present?
+	HLayer     bool    // h present?
+	JLayer     bool    //  J present?
+	Pfback     bool    // P feedback to E layer
+	SDNoise    float64 // probability (or stdev) of environmental noise
+	MutRate    float64 // mutation rate
+	TauF       float64
+	TauG       float64
+	TauH       float64
+	DensityE   float64
+	DensityF   float64
+	DensityG   float64
+	DensityH   float64
+	DensityJ   float64
+	DensityP   float64
 }
 
 func CurrentSettings() Settings {
-	return Settings{MaxPop: maxPop,
+	return Settings{MaxPop: maxPop, MaxDevStep: maxDevStep,
 		NGenes: ngenes, NEnv: nenv, NSel: nsel, NCells: ncells,
 		WithCue: with_cue, FLayer: withF, HLayer: withH, JLayer: withJ,
 		Pfback: pheno_feedback, SDNoise: devNoise, MutRate: mutRate,
@@ -77,13 +79,13 @@ func CurrentSettings() Settings {
 }
 
 const (
-	cueMag     = 1.0    // each trait is +/-cueMag
-	maxDevStep = 200    // Maximum steps for development.
-	epsDev     = 1.0e-5 // Convergence criterion of development.
-	eps        = 1.0e-50
-	sqrt3      = 1.73205080756887729352744634150587236694280525381038062805580697
-	ccStep     = 5.0                  // Number of steady steps for convergence
-	alphaEMA   = 2.0 / (1.0 + ccStep) // exponential moving average/variance
+	cueMag = 1.0 // each trait is +/-cueMag
+	//maxDevStep = 200    // Maximum steps for development.
+	epsDev   = 1.0e-5 // Convergence criterion of development.
+	eps      = 1.0e-50
+	sqrt3    = 1.73205080756887729352744634150587236694280525381038062805580697
+	ccStep   = 5.0                  // Number of steady steps for convergence
+	alphaEMA = 2.0 / (1.0 + ccStep) // exponential moving average/variance
 )
 
 // Length of a gene for Unicellular organism.
@@ -114,6 +116,7 @@ func SetSeed(seed int64) {
 
 func SetParams(s Settings) {
 	maxPop = s.MaxPop
+	maxDevStep = s.MaxDevStep
 	ngenes = s.NGenes
 	nenv = s.NEnv
 	nsel = s.NSel

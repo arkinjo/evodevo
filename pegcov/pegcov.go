@@ -48,7 +48,7 @@ func main() {
 
 	pop := multicell.NewPopulation(settings)
 	if *jsonP != "" {
-		pop.FromJSON(*jsonP)
+		pop.ImportPopGz(*jsonP)
 		multicell.SetParams(pop.Params)
 	} else {
 		flag.PrintDefaults()
@@ -69,7 +69,7 @@ func main() {
 	denv := multicell.NewVec(lenP)
 	multicell.DiffVecs(denv, env1, env0)
 	// for PC projection
-	paxis := multicell.CopyVec(denv)
+	paxis := multicell.CopyVec(denv) //paxis is defined as change in environment
 	multicell.NormalizeVec(paxis)
 
 	genome0 := pop.GetFlatGenome(multicell.IAncEnv)
@@ -113,8 +113,8 @@ func main() {
 		deleg = append(deleg, d)
 	}
 
-	p0 := pop.GetFlatStateVec("P", 0, 0, Nsel)
-	p1 := pop.GetFlatStateVec("P", 1, 0, Nsel)
+	p0 := pop.GetFlatStateVec("P", 0, 0, Nsel) //ancestral phenotype
+	p1 := pop.GetFlatStateVec("P", 1, 0, Nsel) //novel phenotype
 	delp := make([][]float64, 0)
 	for k, p := range p0 {
 		switch pFlag {
@@ -132,9 +132,9 @@ func main() {
 
 	mp, meg, cov := multicell.GetCrossCov(delp, deleg, true, true)
 
-	pdis := multicell.DotVecs(paxis, mp)
-	pmag := multicell.Norm2(mp)
-	pvv := multicell.GetVarVec(delp)
+	pdis := multicell.DotVecs(paxis, mp) //dot product between change in environment and average plastic change
+	pmag := multicell.Norm2(mp)          //L2 norm of plastic change
+	pvv := multicell.GetVarVec(delp)     // variance in plastic change
 	pvar := 0.0
 	for _, v := range pvv {
 		pvar += v
@@ -196,13 +196,13 @@ func main() {
 		totS += v * v
 		totSe += v * v * weightE[a]
 	}
-	fmt.Printf("<DdpDde>_FN2\t%e\n", totSe)
-	fmt.Printf("<DdpDdG>_FN2\t%e\n", totS-totSe)
+	fmt.Printf("<DdpDde>_FN2\t%e\n", totSe)      //Phenotype change due to environmental
+	fmt.Printf("<DdpDdG>_FN2\t%e\n", totS-totSe) //Phenotypc change due to genetic mutation
 	cum := 0.0
 	for a, v := range svals {
 		v2 := v * v
 		cum += v * v / totS
-		fmt.Printf("SVals\t%d\t%e\t%e\t%e\t%e\n", a, v2, v2/totS, cum, weightE[a])
+		fmt.Printf("SVals\t%d\t%e\t%e\t%e\t%e\n", a, v2, v2/totS, cum, weightE[a]) //ath singular value, prop, cum prop, env weight?
 		ali := multicell.DotVecs(Up[a], paxis)
 		fmt.Printf("Ali\t%d\t%e\n", a, ali)
 	}

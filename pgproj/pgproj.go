@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/arkinjo/evodevo/multicell"
 	"log"
 	"math"
 	"os"
 	"time"
+
+	"github.com/arkinjo/evodevo/multicell"
 )
 
 var PG_Filename string //Dump for phenotypes and genotypes
@@ -17,6 +18,7 @@ func main() {
 	log.Println("Starting...")
 	t0 := time.Now()
 	maxpopP := flag.Int("maxpop", 1000, "maximum number of individuals in population")
+	maxdevstepP := flag.Int("maxdevstep", 200, "maximum number of steps for development")
 	ngenesP := flag.Int("ngenes", 200, "number of genes")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	genPtr := flag.Int("ngen", 200, "number of generation/epoch")
@@ -25,12 +27,13 @@ func main() {
 	ref2Ptr := flag.String("ref2", "", "reference JSON file 2")
 
 	pgfilenamePtr := flag.String("PG_file", "phenogeno", "Filename of projected phenotypes and genotypes")
-	jsoninPtr := flag.String("jsonin", "", "basename of JSON files")
+	jsongzinPtr := flag.String("jsongzin", "", "basename of JSON files")
 
 	flag.Parse()
 
 	settings := multicell.CurrentSettings()
 	settings.MaxPop = *maxpopP
+	settings.MaxDevStep = *maxdevstepP
 	settings.NGenes = *ngenesP
 	settings.NCells = *ncellsP
 	epochlength := *genPtr
@@ -40,7 +43,7 @@ func main() {
 
 	PG_Filename = *pgfilenamePtr
 
-	json_in = *jsoninPtr
+	json_in = *jsongzinPtr
 
 	if json_in == "" {
 		log.Fatal("Must specify JSON input file.")
@@ -59,7 +62,7 @@ func main() {
 	log.Println("Reading Pop0")
 	pop0 := multicell.NewPopulation(settings)
 	fmt.Println("Reference population :", refgen1)
-	pop0.FromJSON(refgen1)
+	pop0.ImportPopGz(refgen1)
 	settings = pop0.Params
 	multicell.SetParams(settings)
 
@@ -81,7 +84,7 @@ func main() {
 	log.Println("Reading Pop1")
 	pop1 := multicell.NewPopulation(settings)
 	fmt.Println("Reference population 2:", refgen2)
-	pop1.FromJSON(refgen2)
+	pop1.ImportPopGz(refgen2)
 
 	g11 := pop1.GetFlatGenome(multicell.INovEnv)
 	e11 := pop1.GetFlatStateVec("E", multicell.INovEnv, 0, Nenv)
@@ -124,9 +127,9 @@ func main() {
 		fmt.Fprintf(fout, "#\t Geno+e0     \tPheno0     \tGeno+e1     \tPheno1   ")
 		fmt.Fprintf(fout, "\t||p0-e0||  \t||p1-e1||  \tFit     \tWagFit\n")
 
-		jfilename := fmt.Sprintf("%s_%3.3d.json", json_in, gen)
+		jfilename := fmt.Sprintf("%s_%3.3d.json.gz", json_in, gen)
 		pop := multicell.NewPopulation(settings)
-		pop.FromJSON(jfilename)
+		pop.ImportPopGz(jfilename)
 		gt0 := pop.GetFlatGenome(0)
 		gt1 := pop.GetFlatGenome(1)
 		et0 := pop.GetFlatStateVec("E", 0, 0, Nenv)

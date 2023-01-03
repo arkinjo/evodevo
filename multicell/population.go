@@ -1,9 +1,11 @@
 package multicell
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"math/rand"
@@ -136,15 +138,18 @@ func NewPopulation(s Settings) Population {
 	return p
 }
 
-func (pop *Population) FromJSON(filename string) {
+func (pop *Population) ImportPopGz(filename string) {
 	pop.ClearGenome()
-	fin, err := os.Open(filename)
+	fin, err := os.Open(filename) //This should be a .json.gz file
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	byteValue, _ := ioutil.ReadAll(fin)
-	err = json.Unmarshal(byteValue, pop)
+	//byteValue, _ := io.ReadAll(fin)
+	gzreader, err := gzip.NewReader(fin)
+	buf := new(bytes.Buffer)
+	io.Copy(buf, gzreader)
+	err = json.Unmarshal(buf.Bytes(), pop)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -156,24 +161,51 @@ func (pop *Population) FromJSON(filename string) {
 	log.Println("Successfully imported population from", filename)
 }
 
-func (pop *Population) ToJSON(filename string) {
+func (pop *Population) ExportPopGz(filename string) { //Exports population to .json.gz file
 	jsonpop, err := json.Marshal(pop) //JSON encoding of population as byte array
 	if err != nil {
 		log.Fatal(err)
 	}
-	fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create json file
+	fout, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644) //create json.gz file
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = fout.Write(jsonpop)
+	/* Writing directly to .json file, bugtest
+	utest, err := os.OpenFile("utest.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	_, err = utest.Write(jsonpop)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = fout.Close()
+	err = utest.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	//*/
+
+	//log.Println("Successfully exported population to", filename)
+
+	var buf bytes.Buffer
+	zipper, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = zipper.Write([]byte(string(jsonpop)))
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = zipper.Close() //Close gzipper and flush compressed info
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.WriteFile(filename, []byte(buf.String()), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	err = fout.Close() //Close file
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("Successfully exported population to", filename)
 }
 
@@ -345,9 +377,9 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 	for istep := 1; istep <= nstep; istep++ {
 		pop.DevPop(istep)
 		if test {
-			if jsonout != "" { //Export JSON population of each generation in test mode
-				filename := fmt.Sprintf("%s_%2.2d_%3.3d.json", jsonout, epoch, pop.Gen)
-				pop.ToJSON(filename)
+			if jsonout != "" { //Export .json.gz population of each generation in test mode
+				filename := fmt.Sprintf("%s_%2.2d_%3.3d.json.gz", jsonout, epoch, pop.Gen)
+				pop.ExportPopGz(filename)
 			}
 		}
 
@@ -356,7 +388,7 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 
 		fmt.Fprintf(ftraj, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.PEDot, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
-		fmt.Printf("Evolve: %d\t<ME1>: %e\t<ME0>: %e\n", istep, pstat.PErr1, pstat.PErr0)
+		fmt.Printf("Evolve: %d\t<ME1>: %e\t<ME0>: %e\t DevStep: %e", istep, pstat.PErr1, pstat.PErr0, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
 	}
