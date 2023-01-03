@@ -27,7 +27,7 @@ for cc in pe pG; do
     for denv in 2 {10..100..10}; do
 	for i in {01..${NIND}}; do
 	    echo -n "${denv}"
-	    grep Ddp per/${base}_${denv}_${NOISE}_${i}_${cc}.dat | awk '{printf "\t%e", $2}'
+	    grep FN2 per/${base}_${denv}_${NOISE}_${i}_${cc}.dat | awk '{printf "\t%e", $2}'
 	    echo ''
 	done
     done > ${base}_${cc}_denv22.dat
@@ -40,20 +40,20 @@ for cc in pe pG; do
 	done
     done > ${base}_${cc}_ali.dat
 
-    # This "Sigma" is a bit complicated. ||environmental change x cross-cov||
-    for denv in 2 {10..100..10}; do
-	for i in {01..${NIND}}; do
-	    echo -n $denv
-	    grep "Sigma" per/${base}_${denv}_${NOISE}_${i}_${cc}.dat | awk '{printf "\t%e\n", $2}'
-	done
-    done > ${base}_${cc}_sigma.dat
+    # # This "Sigma" is a bit complicated. ||environmental change x cross-cov||
+    # for denv in 2 {10..100..10}; do
+    # 	for i in {01..${NIND}}; do
+    # 	    echo -n $denv
+    # 	    grep "Sigma" per/${base}_${denv}_${NOISE}_${i}_${cc}.dat | awk '{printf "\t%e\n", $2}'
+    # 	done
+    # done > ${base}_${cc}_sigma.dat
 
-    for denv in 2 {10..100..10}; do
-	for i in {01..${NIND}}; do
-	    echo -n $denv
-	    fgrep Pdenv per/${base}_${denv}_${NOISE}_${i}_${cc}.dat | awk '{printf "\t%e\t%e\t%e\n", $2, $3, $4}'
-	done
-    done > ${base}_${cc}_pheno.dat
+    # for denv in 2 {10..100..10}; do
+    # 	for i in {01..${NIND}}; do
+    # 	    echo -n $denv
+    # 	    fgrep Pdenv per/${base}_${denv}_${NOISE}_${i}_${cc}.dat | awk '{printf "\t%e\t%e\t%e\n", $2, $3, $4}'
+    # 	done
+    # done > ${base}_${cc}_pheno.dat
 
     # 1st singular values
     for denv in 2 {10..100..10}; do
