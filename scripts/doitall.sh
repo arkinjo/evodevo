@@ -14,7 +14,10 @@ for base in EFGHJP _FGHJP E_G__P EFGHJ_; do
 	#done
     #)
     # perturbation & check 1st generations
-    zsh check_perturb.sh $base
+    for mode in {0..2} ; do 
+    (
+        zsh check_perturb2.sh $base $mode #Loop over all modes
+    )
 
     # requires gnuplot
     #zsh plot_covprj.sh $base 
