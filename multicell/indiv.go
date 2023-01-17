@@ -309,16 +309,21 @@ func (cell *Cell) DevCell(G Genome, env Cue) Cell { //Develops a cell given cue
 		copy(f0, f1)
 		copy(g0, g1)
 		copy(h0, h1)
-		cell.updatePEMA(p1)
-
-		diff := 0.0
-		for _, v := range cell.Pvar {
-			diff += v
-		}
-		diff /= float64(len(cell.Pvar))
-		cell.NDevStep = nstep
-		if diff < epsDev {
+		if maxDevStep == 1 {
+			copy(cell.P, p1) //Directly take phenotype if no developmental process.
 			break
+		} else {
+			cell.updatePEMA(p1)
+
+			diff := 0.0
+			for _, v := range cell.Pvar {
+				diff += v
+			}
+			diff /= float64(len(cell.Pvar))
+			cell.NDevStep = nstep
+			if diff < epsDev {
+				break
+			}
 		}
 	}
 	copy(cell.F, f1)

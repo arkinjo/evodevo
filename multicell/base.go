@@ -177,9 +177,11 @@ func SetParams(s Settings) {
 		DensityH = 0.0
 		omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes)*(2-tauG))
 	}
+	/* // Trying not calling EMA for NoDev instead.
 	if maxDevStep == 1 {
 		omega_p *= 10.0 //Arbitrary factor to increase sensitivity of NoDev.
 	}
+	*/
 
 }
 
