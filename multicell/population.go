@@ -388,7 +388,7 @@ func (pop0 *Population) Evolve(test bool, ftraj *os.File, jsonout string, nstep,
 
 		fmt.Fprintf(ftraj, "%d\t%d\t%d\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\t%e\n", epoch, istep, popsize, pstat.PEDot, pstat.PErr1, pstat.PErr0, pstat.PED10, pstat.PED01, pstat.Fitness, pstat.WagFit, pstat.Plasticity, pstat.Div, pstat.NDevStep)
 
-		fmt.Printf("Evolve: %d\t<ME1>: %e\t<ME0>: %e\t DevStep: %e", istep, pstat.PErr1, pstat.PErr0, pstat.NDevStep)
+		fmt.Printf("Evolve: %d\t<ME1>: %e\t<ME0>: %e\t DevStep: %e\n", istep, pstat.PErr1, pstat.PErr0, pstat.NDevStep)
 
 		pop = pop.PairReproduce(maxPop)
 	}
