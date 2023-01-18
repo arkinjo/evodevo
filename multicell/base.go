@@ -178,10 +178,7 @@ func SetParams(s Settings) {
 		omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes)*(2-tauG))
 	}
 	if maxDevStep == 1 {
-		omega_f *= 10.0
-		omega_g *= 10.0
-		omega_h *= 10.0
-		omega_p *= 10.0 //Arbitrary factor to increase sensitivity of NoDev.
+		omega_p *= 100.0 //Arbitrary factor to increase sensitivity of NoDev.
 	}
 
 }
