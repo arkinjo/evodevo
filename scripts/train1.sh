@@ -37,14 +37,14 @@ if [ "${base}" = "E_G__P" ]; then
     DENSITY_G=$((4*0.02/9))
     DENSITY_H=0.00
     DENSITY_P=$((0.02/3))
-elif [ "${base}" = "EFGH__"]; then
+elif [ "${base}" = "EFGH__" ]; then
 #   "Feedforward" deep model [NoDev]
     NGENES=200
     DENSITY_E=0.02
     DENSITY_G=0.02
     DENSITY_H=0.04
     DENSITY_P=0.02
-elif [ "${base}" = "__G___"]; then
+elif [ "${base}" = "__G___" ]; then
 #    Single fat layer "feedforward" model. [Null]   
     NGENES = 800
     DENSITY_E=0.00
