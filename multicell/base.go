@@ -437,7 +437,7 @@ func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	return cv
 }
 
-func GetVarVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
+func GetVarVec(vecs []Vec) Vec { // Return the variance vector of array of vectors
 	lv := len(vecs[0])
 	cv := NewVec(lv)
 	mv := GetMeanVec(vecs)
@@ -454,6 +454,14 @@ func GetVarVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	ScaleVec(cv, fn, cv)
 
 	return cv
+}
+
+func SumVec(v Vec) float64 { //Sum of all elements in vector
+	var s float64
+	for _, x := range v {
+		s += x
+	}
+	return s
 }
 
 func GetCrossCov(vecs0, vecs1 []Vec, submean0, submean1 bool) (Vec, Vec, Dmat) {
