@@ -17,7 +17,7 @@ func cca(vecs0, vecs1 [][]float64, axis0 []float64) {
 	len0 := len(vecs0[0])
 	len1 := len(vecs1[0])
 
-	_, _, cov := multicell.GetCrossCov(vecs0, vecs1, true, true)
+	av0, _, cov := multicell.GetCrossCov(vecs0, vecs1, true, true)
 	Us, svals, Vs := multicell.GetSVD(cov)
 
 	rank := len(svals)
@@ -54,6 +54,14 @@ func cca(vecs0, vecs1 [][]float64, axis0 []float64) {
 	}
 	for i, v := range U[0] {
 		fmt.Printf("LSVec1\t%d\t%e\n", i, v)
+	}
+
+	// Projecting individuals' phenotypes onto U[0].
+	dp := multicell.NewVec(len0)
+	for i, p := range vecs0 {
+		multicell.DiffVecs(dp, p, av0)
+		v := multicell.DotVecs(dp, U[0])
+		fmt.Printf("LProj1\t%d\t%e\n", i, v)
 	}
 }
 
