@@ -101,7 +101,7 @@ for denv in 2 {10..100..10}; do
     for i in {01..${NIND}}; do
     fgrep LProj1 per/${base}_${denv}_${NOISE}_${ccamode}_${i}_pe.dat > tmp0.dat
     fgrep LProj1 per/${base}_${denv}_${NOISE}_${ccamode}_${i}_pG.dat > tmp1.dat
-    paste tmp0.dat tmp1.dat | awk '{printf "%d\t$e\t$e\n", $2, $3, $6}' > LProj1/${base}_${denv}_${NOISE}_${ccamode}_${i}.lproj1
+    paste tmp0.dat tmp1.dat | awk '{printf "%d\t%e\t%e\n", $2, $3, $6}' > LProj1/${base}_${denv}_${NOISE}_${ccamode}_${i}.lproj1
     done
 done
 rm -f tmp0.dat tmp1.dat
