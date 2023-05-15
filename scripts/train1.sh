@@ -31,15 +31,32 @@ TAUF=1
 
 # default values
 if [ "${base}" = "E_G__P" ]; then
-#    Single-layer with fat hidden layer.
+#    Single-layer with fat hidden layer. [NoHier]
     NGENES=600
     DENSITY_E=$((0.02/3))
     DENSITY_G=$((4*0.02/9))
+    DENSITY_H=0.00
     DENSITY_P=$((0.02/3))
-else
+elif [ "${base}" = "EFGH__" ]; then
+#   "Feedforward" deep model [NoDev]
     NGENES=200
     DENSITY_E=0.02
     DENSITY_G=0.02
+    DENSITY_H=0.04
+    DENSITY_P=0.02
+elif [ "${base}" = "__G___" ]; then
+#    Single fat layer "feedforward" model. [Null]   
+    NGENES = 800
+    DENSITY_E=0.00
+    DENSITY_G=$((5*0.02/16))
+    DENSITY_H=0.00
+    DENSITY_P=$((0.02/4))
+else
+#   Everything else
+    NGENES=200
+    DENSITY_E=0.02
+    DENSITY_G=0.02
+    DENSITY_H=0.02
     DENSITY_P=0.02
 fi
 
@@ -60,7 +77,7 @@ if [ ${DENV2} -eq 100 ]; then
 	   -cue=${e} -layerF=${f} -layerH=${h} -layerJ=${j} \
 	   -pfback=${p} \
 	   -seed=${SEED1} -seed_cue=${SEEDCUE1} \
-	   -ngenes=${NGENES} -dE=${DENSITY_E} -dG=${DENSITY_G} -dP=${DENSITY_P} \
+	   -ngenes=${NGENES} -dE=${DENSITY_E} -dG=${DENSITY_G} -dH=${DENSITY_H} -dP=${DENSITY_P} \
 	   -tauF=${TAUF} \
 	   > /dev/null
 fi

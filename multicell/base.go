@@ -177,6 +177,11 @@ func SetParams(s Settings) {
 		DensityH = 0.0
 		omega_p = 1.0 / math.Sqrt(DensityP*float64(ngenes)*(2-tauG))
 	}
+	/* // Trying not calling EMA for NoDev instead.
+	if maxDevStep == 1 {
+		omega_p *= 10.0 //Arbitrary factor to increase sensitivity of NoDev.
+	}
+	*/
 
 }
 
@@ -432,7 +437,7 @@ func GetMeanVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	return cv
 }
 
-func GetVarVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
+func GetVarVec(vecs []Vec) Vec { // Return the variance vector of array of vectors
 	lv := len(vecs[0])
 	cv := NewVec(lv)
 	mv := GetMeanVec(vecs)
@@ -449,6 +454,14 @@ func GetVarVec(vecs []Vec) Vec { // Return the mean vector of array of vectors
 	ScaleVec(cv, fn, cv)
 
 	return cv
+}
+
+func SumVec(v Vec) float64 { //Sum of all elements in vector
+	var s float64
+	for _, x := range v {
+		s += x
+	}
+	return s
 }
 
 func GetCrossCov(vecs0, vecs1 []Vec, submean0, submean1 bool) (Vec, Vec, Dmat) {
