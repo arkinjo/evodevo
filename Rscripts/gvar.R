@@ -62,7 +62,7 @@ mat.diffgvar <- as.matrix(df.diffgvar)
 
 tiff("ngvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 matplot(mat.ngvar[,2:ncol(mat.ngvar)],col=colvec.l,type="l",lty=1,lwd=2,xlab="Generation",ylab="Genetic Variance",cex.lab=1.5)
-legend("bottomright",legend=modelvec[bxpindex],col=colvec.s[bxpindex],lty=1)
+legend("bottomright",legend=modelvec[bxpindex],title="Model",col=colvec.s[bxpindex],lty=1)
 dev.off()
 
 #matplot(mat.diffgvar[,2:ncol(mat.diffgvar)],col=colvec.l,type="l",lty=1,lwd=2,xlab="Generation",ylab="Genetic Variance",ylim=c(-10,10))
@@ -98,4 +98,16 @@ dev.off()
 #legend("bottomright",legend=modelvec[bxpindex-1],col=colvec.s[bxpindex-1],lty=1)
 #dev.off()
 
+###Play
+plot(df.tminvar$NoCue,df.Cvar$NoCue,col="navy",xlim=c(0,70),ylim=c(200,1200),xlab="Generations to bottleneck",ylab="Accumulated Cryptic Mutations",cex.lab=1.5)
+points(df.tminvar$NoHier,df.Cvar$NoHier,col="limegreen")
+points(df.tminvar$Full,df.Cvar$Full,col="orange")
+points(df.tminvar$NoDev,df.Cvar$NoDev,col="darkorchid")
+legend("topright",legend=c("Full","NoHier","NoCue","NoDev"),col=c("orange","limegreen","navy","darkorchid"),pch=rep(1,4),title="Model")
+
+plot(df.Dvar$NoCue,df.Cvar$NoCue,col="navy",xlim=c(0,1200),ylim=c(0,1200),xlab="Generations to bottleneck",ylab="Accumulated Cryptic Mutations",cex.lab=1.5)
+points(df.Dvar$NoHier,df.Cvar$NoHier,col="limegreen")
+points(df.Dvar$Full,df.Cvar$Full,col="orange")
+points(df.Dvar$NoDev,df.Cvar$NoDev,col="darkorchid")
+legend("topleft",legend=c("Full","NoHier","NoCue","NoDev"),col=c("orange","limegreen","navy","darkorchid"),pch=rep(1,4),title="Model")
 

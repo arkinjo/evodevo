@@ -59,7 +59,7 @@ mat.diffgvar <- as.matrix(df.diffgvar)
 
 tiff("ngvar-train.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 matplot(mat.ngvar[,2:ncol(mat.ngvar)],col=colvec.l,type="l",lty=1,lwd=2,xlab="Generation",ylab="Genetic Variance",cex.lab=1.5)
-legend("bottomright",legend=modelvec[bxpindex],col=colvec.s[bxpindex],lty=1)
+legend("bottomright",legend=modelvec[bxpindex],title="Model",col=colvec.s[bxpindex],lty=1)
 dev.off()
 
 #matplot(mat.diffgvar[,2:ncol(mat.diffgvar)],col=colvec.l,type="l",lty=1,lwd=2,xlab="Generation",ylab="Genetic Variance",ylim=c(-10,10))

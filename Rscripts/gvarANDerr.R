@@ -1,11 +1,9 @@
 
-#Run this after running updated gvar-train.R and traj-train.R scripts!
+#Run this after running updated gvar.R and traj.R scripts!
 
 df.err_minvar <- data.frame(epoch=seq(1,nepoch)) #error at minimum genetic variance
 df.derr_GA <- data.frame(epoch=seq(1,nepoch)) #change in error due to change in regulation
 df.derr_AR <- data.frame(epoch=seq(1,nepoch)) #change in error due to adaptive refinement
-
-df.derr_TOT <- data.frame(epoch=seq(1,nepoch))
 
 df.pderr_GA <- data.frame(epoch=seq(1,nepoch))
 df.pderr_AR <- data.frame(epoch=seq(1,nepoch)) #Proportion change in error due to adaptive refinement. 1- gives proportion due to change in regulation
@@ -16,7 +14,6 @@ for(i in seq(2,ncol(df.tminvar))){
   err_minvar <- c()
   derr_GA <- c()
   derr_AR <- c()
-  derr_TOT <- c()
   pderr_AR <- c()
   model <- colnames(df.tminvar)[i]
   modelgens <- df.tminvar[model]
@@ -27,7 +24,6 @@ for(i in seq(2,ncol(df.tminvar))){
     err_minvar <- append(err_minvar,errtraj[gen_minvar,])
     derr_GA <- append(derr_GA,errtraj[1,]-errtraj[gen_minvar,])
     derr_AR <- append(derr_AR,errtraj[gen_minvar,]-errtraj[ngen,])
-    derr_TOT <- append(derr_TOT,errtraj[1,]-errtraj[ngen,])
     pderr_AR <- append(pderr_AR,(errtraj[gen_minvar,]-errtraj[ngen,])/(errtraj[1,]-errtraj[ngen,]))
   }
   df.err_minvar[model] <- err_minvar
@@ -35,42 +31,37 @@ for(i in seq(2,ncol(df.tminvar))){
   df.derr_ALL[sprintf("%s_GA",model)] <- derr_GA
   df.derr_AR[model] <- derr_AR
   df.derr_ALL[sprintf("%s_AR",model)] <- derr_AR
-  df.derr_TOT[model] <- derr_TOT
   df.pderr_AR[model] <- pderr_AR
   df.pderr_GA[model] <- 1-pderr_AR
 }
 
 #Make boxplots of change in error in each phase
 
-boxatvec <- c(1,2,4,5)
-#boxatvec <- boxatvec[-3*seq(1,4)]
-axisatvec <- c(1.5,4.5)
+boxatvec <- seq(1,12)
+boxatvec <- boxatvec[-3*seq(1,4)]
+axisatvec <- 3*seq(1,4)-1.5
 
 #No need length of adaptive refinement phase, as long as environment doesn't change this could be infinite
 
-tiff("derr_GA-train.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
-boxplot(df.derr_GA[bxpindex+1],col=colvec.s[bxpindex],xlab="Model",ylab="Decrease in mismatch",main="Change in regulation")
+tiff("derr_GA.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+boxplot(df.derr_GA[bxpindex+1],col=colvec.s[bxpindex],ylab="Decrease in mismatch (Change in regulation)",cex.lab=1.5,cex.main=2.0)
 dev.off()
 
-tiff("derr_AR-train.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
-boxplot(df.derr_AR[bxpindex+1],col=colvec.s[bxpindex],xlab="Model",ylab="Decrease in mismatch",main="Adaptive refinement")
+tiff("derr_AR.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+boxplot(df.derr_AR[bxpindex+1],col=colvec.s[bxpindex],ylab="Decrease in mismatch (Adaptive refinement)",cex.lab=1.5,cex.main=2.0)
 dev.off()
 
-tiff("derr_TOT-train.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
-boxplot(df.derr_TOT[bxpindex+1],col=colvec.s[bxpindex],xlab="Model",ylab="Decrease in error")
+tiff("pderr_AR.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+boxplot(df.pderr_AR[bxpindex+1],col=colvec.s[bxpindex],ylab="Proportion decrease in mismatch",main="Adaptive refinement")
 dev.off()
 
-tiff("pderr_AR-train.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
-boxplot(df.pderr_AR[bxpindex+1],col=colvec.s[bxpindex],xlab="Model",ylab="Proportion decrease in error",main="Adaptive refinement")
-dev.off()
-
-tiff("pderr_GA-train.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+tiff("pderr_GA.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 boxplot(df.pderr_GA[bxpindex+1],col=colvec.s[bxpindex],xlab="Model",ylab="Proportion decrease in error",main="Change in regulation")
 dev.off()
 
-tiff("derr_ALL-train.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
-boxplot(df.derr_ALL[seq(2,ncol(df.derr_ALL))],ylim=c(0,1),col=c("magenta","cyan"),xlab="Model",ylab="Decrease in mismatch",at=boxatvec,xaxt="n",cex.lab=1.5)
-axis(side = 1, at = axisatvec, labels=c("Full","NoTrain"))
+tiff("derr_ALL.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+boxplot(df.derr_ALL[c(6,7,4,5,2,3,8,9)],ylim=c(0,1),col=c("magenta","cyan"),ylab="Decrease in mismatch",at=boxatvec,xaxt="n",cex.lab=1.5)
+axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
 legend("topright",legend=c("Before bottleneck","After bottleneck"),col=c("magenta","cyan"),lty=1)
 dev.off()
 

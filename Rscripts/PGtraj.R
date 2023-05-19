@@ -19,20 +19,6 @@ apvar <- data.frame(gen=c(1:maxgen))
 
 df.pGvar <- data.frame(gen=c(1:maxgen))
 
-#ffpt.s <- function(v,Omega) { #First passage time
-#  return(min(which(v<Omega)))
-#}
-
-#ffpt.l <- function(v,Omega) { #First passage time
-#  return(min(which(v>Omega)))
-#}
-
-#No need first passage times
-#df.fpt.ag <- data.frame(epoch = c(1:nepoch))
-#df.fpt.ap <- data.frame(epoch = c(1:nepoch)) #First passage time for this is not sane
-#df.fpt.ng <- data.frame(epoch = c(1:nepoch))
-#df.fpt.np <- data.frame(epoch = c(1:nepoch))
-
 df.p_0 <- data.frame(epoch=seq(1,nepoch)) #Projected phenotypes before evolution
 df.p_inf <- data.frame(epoch=seq(1,nepoch)) #Projected phenotypes after evolution
 
@@ -43,7 +29,7 @@ colvec.s <- c()
 colvec.l <- c()
 
 for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order determines what goes over/under in plot!
-
+  
   modelname <- switch(layers, "EFGHJP"="Full","_FGHJP"="NoCue","E_G__P"="NoHier","EFGH__"="NoDev","__G___"="Null")
   modelvec <- append(modelvec, modelname)
   modelcol <- switch(layers, "EFGHJP" = "orange", "_FGHJP"="cyan", "E_G__P"="limegreen", "EFGH__"="darkorchid", "__G___"="red")
@@ -54,18 +40,9 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
   ap_inf <- c()
   np_inf <- c()
   
-  #print(modelname)
-  #fpt.ag <- c()
-  #fpt.ap <- c()
-  #fpt.np <- c()
-  #fpt.ng <- c()
-  
-  #all.nghat <- c() 
-  #all.npvar <- c()
-  #all.apvar <- c()
   
   for(epoch in c(1:nepoch)) {
-
+    
     
     str.epoch <- sprintf("%02d",epoch)
     colvec.l <- append(colvec.l,modelcol)
@@ -77,18 +54,12 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
     
     gvar <- c()
     
-    #fpt.aghat <- 0
-    #fpt.aphat <- 0
-    #fpt.nphat <- 0
-    #fpt.nghat <- 0
-    
     sdap <- c()
     sdnp <- c()
     sdag <- c()
     sdng <- c()
     
-    #pdffilename <- paste("nodev.pdf",sep="")
-    #pdf(pdffilename)
+    pdf(sprintf("../plots/%s_%02d.pdf",modelname,epoch)) 
     for (gen in c(1:maxgen)){
       t0gen <- sprintf("%03d",gen)
       filename <- paste(layers,"_run100_",str.epoch,"_",t0gen,".dat",sep="")
@@ -104,8 +75,16 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
       nphat <- append(nphat,pgstats[2,4])
       sdng <- append(sdng,pgstats[2,5])
       sdnp <- append(sdnp,pgstats[2,6])
+      
+      pgpoints <- read.delim(filename,nrows = 1000)
+      plot(pgpoints$Geno.e0,pgpoints$Pheno0,xlim=c(0.0,1.0),ylim=c(0.0,1.0),
+           xlab="Genotype",ylab="Phenotype",main=modelname,col="darkorchid",pch=1,
+           cex.lab=1.5,cex.main=2.0)
+      points(pgpoints$Geno.e1,pgpoints$Pheno1,col="cyan",pch=4)
+      #legend("topleft",legend=c("Novel","Ancestral"),col=c("cyan","darkorchid"),pch=c(4,1), title="Environment") 
+      #Can't find a good place to put figure legend without getting into way of plot
     }
-    #dev.off()
+    dev.off()
     
     #Summarize trajectory: error plots for initial, reference and final generation.
     #pdf(paste("../plots/",modelname,"_",str.epoch,".pdf",sep=""))
@@ -113,14 +92,14 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
     
     tiff(sprintf("../plots/%s_%02d.tif",modelname,epoch),width=2250,height=2250,units="px", pointsize=12, res=300)
     plot(aghat,aphat,xlim=c(0.0,1.0),ylim=c(0.0,1.0),xlab="Genotype",ylab="Phenotype",main=modelname,col="darkorchid",type="l",cex.lab=1.5,cex.main=2.0)
-    points(aghat,aphat,col="darkorchid")
+    points(aghat,aphat,col="darkorchid",pch=1)
     arrows(aghat, aphat-sdap, aghat, aphat+sdap, length=0.05, angle=90, code=3, col="darkorchid") 
     arrows(aghat-sdag, aphat, aghat+sdag, aphat, length=0.05, angle=90, code=3, col="darkorchid") 
     lines(nghat,nphat,col="cyan")
-    points(nghat,nphat,col="cyan")
+    points(nghat,nphat,col="cyan",pch=4)
     arrows(nghat, nphat-sdnp, nghat, nphat+sdnp, length=0.05, angle=90, code=3, col="cyan") 
     arrows(nghat-sdng, nphat, nghat+sdng, nphat, length=0.05, angle=90, code=3, col="cyan") 
-    legend("topleft",legend=c("Novel","Ancestral"),col=c("cyan","darkorchid"),title="Environment",lty=c(1,1))
+    legend("topleft",legend=c("Novel","Ancestral"),col=c("cyan","darkorchid"),pch=c(4,1), title="Environment",lty=c(1,1))
     dev.off()
     
     df.G[paste(modelname,str.epoch,sep="")] <- nghat
@@ -135,19 +114,9 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
     ap_inf <- append(ap_inf,aphat[maxgen])
     np_inf <- append(np_inf,nphat[maxgen])
     
-    #ap_inf <- append(ap_inf)
     
-    
-    #fpt.aghat <- ffpt.l(aghat,fpt.Threshold)
-    #fpt.aphat <- ffpt.l(aphat,fpt.Threshold)
-    #fpt.nghat <- ffpt.l(nghat,fpt.Threshold)
-    #fpt.nphat <- ffpt.l(nphat,fpt.Threshold)
-    
-    #fpt.ag <- append(fpt.ag, fpt.aghat)
-    #fpt.ap <- append(fpt.ap, fpt.aphat)
-    #fpt.ng <- append(fpt.ng, fpt.nghat)
-    #fpt.np <- append(fpt.np, fpt.nphat)
     print(paste("Plotting ../plots/",modelname,"_",str.epoch,".png",sep=""))
+    
   }
   
   df.p_0[sprintf("%s_a",modelname)] <- ap_0
@@ -184,10 +153,10 @@ axisatvec <- 3*seq(1,4)-1.5
 
 
 tiff("../plots/G.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
-matplot(y=mat.G[,c(2:41)],ylab="Projected genotype",xlab="Generation",type="l",lty=1,col=colvec.l)
-legend("topright",legend = modelvec[lindex], col=colvec.s[lindex], lty=1)
+matplot(y=mat.G[,c(2:41)],ylab="Projected genotype",xlab="Generation",type="l",lty=1,col=colvec.l,cex.lab=1.5)
+legend("bottomright",legend = modelvec[lindex], title = "Model", col=colvec.s[lindex], lty=1)
 
-
+dev.off()
 
 #pdf("../plots/dG.pdf")
 tiff("../plots/dG.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
