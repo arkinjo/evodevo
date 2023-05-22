@@ -59,7 +59,8 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
     sdag <- c()
     sdng <- c()
     
-    pdf(sprintf("../plots/%s_%02d.pdf",modelname,epoch)) 
+    print(paste("Plotting ../anims/",modelname,"_",str.epoch,".pdf",sep=""))
+    pdf(sprintf("../anims/%s_%02d.pdf",modelname,epoch)) #dump animation in seperate directory
     for (gen in c(1:maxgen)){
       t0gen <- sprintf("%03d",gen)
       filename <- paste(layers,"_run100_",str.epoch,"_",t0gen,".dat",sep="")
@@ -78,8 +79,8 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
       
       pgpoints <- read.delim(filename,nrows = 1000)
       plot(pgpoints$Geno.e0,pgpoints$Pheno0,xlim=c(0.0,1.0),ylim=c(0.0,1.0),
-           xlab="Genotype",ylab="Phenotype",main=modelname,col="darkorchid",pch=1,
-           cex.lab=1.5,cex.main=2.0)
+           xlab="Genotype",ylab="Phenotype",main=sprintf("%6s (Gen:%3d)", modelname, gen),
+           col="darkorchid",pch=1,cex.lab=1.5,cex.main=2.0)
       points(pgpoints$Geno.e1,pgpoints$Pheno1,col="cyan",pch=4)
       #legend("topleft",legend=c("Novel","Ancestral"),col=c("cyan","darkorchid"),pch=c(4,1), title="Environment") 
       #Can't find a good place to put figure legend without getting into way of plot
@@ -90,7 +91,7 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
     #pdf(paste("../plots/",modelname,"_",str.epoch,".pdf",sep=""))
     
     
-    tiff(sprintf("../plots/%s_%02d.tif",modelname,epoch),width=2250,height=2250,units="px", pointsize=12, res=300)
+    png(sprintf("../plots/%s_%02d.png",modelname,epoch),width=2250,height=2250,units="px", pointsize=12, res=300)
     plot(aghat,aphat,xlim=c(0.0,1.0),ylim=c(0.0,1.0),xlab="Genotype",ylab="Phenotype",main=modelname,col="darkorchid",type="l",cex.lab=1.5,cex.main=2.0)
     points(aghat,aphat,col="darkorchid",pch=1)
     arrows(aghat, aphat-sdap, aghat, aphat+sdap, length=0.05, angle=90, code=3, col="darkorchid") 
