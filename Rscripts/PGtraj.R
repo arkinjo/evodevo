@@ -28,11 +28,11 @@ modelvec <- c()
 colvec.s <- c()
 colvec.l <- c()
 
-for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order determines what goes over/under in plot!
+for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__","CEFGHJP")){ #Loop over models, order determines what goes over/under in plot! #Ignore NoTrain in main plots.
   
-  modelname <- switch(layers, "EFGHJP"="Full","_FGHJP"="NoCue","E_G__P"="NoHier","EFGH__"="NoDev","__G___"="Null")
+  modelname <- switch(layers, "EFGHJP"="Full","_FGHJP"="NoCue","E_G__P"="NoHier","EFGH__"="NoDev","CEFGHJP"="NoTrain")
   modelvec <- append(modelvec, modelname)
-  modelcol <- switch(layers, "EFGHJP" = "orange", "_FGHJP"="cyan", "E_G__P"="limegreen", "EFGH__"="darkorchid", "__G___"="red")
+  modelcol <- switch(layers, "EFGHJP" = "orange", "_FGHJP"="cyan", "E_G__P"="limegreen", "EFGH__"="darkorchid", "CEFGHJP"="blue")
   colvec.s <- append(colvec.s, modelcol)
   
   ap_0 <- c()
@@ -152,6 +152,7 @@ boxatvec <- boxatvec[-3*seq(1,4)]
 axisatvec <- 3*seq(1,4)-1.5
 
 
+#Do Full (2:11), NoHier (12:21), NoCue(22:31), NoDev(32:41) Ignore NoTrain (42:)
 
 tiff("../plots/G.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 matplot(y=mat.G[,c(2:41)],ylab="Projected genotype",xlab="Generation",type="l",lty=1,col=colvec.l,cex.lab=1.5)
