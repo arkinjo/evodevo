@@ -13,6 +13,7 @@ pgproj=${EVODEVODIR}/pgproj/pgproj
 
 
 MAXPOP=200
+MAXDEVSTEP=200
 NEPOCH1=40
 NEPOCH2=10
 NCELLS=1
@@ -44,6 +45,7 @@ elif [ "${base}" = "EFGH__" ]; then
     DENSITY_G=0.02
     DENSITY_H=0.04
     DENSITY_P=0.02
+    MAXDEVSTEP=1
 elif [ "${base}" = "__G___" ]; then
 #    Single fat layer "feedforward" model. [Null]   
     NGENES = 800
@@ -70,7 +72,7 @@ if [ ${base[6]} = "_" ]; then p=F; else p=T; fi
 echo $base ${e}${f}G${h}${j}${p}
 
 if [ ${DENV2} -eq 100 ]; then
-    $train -maxpop=${MAXPOP} -ncells=${NCELLS} -nepoch=${NEPOCH1} \
+    $train -maxpop=${MAXPOP} -maxdevstep=${MAXDEVSTEP} -ncells=${NCELLS} -nepoch=${NEPOCH1} \
 	   -traj_file=traj/${base}_train.traj \
 	   -jsongzout=json/${base}_train.json.gz \
 	   -denv=${DENV1} -noise=${NOISE} -mut=${MUT} \
