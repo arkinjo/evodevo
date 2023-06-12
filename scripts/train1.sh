@@ -84,19 +84,20 @@ if [ ${DENV2} -eq 100 ]; then
 	   > /dev/null
 fi
 
-$train -test=true -nepoch=${NEPOCH2} -maxpop=${MAXPOP} -ncells=${NCELLS} \
-       -traj_file=traj/${base}_run${DENV2}.traj \
+for denv in {10..90..10}; do
+    $train -test=true -nepoch=${NEPOCH2} -maxpop=${MAXPOP} -ncells=${NCELLS} \
+       -traj_file=traj/${base}_run${denv}.traj \
        -jsongzin=json/${base}_train.json.gz \
-       -jsongzout=pops/${base}_run${DENV2} \
-       -denv=${DENV2} -noise=${NOISE} -mut=${MUT} \
+       -jsongzout=pops/${base}_run${denv} \
+       -denv=${denv} -noise=${NOISE} -mut=${MUT} \
        -seed=${SEED2} -seed_cue=${SEEDCUE2} \
        > /dev/null
 
-for epo in {01..${NEPOCH2}}; do
-    $pgproj -maxpop=${MAXPOP} -ncells=${NCELLS} -ngen=${NGEN} \
-	    -ref1=pops/${base}_run${DENV2}_${epo}_${REF1}.json.gz \
-	    -ref2=pops/${base}_run${DENV2}_${epo}_${REF2}.json.gz \
-	    -jsongzin=pops/${base}_run${DENV2}_${epo} \
-	    -PG_file=proj/${base}_run${DENV2}_${epo} -env=false
+    for epo in {01..${NEPOCH2}}; do
+        $pgproj -maxpop=${MAXPOP} -ncells=${NCELLS} -ngen=${NGEN} \
+	        -ref1=pops/${base}_run${denv}_${epo}_${REF1}.json.gz \
+	        -ref2=pops/${base}_run${denv}_${epo}_${REF2}.json.gz \
+	        -jsongzin=pops/${base}_run${denv}_${epo} \
+	        -PG_file=proj/${base}_run${denv}_${epo} -env=false
 done
 

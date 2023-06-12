@@ -14,8 +14,8 @@ for base in EFGHJP _FGHJP E_G__P EFGHJ_; do
 	#done
     #)
     # perturbation & check 1st generations
-    for mode in {0..2} ; do 
-        zsh check_perturb2.sh $base $mode #Loop over all modes
+    for mode in {0..1} ; do 
+        zsh check_perturb2.sh $base $mode #Loop over all modes, already loops over different perturbation sizes.
     done
 
     # requires gnuplot
