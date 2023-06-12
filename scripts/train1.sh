@@ -84,7 +84,7 @@ if [ ${DENV2} -eq 100 ]; then
 	   > /dev/null
 fi
 
-for denv in {10..90..10}; do
+for denv in 10 100; do 
     $train -test=true -nepoch=${NEPOCH2} -maxpop=${MAXPOP} -ncells=${NCELLS} \
        -traj_file=traj/${base}_run${denv}.traj \
        -jsongzin=json/${base}_train.json.gz \
@@ -99,5 +99,6 @@ for denv in {10..90..10}; do
 	        -ref2=pops/${base}_run${denv}_${epo}_${REF2}.json.gz \
 	        -jsongzin=pops/${base}_run${denv}_${epo} \
 	        -PG_file=proj/${base}_run${denv}_${epo} -env=false
+    done
 done
 
