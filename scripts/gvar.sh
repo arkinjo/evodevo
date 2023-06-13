@@ -71,8 +71,10 @@ echo $base ${e}${f}G${h}${j}${p}
 
 
 for epo in {01..${NEPOCH2}}; do
-    $gvar -maxpop=${MAXPOP} -ncells=${NCELLS} -ngen=${NGEN} \
-	    -jsongzin=pops/${base}_run${DENV2}_${epo} \
-	    -GVar_file=vgout/${base}_run${DENV2}_${epo}
+    for denv in 10 100; do
+        $gvar -maxpop=${MAXPOP} -ncells=${NCELLS} -ngen=${NGEN} \
+	        -jsongzin=pops/${base}_run${denv}_${epo} \
+	        -GVar_file=vgout/${base}_run${denv}_${epo}
+    done
 done
 
