@@ -40,92 +40,89 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__","CEFGHJP")){ #Loop over mode
   ap_inf <- c()
   np_inf <- c()
   
-  
-  for(epoch in c(1:nepoch)) {
+  for(pertsize in c(10,100)) { #Genotype-phenotype plot in small and large environmental changes
+    for(epoch in c(1:nepoch)) {
+      colvec.l <- append(colvec.l,modelcol)
     
+      aghat <- c()
+      aphat <- c()
+      nghat <- c()
+      nphat <- c()
     
-    str.epoch <- sprintf("%02d",epoch)
-    colvec.l <- append(colvec.l,modelcol)
+      gvar <- c()
     
-    aghat <- c()
-    aphat <- c()
-    nghat <- c()
-    nphat <- c()
+      sdap <- c()
+      sdnp <- c()
+      sdag <- c()
+      sdng <- c()
     
-    gvar <- c()
-    
-    sdap <- c()
-    sdnp <- c()
-    sdag <- c()
-    sdng <- c()
-    
-    print(paste("Plotting ../anims/",modelname,"_",str.epoch,".pdf",sep=""))
-    pdf(sprintf("../anims/%s_%02d.pdf",modelname,epoch)) #dump animation in seperate directory
-    for (gen in c(1:maxgen)){
-      t0gen <- sprintf("%03d",gen)
-      filename <- paste(layers,"_run100_",str.epoch,"_",t0gen,".dat",sep="")
+      print(sprintf("Plotting ../anims/%s_%s.pdf",modelname,str.epoch,sep=""))
+      pdf(sprintf("../anims/%s_%d_%02d.pdf",modelname,pertsize, epoch)) #dump animation in seperate directory
+      for (gen in c(1:maxgen)){
+        t0gen <- sprintf("%03d",gen)
+        #filename <- paste(layers,"_run100_",str.epoch,"_",t0gen,".dat",sep="")
+        filename <- sprintf("%s_run%d_%02d_%03d.dat",layers,pertsize,epoch,gen)
       
-      pgstats <- read.delim(filename,skip = 1000)
-      #print(filename)
+        pgstats <- read.delim(filename,skip = 1000)
+        #print(filename)
       
-      aghat <- append(aghat,pgstats[1,3])
-      aphat <- append(aphat,pgstats[1,4])
-      sdag <- append(sdag,pgstats[1,5])
-      sdap <- append(sdap,pgstats[1,6])
-      nghat <- append(nghat,pgstats[2,3])
-      nphat <- append(nphat,pgstats[2,4])
-      sdng <- append(sdng,pgstats[2,5])
-      sdnp <- append(sdnp,pgstats[2,6])
+        aghat <- append(aghat,pgstats[1,3])
+        aphat <- append(aphat,pgstats[1,4])
+        sdag <- append(sdag,pgstats[1,5])
+        sdap <- append(sdap,pgstats[1,6])
+        nghat <- append(nghat,pgstats[2,3])
+        nphat <- append(nphat,pgstats[2,4])
+        sdng <- append(sdng,pgstats[2,5])
+        sdnp <- append(sdnp,pgstats[2,6])
       
-      pgpoints <- read.delim(filename,nrows = 1000)
-      plot(pgpoints$Geno.e0,pgpoints$Pheno0,xlim=c(0.0,1.0),ylim=c(0.0,1.0),
-           xlab="Genotype",ylab="Phenotype",main=sprintf("%6s (Gen:%3d)", modelname, gen),
-           col="darkorchid",pch=1,cex.lab=1.5,cex.main=2.0)
-      points(pgpoints$Geno.e1,pgpoints$Pheno1,col="cyan",pch=4)
-      #legend("topleft",legend=c("Novel","Ancestral"),col=c("cyan","darkorchid"),pch=c(4,1), title="Environment") 
-      #Can't find a good place to put figure legend without getting into way of plot
+        pgpoints <- read.delim(filename,nrows = 1000)
+        plot(pgpoints$Geno.e0,pgpoints$Pheno0,xlim=c(0.0,1.0),ylim=c(0.0,1.0),
+             xlab="Genotype",ylab="Phenotype",main=sprintf("%6s (Gen:%3d)", modelname, gen),
+             col="darkorchid",pch=1,cex.lab=1.5,cex.main=2.0)
+        points(pgpoints$Geno.e1,pgpoints$Pheno1,col="cyan",pch=4)
+        #legend("topleft",legend=c("Novel","Ancestral"),col=c("cyan","darkorchid"),pch=c(4,1), title="Environment") 
+        #Can't find a good place to put figure legend without getting into way of plot
+      }
+      dev.off()
+    
+      #Summarize trajectory: error plots for initial, reference and final generation.
+      #pdf(paste("../plots/",modelname,"_",str.epoch,".pdf",sep=""))
+    
+    
+      png(sprintf("../plots/%s_%d_%02d.png",modelname,pertsize_epoch),width=2250,height=2250,units="px", pointsize=12, res=300)
+      plot(aghat,aphat,xlim=c(0.0,1.0),ylim=c(0.0,1.0),xlab="Genotype",ylab="Phenotype",main=modelname,col="darkorchid",type="l",cex.lab=1.5,cex.main=2.0)
+      points(aghat,aphat,col="darkorchid",pch=1)
+      arrows(aghat, aphat-sdap, aghat, aphat+sdap, length=0.05, angle=90, code=3, col="darkorchid") 
+      arrows(aghat-sdag, aphat, aghat+sdag, aphat, length=0.05, angle=90, code=3, col="darkorchid") 
+      lines(nghat,nphat,col="cyan")
+      points(nghat,nphat,col="cyan",pch=4)
+      arrows(nghat, nphat-sdnp, nghat, nphat+sdnp, length=0.05, angle=90, code=3, col="cyan") 
+      arrows(nghat-sdng, nphat, nghat+sdng, nphat, length=0.05, angle=90, code=3, col="cyan") 
+      legend("topleft",legend=c("Novel","Ancestral"),col=c("cyan","darkorchid"),pch=c(4,1), title="Environment",lty=c(1,1))
+      dev.off()
+    
+      df.G[paste(modelname,str.epoch,sep="")] <- nghat
+      df.dG[paste(modelname,str.epoch,sep="")] <- diff(nghat)
+      apvar[paste(modelname,str.epoch,sep="")] <- sdap^2
+      npvar[paste(modelname,str.epoch,sep="")] <- sdnp^2
+    
+      df.pGvar[sprintf("%s%02d",modelname,epoch)] <- sdng^2
+    
+      ap_0 <- append(ap_0,aphat[1])
+      np_0 <- append(np_0,nphat[1])
+      ap_inf <- append(ap_inf,aphat[maxgen])
+      np_inf <- append(np_inf,nphat[maxgen])
+    
+    
+      print(paste("Plotting ../plots/",modelname,"_",str.epoch,".png",sep=""))
     }
-    dev.off()
-    
-    #Summarize trajectory: error plots for initial, reference and final generation.
-    #pdf(paste("../plots/",modelname,"_",str.epoch,".pdf",sep=""))
-    
-    
-    png(sprintf("../plots/%s_%02d.png",modelname,epoch),width=2250,height=2250,units="px", pointsize=12, res=300)
-    plot(aghat,aphat,xlim=c(0.0,1.0),ylim=c(0.0,1.0),xlab="Genotype",ylab="Phenotype",main=modelname,col="darkorchid",type="l",cex.lab=1.5,cex.main=2.0)
-    points(aghat,aphat,col="darkorchid",pch=1)
-    arrows(aghat, aphat-sdap, aghat, aphat+sdap, length=0.05, angle=90, code=3, col="darkorchid") 
-    arrows(aghat-sdag, aphat, aghat+sdag, aphat, length=0.05, angle=90, code=3, col="darkorchid") 
-    lines(nghat,nphat,col="cyan")
-    points(nghat,nphat,col="cyan",pch=4)
-    arrows(nghat, nphat-sdnp, nghat, nphat+sdnp, length=0.05, angle=90, code=3, col="cyan") 
-    arrows(nghat-sdng, nphat, nghat+sdng, nphat, length=0.05, angle=90, code=3, col="cyan") 
-    legend("topleft",legend=c("Novel","Ancestral"),col=c("cyan","darkorchid"),pch=c(4,1), title="Environment",lty=c(1,1))
-    dev.off()
-    
-    df.G[paste(modelname,str.epoch,sep="")] <- nghat
-    df.dG[paste(modelname,str.epoch,sep="")] <- diff(nghat)
-    apvar[paste(modelname,str.epoch,sep="")] <- sdap^2
-    npvar[paste(modelname,str.epoch,sep="")] <- sdnp^2
-    
-    df.pGvar[sprintf("%s%02d",modelname,epoch)] <- sdng^2
-    
-    ap_0 <- append(ap_0,aphat[1])
-    np_0 <- append(np_0,nphat[1])
-    ap_inf <- append(ap_inf,aphat[maxgen])
-    np_inf <- append(np_inf,nphat[maxgen])
-    
-    
-    print(paste("Plotting ../plots/",modelname,"_",str.epoch,".png",sep=""))
-    
+
   }
   
   df.p_0[sprintf("%s_a",modelname)] <- ap_0
   df.p_0[sprintf("%s_n",modelname)] <- np_0
   df.p_inf[sprintf("%s_a",modelname)] <- ap_inf
   df.p_inf[sprintf("%s_n",modelname)] <- np_inf
-  
-  
   
   #df.fpt.ag[modelname] <- fpt.ag
   #df.fpt.ap[modelname] <- fpt.ap
