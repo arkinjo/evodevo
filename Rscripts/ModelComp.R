@@ -14,34 +14,45 @@ pert <- "pe" ### "pG": Genetic/Mutational perturbation, "pe": environmental pert
 #Reminder that R starts counting at 1 instead of 0.
 pert_vs <- switch(pert, "pG" = "Pheno-Geno", "pe" = "Pheno-Cue") 
 
-
-
-df.ali100 <- data.frame(id=c(1:20))
-df.sv1100 <- data.frame(id=c(1:20))
-df.psv1100 <- data.frame(id=c(1:20))
+df.ali <- data.frame(id=c(1:20))
+df.sv1 <- data.frame(id=c(1:20))
+df.psv1 <- data.frame(id=c(1:20))
 df.Fnorm <- data.frame(id=c(1:20))
+
+envmode <- 1 #Only consider novel environments
+
+denvs <- append(2,seq(10,50,5))
 #Challenge: Try to plot all models in one plot.
 
 for (layers in c("EFGHJP","E_G__P","_FGHJP","EFGH__")){
-  for (envmode in c(0,1)){ 
-    modelname <- switch(layers, "EFGHJP"="Full", "_FGHJP"="NoCue", "E_G__P"="NoHier", "EFGH__"="NoDev", "__G___"="Null"  )
-    modelenv <- paste(modelname,envmode)
+  modelname <- switch(layers, "EFGHJP"="Full", "_FGHJP"="NoCue", "E_G__P"="NoHier", "EFGH__"="NoDev", "__G___"="Null"  )
+  #modelenv <- paste(modelname,envmode)
+  #envmodename <- switch(envmode+1, "Ancestral", "Novel", "Novel-Ancestral") 
     
-    envmodename <- switch(envmode+1, "Ancestral", "Novel", "Novel-Ancestral") 
+  #Read data tables
+  ali_in <- read.table(sprintf("%s_1_%s_ali.dat",layers,pert),header=FALSE)
+  sv1_in <- read.table(sprintf("%s_1_%s_sval1.dat",layers,pert),header=FALSE)
+  Fnorm_in <- read.table(sprintf("%s_1_%s_denv22.dat",layers,pert),header=FALSE)
+
+  for (denv in denvs)){
+    modeldenv <- sprintf("%s_%d",modelname,denv)
     
-    ali_in <- read.table(paste(layers,"_",envmode,"_",pert,"_ali.dat",sep=""),header=FALSE)
-    df.ali100[modelenv] <- ali_in$V2[which(ali_in$V1==100)] #Alignment between first singular vector with environmental change
-    
-    sv1_in <- read.table(paste(layers,"_",envmode,"_",pert,"_sval1.dat",sep=""),header=FALSE)
-    df.sv1100[modelenv] <- sv1_in$V2[which(sv1_in$V1==100)] #First singular value
-    df.psv1100[modelenv] <- sv1_in$V3[which(sv1_in$V1==100)] #Proportion first singular value
-    
-    Fnorm_in <- read.table(paste(layers,"_",envmode,"_",pert,"_denv22.dat",sep=""),header=FALSE)
-    df.Fnorm[modelenv] <- Fnorm_in$V2[which(sv1_in$V1==100)] #Frobenius norm.
-    
-    
+    df.ali[modeldenv] <- ali_in$V2[which(sv1_in$V1==denv)]
+    df.sv1[modeldenv] <- sv1_in$V2[which(sv1_in$V1==denv)]
+    df.psv1[modeldenv] <- sv1_in$V3[which(sv1_in$V1==denv)]
+    df.Fnorm[modeldenv] <- Fnorm_in$V2[which(sv1_in$V1==denv)]
+
   }
+  #df.ali100[modelenv] <- ali_in$V2[which(ali_in$V1==100)] #Alignment between first singular vector with environmental change
+    
+  #df.sv1100[modelenv] <- sv1_in$V2[which(sv1_in$V1==100)] #First singular value
+  #df.psv1100[modelenv] <- sv1_in$V3[which(sv1_in$V1==100)] #Proportion first singular value
+    
+  #Fnorm_in <- read.table(paste(layers,"_",envmode,"_",pert,"_denv22.dat",sep=""),header=FALSE)
+  #df.Fnorm[modelenv] <- Fnorm_in$V2[which(sv1_in$V1==100)] #Frobenius norm.
+     
 }
+
 
 ## Colors now indicate ancestral or novel environment
 cols <- c("magenta","cyan")
