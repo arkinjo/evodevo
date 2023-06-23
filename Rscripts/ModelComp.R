@@ -21,20 +21,21 @@ df.Fnorm <- data.frame(id=c(1:20))
 
 envmode <- 1 #Only consider novel environments
 
-denvs <- append(2,seq(10,50,5))
+denvs <- seq(10,100,10)
+#denvs <- append(2,seq(10,50,5))
 #Challenge: Try to plot all models in one plot.
-
-for (layers in c("EFGHJP","E_G__P","_FGHJP","EFGH__")){
-  modelname <- switch(layers, "EFGHJP"="Full", "_FGHJP"="NoCue", "E_G__P"="NoHier", "EFGH__"="NoDev", "__G___"="Null"  )
-  #modelenv <- paste(modelname,envmode)
-  #envmodename <- switch(envmode+1, "Ancestral", "Novel", "Novel-Ancestral") 
+for (denv in denvs){
+  for (layers in c("EFGHJP","E_G__P","_FGHJP","EFGH__")){ #Full, NoHier, NoCue, NoDev
+    modelname <- switch(layers, "EFGHJP"="Full", "_FGHJP"="NoCue", "E_G__P"="NoHier", "EFGH__"="NoDev", "__G___"="Null"  )
+    #modelenv <- paste(modelname,envmode)
+    #envmodename <- switch(envmode+1, "Ancestral", "Novel", "Novel-Ancestral") 
     
-  #Read data tables
-  ali_in <- read.table(sprintf("%s_1_%s_ali.dat",layers,pert),header=FALSE)
-  sv1_in <- read.table(sprintf("%s_1_%s_sval1.dat",layers,pert),header=FALSE)
-  Fnorm_in <- read.table(sprintf("%s_1_%s_denv22.dat",layers,pert),header=FALSE)
+    #Read data tables
+    ali_in <- read.table(sprintf("%s_1_%s_ali.dat",layers,pert),header=FALSE)
+    sv1_in <- read.table(sprintf("%s_1_%s_sval1.dat",layers,pert),header=FALSE)
+    Fnorm_in <- read.table(sprintf("%s_1_%s_denv22.dat",layers,pert),header=FALSE)
 
-  for (denv in denvs)){
+  
     modeldenv <- sprintf("%s_%d",modelname,denv)
     
     df.ali[modeldenv] <- ali_in$V2[which(sv1_in$V1==denv)]
@@ -55,41 +56,35 @@ for (layers in c("EFGHJP","E_G__P","_FGHJP","EFGH__")){
 
 
 ## Colors now indicate ancestral or novel environment
-cols <- c("magenta","cyan")
-colvec <- rep.int(cols,times=4)
-boxatvec <- seq(1,12)
-boxatvec <- boxatvec[-3*seq(1,4)]
-axisatvec <- 3*seq(1,4)-1.5
+#cols <- c("magenta","cyan")
+#colvec <- rep.int(cols,times=4)
+#boxatvec <- seq(1,12)
+#boxatvec <- boxatvec[-3*seq(1,4)]
+#axisatvec <- 3*seq(1,4)-1.5
 
-#tiff("derr_AR.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
-tiff(paste("ali_",pert,".tif",sep=""),width=2250,height=2250,units="px",pointsize=12,res=300)
-boxplot(df.ali100[2:ncol(df.ali100)], ylab = sprintf("Alignment (%s)",pert_vs), col=cols,ylim=c(0,1), at=boxatvec, xaxt = "n", cex.lab=1.5, cex.main=2.0)
-axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
-legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, col=cols)
-#legend("bottomleft",legend = c("Full","NoHier","NoCue","NoDev"), col=c("orange","navy","limegreen","darkorchid"), lty=c(rep(1,4)))
+colvec <- ("orange","limegreen","cyan","darkorchid")
+
+png(sprintf("ali_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
+boxplot(df.ali[2:ncol(df.ali)],ylab = sprintf("Alignment (%s)",pert_vs), col=colvec, ylim=c(0,1), cex.lab=1.5, cex.main=2.0)
+#axis()
+legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
 dev.off()
 
-tiff(paste("sv1_",pert,".tif",sep=""),width=2250,height=2250,units="px",pointsize=12,res=300)
-boxplot(df.sv1100[2:ncol(df.sv1100)], ylab = sprintf("SV1 (%s)",pert_vs), col=colvec, at= boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
-axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
-legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, col=cols)
-#legend("topright",legend = c("Full","NoHier","NoCue","NoDev"), col=c("orange","navy","limegreen","darkorchid"), lty=c(rep(1,4)))
+png(sprintf("sv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
+boxplot(df.ali[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), col=colvec, ylim=c(0,1), cex.lab=1.5, cex.main=2.0)
+#axis()
+legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
 dev.off()
 
-tiff(paste("psv1_",pert,".tif",sep=""),width=2250,height=2250,units="px",pointsize=12,res=300)
-boxplot(df.psv1100[2:ncol(df.psv1100)], ylab = sprintf("%% 1st singular value (%s)",pert_vs), col=colvec, ylim=c(0,1), at = boxatvec, xaxt = "n", yaxt = "n", cex.lab=1.5, cex.main=2.0)
-
-#To do: Fake up percentage axis values.
-
-axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
+png(sprintf("psv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
+boxplot(df.psv1[2:ncol(df.psv1)],ylab = sprintf("%% 1st singular value (%s)",pert_vs), col=colvec, ylim=c(0,1),
+        yaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side = 2, at = c(0,0.2,0.4,0.6,0.8,1.0), labels= c(0,20,40,60,80,100))
-legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, col=cols)
-#legend("topright",legend = c("Full","NoHier","NoCue","NoDev"), col=c("orange","navy","limegreen","darkorchid"), lty=c(rep(1,4)))
+legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
 dev.off()
 
-tiff(paste("Fnorm_",pert,".tif",sep=""),width=2250,height=2250,units="px",pointsize=12,res=300)
-#boxplot(df.Fnorm[2:5], main=paste(envmodename, pertname, sep=","), xlab="Model", ylab="Square Frobenius Norm", col=c("orange","limegreen","navy","darkorchid"), ylim=c(0,2.5))
-boxplot(df.Fnorm[2:ncol(df.Fnorm)], ylab=sprintf("Total Cross Covariance (%s)",pert_vs), col=cols, at = boxatvec, xaxt = "n", cex.lab=1.5, cex.main=2.0) #May need to adjust range manually
-axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
-legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, col=cols)
+png(sprintf("Fnorm_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
+boxplot(df.ali[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), col=colvec, ylim=c(0,1), cex.lab=1.5, cex.main=2.0)
+#axis()
+legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
 dev.off()
