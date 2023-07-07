@@ -19,10 +19,12 @@ df.sv1 <- data.frame(id=c(1:20))
 df.psv1 <- data.frame(id=c(1:20))
 df.Fnorm <- data.frame(id=c(1:20))
 
+#df.play <- data.frame(id=c(1:20)) #Effective variance in direction of environmental change.
+
 envmode <- 1 #Only consider novel environments
 
-denvs <- seq(10,100,10)
-#denvs <- append(2,seq(10,50,5))
+#denvs <- seq(10,100,10)
+denvs <- append(2,seq(10,100,10))
 #Challenge: Try to plot all models in one plot.
 for (denv in denvs){
   for (layers in c("EFGHJP","E_G__P","_FGHJP","EFGH__")){ #Full, NoHier, NoCue, NoDev
@@ -34,14 +36,18 @@ for (denv in denvs){
     ali_in <- read.table(sprintf("%s_1_%s_ali.dat",layers,pert),header=FALSE)
     sv1_in <- read.table(sprintf("%s_1_%s_sval1.dat",layers,pert),header=FALSE)
     Fnorm_in <- read.table(sprintf("%s_1_%s_denv22.dat",layers,pert),header=FALSE)
+    
+    alivec <- ali_in$V2[which(sv1_in$V1==denv)]
+    sv1vec <- sv1_in$V2[which(sv1_in$V1==denv)]
 
-  
     modeldenv <- sprintf("%s_%d",modelname,denv)
     
-    df.ali[modeldenv] <- ali_in$V2[which(sv1_in$V1==denv)]
-    df.sv1[modeldenv] <- sv1_in$V2[which(sv1_in$V1==denv)]
+    df.ali[modeldenv] <- alivec
+    df.sv1[modeldenv] <- sv1vec
     df.psv1[modeldenv] <- sv1_in$V3[which(sv1_in$V1==denv)]
     df.Fnorm[modeldenv] <- Fnorm_in$V2[which(sv1_in$V1==denv)]
+    
+    #df.play[modeldenv] <- alivec*sv1vec
 
   }
   #df.ali100[modelenv] <- ali_in$V2[which(ali_in$V1==100)] #Alignment between first singular vector with environmental change
@@ -62,29 +68,47 @@ for (denv in denvs){
 #boxatvec <- boxatvec[-3*seq(1,4)]
 #axisatvec <- 3*seq(1,4)-1.5
 
-colvec <- ("orange","limegreen","cyan","darkorchid")
+colvec <- c("orange","limegreen","cyan","darkorchid")
+boxatvec <- seq(1,5*length(denvs))
+boxatvec <- boxatvec[-5*seq(1,length(denvs))]
+axisatvec <- seq(2.5,47.5,5.0)
+pdenvs <- as.integer(denvs/2) #% change of environmental factors
+spdenvs <- sprintf("%d",pdenvs) #string as boxplot label #Maybe not needed
 
-png(sprintf("ali_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
-boxplot(df.ali[2:ncol(df.ali)],ylab = sprintf("Alignment (%s)",pert_vs), col=colvec, ylim=c(0,1), cex.lab=1.5, cex.main=2.0)
-#axis()
-legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
+
+png(sprintf("ali_%s.png",pert),width=2250,height=1125,units="px",pointsize=12,res=300)
+boxplot(df.ali[2:ncol(df.ali)],ylab = sprintf("Alignment (%s)",pert_vs), xlab="% Environmental change",
+        col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
+axis(side=1, at=axisatvec, labels=spdenvs)
+legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
 dev.off()
 
 png(sprintf("sv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
-boxplot(df.ali[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), col=colvec, ylim=c(0,1), cex.lab=1.5, cex.main=2.0)
-#axis()
-legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
+boxplot(df.sv1[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change", 
+        col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
+axis(side=1, at=axisatvec, labels=spdenvs)
+legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
 dev.off()
 
 png(sprintf("psv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
-boxplot(df.psv1[2:ncol(df.psv1)],ylab = sprintf("%% 1st singular value (%s)",pert_vs), col=colvec, ylim=c(0,1),
-        yaxt="n", cex.lab=1.5, cex.main=2.0)
+boxplot(df.psv1[2:ncol(df.psv1)],ylab = sprintf("%% 1st singular value (%s)",pert_vs), 
+        col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", yaxt="n", cex.lab=1.5, cex.main=2.0)
+axis(side=1, at=axisatvec, labels=spdenvs)
 axis(side = 2, at = c(0,0.2,0.4,0.6,0.8,1.0), labels= c(0,20,40,60,80,100))
 legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
 dev.off()
 
 png(sprintf("Fnorm_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
-boxplot(df.ali[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), col=colvec, ylim=c(0,1), cex.lab=1.5, cex.main=2.0)
-#axis()
+boxplot(df.Fnorm[2:ncol(df.Fnorm)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change",
+        col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
+axis(side=1, at=axisatvec, labels=spdenvs)
 legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
 dev.off()
+
+#png(sprintf("play_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
+#boxplot(df.play[2:ncol(df.play)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change",
+#        col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
+#axis(side=1, at=axisatvec, labels=spdenvs)
+#legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
+#dev.off()
+
