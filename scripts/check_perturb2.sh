@@ -7,7 +7,7 @@ NIND=20
 NOISE=0.05
 
 ## cross-covariance analysis
-pegcov=~/work/GitHub/evodevo/crosscov/crosscov
+pegcov=../GitHub/evodevo/crosscov/crosscov
 #
 
 

@@ -84,7 +84,7 @@ if [ ${DENV2} -eq 100 ]; then
 	   > /dev/null
 fi
 
-for denv in 10 100; do 
+for denv in 10; do 
     $train -test=true -nepoch=${NEPOCH2} -maxpop=${MAXPOP} -ncells=${NCELLS} \
        -traj_file=traj/${base}_run${denv}.traj \
        -jsongzin=json/${base}_train.json.gz \

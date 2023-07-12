@@ -9,7 +9,7 @@
 #envmode <- 2 ### 0: Ancestral, 1: Novel, 2: Diff
 #par(cex=1.0, cex.axis=1.0, cex.lab=1.5, cex.main=2.0) #Graphical parameters #This doesn't work with boxplot for some reason
 
-pert <- "pe" ### "pG": Genetic/Mutational perturbation, "pe": environmental perturbation
+pert <- "pG" ### "pG": Genetic/Mutational perturbation, "pe": environmental perturbation
 
 #Reminder that R starts counting at 1 instead of 0.
 pert_vs <- switch(pert, "pG" = "Pheno-Geno", "pe" = "Pheno-Cue") 
@@ -71,23 +71,23 @@ for (denv in denvs){
 colvec <- c("orange","limegreen","cyan","darkorchid")
 boxatvec <- seq(1,5*length(denvs))
 boxatvec <- boxatvec[-5*seq(1,length(denvs))]
-axisatvec <- seq(2.5,47.5,5.0)
+axisatvec <- seq(2.5,52.5,5.0)
 pdenvs <- as.integer(denvs/2) #% change of environmental factors
 spdenvs <- sprintf("%d",pdenvs) #string as boxplot label #Maybe not needed
 
 
-png(sprintf("ali_%s.png",pert),width=2250,height=1125,units="px",pointsize=12,res=300)
+png(sprintf("ali_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
 boxplot(df.ali[2:ncol(df.ali)],ylab = sprintf("Alignment (%s)",pert_vs), xlab="% Environmental change",
         col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
-legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
+legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
 dev.off()
 
 png(sprintf("sv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
 boxplot(df.sv1[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change", 
-        col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
+        col=colvec, at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
-legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
+legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
 dev.off()
 
 png(sprintf("psv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
@@ -95,14 +95,14 @@ boxplot(df.psv1[2:ncol(df.psv1)],ylab = sprintf("%% 1st singular value (%s)",per
         col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", yaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
 axis(side = 2, at = c(0,0.2,0.4,0.6,0.8,1.0), labels= c(0,20,40,60,80,100))
-legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
+legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
 dev.off()
 
 png(sprintf("Fnorm_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
 boxplot(df.Fnorm[2:ncol(df.Fnorm)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change",
-        col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
+        col=colvec, at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
-legend("topright", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=cols)
+legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
 dev.off()
 
 #png(sprintf("play_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
