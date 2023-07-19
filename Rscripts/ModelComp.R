@@ -84,10 +84,16 @@ legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=
 dev.off()
 
 png(sprintf("sv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
+#make main plot first
+par(fig=c(0,1,0,1)) #Specify NDC coordinates for main plot
 boxplot(df.sv1[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change", 
         col=colvec, at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
 legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
+#make inset plot
+par(fig=c(0.1,0.5,0.1,0.5))
+boxplot(df.sv1[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change", 
+        col=colvec, at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0, log="y")
 dev.off()
 
 png(sprintf("psv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
