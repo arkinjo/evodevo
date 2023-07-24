@@ -1,7 +1,9 @@
 
 nepoch <- 10
 ngen <- 200
+denv <- 10
 
+str.pdenv <- sprintf("%d%%",denv/2)
 #df.agvar <- data.frame(gen=seq(1,ngen))
 df.ngvar <- data.frame(gen=seq(1,ngen))
 df.diffgvar <- data.frame(gen=seq(1,ngen-1))
@@ -31,7 +33,7 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
   Cvar <- c()
 
   for (epoch in c(1:nepoch)){
-    traj <- read.table(sprintf("%s_run100_%02d.gvar",layers,epoch),header=FALSE)
+    traj <- read.table(sprintf("%s_run%d_%02d.gvar",layers,denv,epoch),header=FALSE)
     modelXepoch <- sprintf("%s_%02d",modelname,epoch)
     #agvartraj <- traj$V2
     ngvartraj <- traj$V3
@@ -54,14 +56,17 @@ for(layers in c("_FGHJP","E_G__P","EFGHJP","EFGH__")){ #Loop over models, order 
   df.Cvar[modelname] <- Cvar
 }
 
-bxpindex <- c(4,3,2,5)-1
+bxpindex <- c(3,2,1,4)
+#bxpindex <- c(2,1)
+
 
 #mat.agvar <- as.matrix(df.agvar)
 mat.ngvar <- as.matrix(df.ngvar)
 mat.diffgvar <- as.matrix(df.diffgvar)
 
-tiff("ngvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
-matplot(mat.ngvar[,2:ncol(mat.ngvar)],col=colvec.l,type="l",lty=1,lwd=2,xlab="Generation",ylab="Genetic Variance",cex.lab=1.5)
+png(sprintf("ngvar_%d.png",denv),width=2250,height=2250,units="px", pointsize=12, res=300)
+matplot(mat.ngvar[,2:ncol(mat.ngvar)],col=colvec.l,type="l",lty=1,lwd=2,
+        xlab="Generation",ylab="Genetic Variance",cex.lab=1.5, sub=sprintf("(%s environmental change)",str.pdenv))
 legend("bottomright",legend=modelvec[bxpindex],title="Model",col=colvec.s[bxpindex],lty=1)
 dev.off()
 
@@ -69,23 +74,23 @@ dev.off()
 #legend("bottomright",legend=modelvec[bxpindex],col=colvec.s[bxpindex],lty=1)
 #abline(h=0)
 
-tiff("minvar.tif",width=2250,height=2250,units="px",pointsize=12, res=300)
+png("minvar.tif",width=2250,height=2250,units="px",pointsize=12, res=300)
 boxplot(df.minvar[bxpindex+1],col=colvec.s[bxpindex],ylab="Minimum genetic variance",cex.lab=1.5)
 dev.off()
 
-tiff("tminvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+png("tminvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 boxplot(df.tminvar[bxpindex+1],col=colvec.s[bxpindex],ylab="Generations to genetic bottleneck",cex.lab=1.5)
 dev.off()
 
-tiff("gvar0.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+png("gvar0.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 boxplot(df.gvar0[bxpindex+1],col=colvec.s[bxpindex],xlab="Model",ylab="Initial genetic variance",cex.lab=1.5)
 dev.off()
 
-tiff("Dvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+png("Dvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 boxplot(df.Dvar[bxpindex+1],col=colvec.s[bxpindex],ylab="Drop in genetic variance",cex.lab=1.5)
 dev.off()
 
-tiff("Cvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+png("Cvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 boxplot(df.Cvar[bxpindex+1],col=colvec.s[bxpindex],ylab="Gain in genetic variance",cex.lab=1.5)
 dev.off()
 
@@ -97,17 +102,4 @@ dev.off()
 #matplot(mat.agvar[,2:ncol(mat.agvar)],col=colvec.l,type="l",lty=1,xlab="Generation",ylab="Genetic Variance")
 #legend("bottomright",legend=modelvec[bxpindex-1],col=colvec.s[bxpindex-1],lty=1)
 #dev.off()
-
-###Play
-plot(df.tminvar$NoCue,df.Cvar$NoCue,col="navy",xlim=c(0,70),ylim=c(200,1200),xlab="Generations to bottleneck",ylab="Accumulated Cryptic Mutations",cex.lab=1.5)
-points(df.tminvar$NoHier,df.Cvar$NoHier,col="limegreen")
-points(df.tminvar$Full,df.Cvar$Full,col="orange")
-points(df.tminvar$NoDev,df.Cvar$NoDev,col="darkorchid")
-legend("topright",legend=c("Full","NoHier","NoCue","NoDev"),col=c("orange","limegreen","navy","darkorchid"),pch=rep(1,4),title="Model")
-
-plot(df.Dvar$NoCue,df.Cvar$NoCue,col="navy",xlim=c(0,1200),ylim=c(0,1200),xlab="Generations to bottleneck",ylab="Accumulated Cryptic Mutations",cex.lab=1.5)
-points(df.Dvar$NoHier,df.Cvar$NoHier,col="limegreen")
-points(df.Dvar$Full,df.Cvar$Full,col="orange")
-points(df.Dvar$NoDev,df.Cvar$NoDev,col="darkorchid")
-legend("topleft",legend=c("Full","NoHier","NoCue","NoDev"),col=c("orange","limegreen","navy","darkorchid"),pch=rep(1,4),title="Model")
 

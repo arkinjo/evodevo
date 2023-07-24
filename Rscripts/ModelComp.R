@@ -9,7 +9,7 @@
 #envmode <- 2 ### 0: Ancestral, 1: Novel, 2: Diff
 #par(cex=1.0, cex.axis=1.0, cex.lab=1.5, cex.main=2.0) #Graphical parameters #This doesn't work with boxplot for some reason
 
-pert <- "pG" ### "pG": Genetic/Mutational perturbation, "pe": environmental perturbation
+pert <- "pe" ### "pG": Genetic/Mutational perturbation, "pe": environmental perturbation
 
 #Reminder that R starts counting at 1 instead of 0.
 pert_vs <- switch(pert, "pG" = "Pheno-Geno", "pe" = "Pheno-Cue") 
@@ -91,24 +91,30 @@ boxplot(df.sv1[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs)
 axis(side=1, at=axisatvec, labels=spdenvs)
 legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
 #make inset plot
-par(fig=c(0.1,0.5,0.1,0.5))
-boxplot(df.sv1[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change", 
-        col=colvec, at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0, log="y")
+par(fig=c(0.05,0.65,0.3,0.8),new=T)
+boxplot(df.sv1[2:25], col=colvec, at=boxatvec[1:24], xaxt="n", log="y", cex.axis=0.8) #log scale
+axis(side=1, at=axisatvec, labels=spdenvs, cex.axis=0.8)
 dev.off()
 
 png(sprintf("psv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
 boxplot(df.psv1[2:ncol(df.psv1)],ylab = sprintf("%% 1st singular value (%s)",pert_vs), 
         col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", yaxt="n", cex.lab=1.5, cex.main=2.0)
-axis(side=1, at=axisatvec, labels=spdenvs)
+axis(side = 1, at = axisatvec, labels = spdenvs)
 axis(side = 2, at = c(0,0.2,0.4,0.6,0.8,1.0), labels= c(0,20,40,60,80,100))
 legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
 dev.off()
 
 png(sprintf("Fnorm_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
+par(fig=c(0,1,0,1)) #Specify NDC coordinates for main plot
 boxplot(df.Fnorm[2:ncol(df.Fnorm)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change",
         col=colvec, at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
 legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
+#make inset plot
+par(fig=c(0.05,0.65,0.3,0.8),new=T)
+boxplot(df.Fnorm[2:25], col=colvec, at=boxatvec[1:24], xaxt="n", log="y", cex.axis=0.8) #log scale
+axis(side=1, at=axisatvec, labels=spdenvs, cex.axis=0.8)
+
 dev.off()
 
 #png(sprintf("play_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
