@@ -22,7 +22,7 @@ func main() {
 	ngenesP := flag.Int("ngenes", 200, "number of genes")
 	ncellsP := flag.Int("ncells", 1, "number of cell types/phenotypes simultaneously trained")
 	//genPtr := flag.Int("ngen", 200, "number of generation/epoch")
-	envP := flag.Bool("env", true, "with environment?")
+	//envP := flag.Bool("env", true, "with environment?")
 	//ref1Ptr := flag.String("ref1", "", "reference JSON file 1")
 	//ref2Ptr := flag.String("ref2", "", "reference JSON file 2")
 
@@ -39,7 +39,7 @@ func main() {
 	//epochlength := *genPtr
 	//refgen1 := *ref1Ptr
 	//refgen2 := *ref2Ptr
-	withEnv := *envP
+	//withEnv := *envP
 
 	PG_Filename = *pgfilenamePtr
 
@@ -85,8 +85,8 @@ func main() {
 	}
 	*/
 
-	log.Println("Reading Pop1")
-	pop1 := multicell.NewPopulation(settings)
+	//log.Println("Reading Pop1")
+	//pop1 := multicell.NewPopulation(settings)
 	//fmt.Println("Reference population 2:", refgen2)
 	//pop1.ImportPopGz(refgen2)
 
@@ -121,8 +121,12 @@ func main() {
 	//	multicell.ScaleVec(midp, 0.5, midp)
 	paxis := multicell.NewVec(lenP)
 	multicell.DiffVecs(paxis, env1, env0)
+	
 	//	multicell.NormalizeVec(paxis)
 	len2_paxis := multicell.Norm2Sq(paxis)
+	log.Printf("Diagnostic: Veclength = %e",len2_paxis)
+	//error: Division by zero
+
 
 	log.Printf("Dumping start")
 	//for gen := 1; gen <= epochlength; gen++ {
@@ -136,13 +140,13 @@ func main() {
 	//fmt.Fprintf(fout, "#\t Geno+e0     \tPheno0     \tGeno+e1     \tPheno1   ")
 	//fmt.Fprintf(fout, "\t||p0-e0||  \t||p1-e1||  \tFit     \tWagFit\n")
 
-	jfilename := fmt.Sprintf("%s_%3.3d.json.gz", json_in, gen)
+	jfilename := fmt.Sprintf("%s_01_001.json.gz", json_in)
 	pop := multicell.NewPopulation(settings)
 	pop.ImportPopGz(jfilename)
 	//gt0 := pop.GetFlatGenome(0)
 	//gt1 := pop.GetFlatGenome(1)
 	et0 := pop.GetFlatStateVec("E", 0, 0, Nenv)
-	et1 := pop.GetFlatStateVec("E", 1, 0, Nenv)
+	//et1 := pop.GetFlatStateVec("E", 1, 0, Nenv)
 	/*
 		if withEnv {
 			for k, e := range et0 {
@@ -174,13 +178,17 @@ func main() {
 
 		//x1 := multicell.DotVecs(tx1, gaxis) / len2_gaxis
 		y1 := multicell.DotVecs(ty1, paxis) / len2_paxis
+		//log.Printf("Data\t%e\t%e\n", y0, y1) //Diagnostic
 
 		//fmt.Fprintf(fout, "Data\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
+		//fmt.Fprintf(fout, "Data\t%e\t%e\n", y0, y1)
 
 		//dx0 = append(dx0, x0)
 		dy0 = append(dy0, y0)
+		//fmt.Println(dy0)
 		//dx1 = append(dx1, x1)
 		dy1 = append(dy1, y1)
+		//fmt.Println(dy1)
 
 		//dp1e1 := pop.Indivs[k].Dp1e1
 		//dp0e0 := pop.Indivs[k].Dp0e0
