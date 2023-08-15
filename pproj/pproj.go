@@ -61,19 +61,20 @@ func main() {
 
 	tdump := time.Now()
 
-	log.Println("Reading Pop0")
-	pop0 := multicell.NewPopulation(settings)
+	log.Println("Reading Population")
+	pop := multicell.NewPopulation(settings)
 	//fmt.Println("Reference population :", refgen1)
-	//pop0.ImportPopGz(refgen1)
-	settings = pop0.Params
+	jfilename := fmt.Sprintf("%s_01_001.json.gz", json_in)
+	pop.ImportPopGz(jfilename)
+	settings = pop.Params
 	multicell.SetParams(settings)
 
 	Nenv := multicell.GetNenv()
 	Nsel := multicell.GetNsel()
 
 	// Reference direction (Selective Envs only)
-	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.AncEnvs))
-	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop0.NovEnvs))
+	env0 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop.AncEnvs))
+	env1 := multicell.FlattenEnvs(multicell.GetSelEnvs(pop.NovEnvs))
 	lenP := len(env0)
 
 	/*g00 := pop0.GetFlatGenome(multicell.IAncEnv)
@@ -121,16 +122,12 @@ func main() {
 	//	multicell.ScaleVec(midp, 0.5, midp)
 	paxis := multicell.NewVec(lenP)
 	multicell.DiffVecs(paxis, env1, env0)
-	
+
 	//	multicell.NormalizeVec(paxis)
 	len2_paxis := multicell.Norm2Sq(paxis)
-	log.Printf("Diagnostic: Veclength = %e",len2_paxis)
-	//error: Division by zero
-
 
 	log.Printf("Dumping start")
 	//for gen := 1; gen <= epochlength; gen++ {
-	gen := 1 //Fix at gen 1.
 
 	ofilename := fmt.Sprintf("%s.pproj", PG_Filename) //Only one generation
 	fout, err := os.OpenFile(ofilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
@@ -139,10 +136,6 @@ func main() {
 	}
 	//fmt.Fprintf(fout, "#\t Geno+e0     \tPheno0     \tGeno+e1     \tPheno1   ")
 	//fmt.Fprintf(fout, "\t||p0-e0||  \t||p1-e1||  \tFit     \tWagFit\n")
-
-	jfilename := fmt.Sprintf("%s_01_001.json.gz", json_in)
-	pop := multicell.NewPopulation(settings)
-	pop.ImportPopGz(jfilename)
 	//gt0 := pop.GetFlatGenome(0)
 	//gt1 := pop.GetFlatGenome(1)
 	et0 := pop.GetFlatStateVec("E", 0, 0, Nenv)
@@ -181,7 +174,7 @@ func main() {
 		//log.Printf("Data\t%e\t%e\n", y0, y1) //Diagnostic
 
 		//fmt.Fprintf(fout, "Data\t%e\t%e\t%e\t%e", x0, y0, x1, y1)
-		//fmt.Fprintf(fout, "Data\t%e\t%e\n", y0, y1)
+		fmt.Fprintf(fout, "Data\t%e\t%e\n", y0, y1)
 
 		//dx0 = append(dx0, x0)
 		dy0 = append(dy0, y0)
@@ -200,12 +193,13 @@ func main() {
 	}
 	//ax0, sx0 := avesd(dx0)
 	ay0, sy0 := avesd(dy0)
-	//fmt.Fprintf(fout, "AVESD0\t%d\t%e\t%e\t%e\t%e\n", gen, ax0, ay0, sx0, sy0)
-	fmt.Fprintf(fout, "AVESD0\t%d\t%e\t%e\n", gen, ay0, sy0)
-	//ax1, sx1 := avesd(dx1)
 	ay1, sy1 := avesd(dy1)
+
+	//fmt.Fprintf(fout, "AVESD0\t%d\t%e\t%e\t%e\t%e\n", gen, ax0, ay0, sx0, sy0)
+	fmt.Fprintf(fout, "AVESD01\t%e\t%e\t%e\t%e\n", ay0, sy0, ay1, sy1)
+	//ax1, sx1 := avesd(dx1)
 	//fmt.Fprintf(fout, "AVESD1\t%d\t%e\t%e\t%e\t%e\n", gen, ax1, ay1, sx1, sy1)
-	fmt.Fprintf(fout, "AVESD1\t%d\t%e\t%e\n", gen, ay1, sy1)
+	//fmt.Fprintf(fout, "AVESD1\t%d\t%e\t%e\n", gen, ay1, sy1)
 	err = fout.Close()
 	if err != nil {
 		log.Fatal(err)
