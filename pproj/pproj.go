@@ -125,6 +125,7 @@ func main() {
 
 	//	multicell.NormalizeVec(paxis)
 	len2_paxis := multicell.Norm2Sq(paxis)
+	//log.Println("Diagnostic: Veclength = %f",len2_paxis)
 
 	log.Printf("Dumping start")
 	//for gen := 1; gen <= epochlength; gen++ {
