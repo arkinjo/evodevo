@@ -27,7 +27,7 @@ envmode <- 1 #Only consider novel environments
 denvs <- append(2,seq(10,100,10))
 #Challenge: Try to plot all models in one plot.
 for (denv in denvs){
-  for (layers in c("EFGHJP","E_G__P","_FGHJP","EFGH__")){ #Full, NoHier, NoCue, NoDev
+  for (layers in c("EFGHJP","_FGHJP")){ #Full, NoHier, NoCue, NoDev
     modelname <- switch(layers, "EFGHJP"="Full", "_FGHJP"="NoCue", "E_G__P"="NoHier", "EFGH__"="NoDev", "__G___"="Null"  )
     #modelenv <- paste(modelname,envmode)
     #envmodename <- switch(envmode+1, "Ancestral", "Novel", "Novel-Ancestral") 
@@ -68,10 +68,10 @@ for (denv in denvs){
 #boxatvec <- boxatvec[-3*seq(1,4)]
 #axisatvec <- 3*seq(1,4)-1.5
 
-colvec <- c("orange","limegreen","cyan","darkorchid")
-boxatvec <- seq(1,5*length(denvs))
-boxatvec <- boxatvec[-5*seq(1,length(denvs))]
-axisatvec <- seq(2.5,52.5,5.0)
+colvec <- c("red","cyan")
+boxatvec <- seq(1,3*length(denvs))
+boxatvec <- boxatvec[-3*seq(1,length(denvs))]
+axisatvec <- seq(1.5,31.5,3.0)
 pdenvs <- as.integer(denvs/2) #% change of environmental factors
 spdenvs <- sprintf("%d",pdenvs) #string as boxplot label #Maybe not needed
 
@@ -80,7 +80,7 @@ png(sprintf("ali_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,re
 boxplot(df.ali[2:ncol(df.ali)],ylab = sprintf("Alignment (%s)",pert_vs), xlab="% Environmental change",
         col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
-legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
+legend("topleft", title="Model", legend=c("Full","NoCue"), border="black", fill=colvec)
 dev.off()
 
 png(sprintf("sv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
@@ -89,19 +89,19 @@ par(fig=c(0,1,0,1)) #Specify NDC coordinates for main plot
 boxplot(df.sv1[2:ncol(df.sv1)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change", 
         col=colvec, at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
-legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
+legend("topleft", title="Model", legend=c("Full","NoCue"), border="black", fill=colvec)
 #make inset plot
 par(fig=c(0.05,0.65,0.3,0.8),new=T)
-boxplot(df.sv1[2:25], col=colvec, at=boxatvec[1:24], xaxt="n", log="y", cex.axis=0.8) #log scale
+boxplot(df.sv1[2:13], col=colvec, at=boxatvec[1:12], xaxt="n", log="y", cex.axis=0.8) #log scale
 axis(side=1, at=axisatvec, labels=spdenvs, cex.axis=0.8)
 dev.off()
 
 png(sprintf("psv1_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
-boxplot(df.psv1[2:ncol(df.psv1)],ylab = sprintf("%% 1st singular value (%s)",pert_vs), 
+boxplot(df.psv1[2:ncol(df.psv1)],ylab = sprintf("%% 1st singular value (%s)",pert_vs), xlab="% Environmental change",
         col=colvec, ylim=c(0,1), at=boxatvec, xaxt="n", yaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side = 1, at = axisatvec, labels = spdenvs)
 axis(side = 2, at = c(0,0.2,0.4,0.6,0.8,1.0), labels= c(0,20,40,60,80,100))
-legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
+legend("topleft", title="Model", legend=c("Full","NoCue"), border="black", fill=colvec)
 dev.off()
 
 png(sprintf("Fnorm_%s.png",pert),width=2250,height=2250,units="px",pointsize=12,res=300)
@@ -109,10 +109,10 @@ par(fig=c(0,1,0,1)) #Specify NDC coordinates for main plot
 boxplot(df.Fnorm[2:ncol(df.Fnorm)],ylab = sprintf("1st singular value (%s)",pert_vs), xlab="% Environmental change",
         col=colvec, at=boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side=1, at=axisatvec, labels=spdenvs)
-legend("topleft", title="Model", legend=c("Full","NoHier","NoCue","NoDev"), lty=1, col=colvec)
+legend("topleft", title="Model", legend=c("Full","NoCue"), border="black", fill=colvec)
 #make inset plot
 par(fig=c(0.05,0.65,0.3,0.8),new=T)
-boxplot(df.Fnorm[2:25], col=colvec, at=boxatvec[1:24], xaxt="n", log="y", cex.axis=0.8) #log scale
+boxplot(df.Fnorm[2:13], col=colvec, at=boxatvec[1:12], xaxt="n", log="y", cex.axis=0.8) #log scale
 axis(side=1, at=axisatvec, labels=spdenvs, cex.axis=0.8)
 
 dev.off()
