@@ -11,11 +11,19 @@ pproj=../GitHub/evodevo/pproj/pproj
 #
 
 
-# perturb and compute cross-covariance for the 1st generations.
+# perturb and compute projections for the 1st generations.
 for denv in 2 {10..100..10}; do
     for i in {01..${NIND}}; do
 	zsh perturb.sh $base ${denv} ${NOISE} $i $RANDOM
-	$pproj -jsongzin pops/${base}_perturb${denv}_${NOISE}_01_001.json.gz \
-		-PG_File pproj/${base}_run${denv}_${epo} \
-    done
+	$pproj -jsongzin pops/${base}_perturb${denv}_${NOISE} \
+		-PG_file pproj/${base}_perturb${denv}_${i}     
+	done
 done
+
+# extracting data
+for denv in 2 {10..100..10}; do
+	for i in {01..${NIND}}; do
+	    echo -n "${denv}"
+	    grep AVESD01 pproj/${base}_perturb${denv}_${i}.pproj | awk '{printf "\t %f \t %f \t %f \t %f \n", $2, $3, $4, $5}'
+	done
+done > ${base}_apr.dat
