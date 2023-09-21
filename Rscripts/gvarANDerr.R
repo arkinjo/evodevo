@@ -59,10 +59,10 @@ tiff("pderr_GA.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 boxplot(df.pderr_GA[bxpindex+1],col=colvec.s[bxpindex],xlab="Model",ylab="Proportion decrease in error",main="Change in regulation")
 dev.off()
 
-tiff("derr_ALL.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
+png("derr_ALL.png",width=2250,height=2250,units="px", pointsize=12, res=300)
 boxplot(df.derr_ALL[c(6,7,4,5,2,3,8,9)],ylim=c(0,1),col=c("magenta","cyan"),ylab="Decrease in mismatch",at=boxatvec,xaxt="n",cex.lab=1.5)
 axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
-legend("topright",legend=c("Before bottleneck","After bottleneck"),col=c("magenta","cyan"),lty=1)
+legend("topright",legend=c("Before bottleneck","After bottleneck"),fill=c("magenta","cyan"),border="black")
 dev.off()
 
 # #For fun

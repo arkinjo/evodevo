@@ -73,7 +73,7 @@ dev.off()
 tiff(filename=sprintf("../plots/vars_%d.tif",gen),width=2250,height=2250,units="px",pointsize=12,res=300)
 bp.vars <- boxplot(df.vars[2:length(df.vars)],col=c("magenta","cyan"),ylab=sprintf("Variance in projected phenotype (Gen %d)",gen), at = atvec, xaxt="n",cex.lab=1.5,cex.main=2.0)
 axis(side = 1, at = c(1.5,4.5,7.5,10.5), labels = models )
-legend("topright",legend=c("Ancestral", "Novel"), col=c("magenta","cyan"), lty=1, title="Environment")
+legend("topright",legend=c("Ancestral", "Novel"), border="black",fill =c("magenta","cyan"), lty=1, title="Environment")
 dev.off()
 
 #png(filename=paste("../plots/sdap",gen,".png"))

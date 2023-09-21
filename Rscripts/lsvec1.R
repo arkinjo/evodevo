@@ -32,9 +32,9 @@ boxatvec <- c(1:12)
 boxatvec <- boxatvec[-3*c(1:4)]
 axisatvec <- c(1.5,4.5,7.5,10.5)
 png("eGali.png")
-boxplot(df.eGali[2:ncol(df.eGali)], ylab="Pheno(Cue)-Pheno(Geno) alignment (Gen 1)", ylim=c(0,1),col=colvec,xaxt="n",at=boxatvec,cex.lab=1.5)
+boxplot(df.eGali[2:ncol(df.eGali)], ylab="(Pheno-Cue)-(Pheno-Geno) alignment", ylim=c(0,1),col=colvec,xaxt="n",at=boxatvec,cex.lab=1.5)
 axis(1,at=axisatvec,labels=c("Full","NoHier","NoCue","NoDev"))
-legend("bottomleft",legend=c("Ancestral","Novel"),col = c("magenta","cyan"),lty=1, title = "Environment")
+legend("bottomleft",legend=c("Ancestral","Novel"),border="black",fill = c("magenta","cyan"), title = "Environment")
 dev.off()
 
 #Plot both in same environment

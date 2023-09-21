@@ -182,7 +182,7 @@ dev.off()
 tiff("../plots/npvar.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 
 matplot(y=mat.npvar[,c(2:41)],ylab="Variance in novel phenotype",xlab="Generation",type="l",lty=1,col=colvec.l)
-legend("topright",legend = modelvec[lindex], col=colvec.s[lindex], lty=1)
+legend("topright",legend = modelvec[lindex], border="black", fill=colvec.s[lindex])
 #legend("topright",legend = c("Full","NoHier","NoCue","NoDev","Null"), col=c("orange","navy","limegreen","darkorchid","red"), lty=c(rep(1,4)))
 dev.off()
 
@@ -219,7 +219,7 @@ dev.off()
 tiff("../plots/p_0.tif",width=2250,height=2250,units="px", pointsize=12, res=300)
 boxplot(df.p_0[c(6,7,4,5,2,3,8,9)],col=c("magenta","cyan"),at=boxatvec,ylab="Projected Phenotype (Gen 1)",ylim=c(0,1),xaxt="n",cex.lab=1.5,cex.main=2.0)
 axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
-legend("topright",legend=c("Ancestral","Novel"),col=c("magenta","cyan"),lty=1,title="Environment")
+legend("topright",legend=c("Ancestral","Novel"),border="black",fill=c("magenta","cyan"),title="Environment")
 dev.off()
 
 tiff("../plots/p_inf.tif",width=2250,height=2250,units="px", pointsize=12, res=300)

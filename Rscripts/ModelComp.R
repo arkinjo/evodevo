@@ -54,14 +54,14 @@ axisatvec <- 3*seq(1,4)-1.5
 tiff(paste("ali_",pert,".tif",sep=""),width=2250,height=2250,units="px",pointsize=12,res=300)
 boxplot(df.ali100[2:ncol(df.ali100)], ylab = sprintf("Alignment (%s)",pert_vs), col=cols,ylim=c(0,1), at=boxatvec, xaxt = "n", cex.lab=1.5, cex.main=2.0)
 axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
-legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, col=cols)
+legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, border="black", fill=cols)
 #legend("bottomleft",legend = c("Full","NoHier","NoCue","NoDev"), col=c("orange","navy","limegreen","darkorchid"), lty=c(rep(1,4)))
 dev.off()
 
 tiff(paste("sv1_",pert,".tif",sep=""),width=2250,height=2250,units="px",pointsize=12,res=300)
 boxplot(df.sv1100[2:ncol(df.sv1100)], ylab = sprintf("SV1 (%s)",pert_vs), col=colvec, at= boxatvec, xaxt="n", cex.lab=1.5, cex.main=2.0)
 axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
-legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, col=cols)
+legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, border="black", fill=cols)
 #legend("topright",legend = c("Full","NoHier","NoCue","NoDev"), col=c("orange","navy","limegreen","darkorchid"), lty=c(rep(1,4)))
 dev.off()
 
@@ -72,7 +72,7 @@ boxplot(df.psv1100[2:ncol(df.psv1100)], ylab = sprintf("%% 1st singular value (%
 
 axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
 axis(side = 2, at = c(0,0.2,0.4,0.6,0.8,1.0), labels= c(0,20,40,60,80,100))
-legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, col=cols)
+legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, border="black", fill=cols)
 #legend("topright",legend = c("Full","NoHier","NoCue","NoDev"), col=c("orange","navy","limegreen","darkorchid"), lty=c(rep(1,4)))
 dev.off()
 
@@ -80,5 +80,5 @@ tiff(paste("Fnorm_",pert,".tif",sep=""),width=2250,height=2250,units="px",points
 #boxplot(df.Fnorm[2:5], main=paste(envmodename, pertname, sep=","), xlab="Model", ylab="Square Frobenius Norm", col=c("orange","limegreen","navy","darkorchid"), ylim=c(0,2.5))
 boxplot(df.Fnorm[2:ncol(df.Fnorm)], ylab=sprintf("Total Cross Covariance (%s)",pert_vs), col=cols, at = boxatvec, xaxt = "n", cex.lab=1.5, cex.main=2.0) #May need to adjust range manually
 axis(side = 1, at = axisatvec, labels=c("Full","NoHier","NoCue","NoDev"))
-legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, col=cols)
+legend("topright", title="Environment", legend=c("Ancestral", "Novel"), lty=1, border="black", fill=cols)
 dev.off()
