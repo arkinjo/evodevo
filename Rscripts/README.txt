@@ -14,4 +14,3 @@ gvarANDpproj.R should only be run after running gvar.R and PGtraj.R. It generate
 
 gvarANDerr.R should only be run after running gvar.R and traj.R. It generates plots of mismatch before and after the genetic bottleneck
 
-*-train.R functions the same as it's above variants, but compares Full and NoTrain models instead of models of different features.
