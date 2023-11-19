@@ -2,10 +2,9 @@ package multicell
 
 import (
 	//	"log"
+	"gonum.org/v1/gonum/stat/distuv"
 	"math"
 	"math/rand"
-
-	"gonum.org/v1/gonum/stat/distuv"
 )
 
 type Genome struct { //Genome of an individual
@@ -238,11 +237,9 @@ func (genome *Genome) Mutate() {
 	lambda := mutRate * float64(ngenes*fullGeneLength)
 	dist := distuv.Poisson{Lambda: lambda}
 	nmut := int(dist.Rand())
-
 	for n := 0; n < nmut; n++ {
 		irow := rand.Intn(ngenes)
 		icol := rand.Intn(fullGeneLength)
-
 		if icol < tE {
 			genome.E.pMutateSpmat(DensityE, irow, icol)
 		} else if icol < tF {
